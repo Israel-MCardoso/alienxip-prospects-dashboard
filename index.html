@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prospects Alienxip</title>
+  <style>
+    :root { --bg:#f6f7f9; --panel:#fff; --text:#17202a; --muted:#617080; --line:#d9dee5; --accent:#1f6feb; --ok:#0a7a3d; --warn:#a15c00; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Arial,sans-serif; background:var(--bg); color:var(--text); }
+    header { padding:20px 24px 12px; background:var(--panel); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
+    h1 { margin:0 0 12px; font-size:22px; }
+    .controls { display:grid; grid-template-columns:minmax(240px,1fr) 180px 220px; gap:10px; }
+    input, select { height:38px; border:1px solid var(--line); border-radius:6px; padding:0 10px; background:#fff; font-size:14px; }
+    main { padding:18px 24px 28px; }
+    .metrics { display:grid; grid-template-columns:repeat(5,minmax(120px,1fr)); gap:10px; margin-bottom:16px; }
+    .metric { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; }
+    .metric strong { display:block; font-size:20px; }
+    .metric span { color:var(--muted); font-size:12px; }
+    .table-wrap { background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow:auto; max-height:72vh; }
+    table { border-collapse:collapse; width:100%; min-width:1350px; }
+    th, td { border-bottom:1px solid var(--line); padding:9px 10px; text-align:left; vertical-align:top; font-size:13px; }
+    th { position:sticky; top:0; background:#eef2f6; z-index:2; white-space:nowrap; }
+    td { max-width:260px; }
+    a { color:var(--accent); text-decoration:none; }
+    .pill { display:inline-block; padding:3px 7px; border-radius:999px; font-size:12px; border:1px solid var(--line); background:#f7f9fb; }
+    .Alta { color:#9f1d20; font-weight:700; }
+    .Media { color:var(--warn); font-weight:700; }
+    .Baixa { color:var(--ok); font-weight:700; }
+    .muted { color:var(--muted); }
+    @media (max-width:900px) { .controls,.metrics { grid-template-columns:1fr; } main,header { padding-left:14px; padding-right:14px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Prospects Alienxip</h1>
+    <div class="controls">
+      <input id="search" placeholder="Buscar empresa, segmento, cidade ou oferta">
+      <select id="priority"><option value="">Todas prioridades</option><option>Alta</option><option>Media</option><option>Baixa</option></select>
+      <select id="hasLink"><option value="">Todos links</option><option value="site">Com site</option><option value="whatsapp">Com WhatsApp</option><option value="social">Com rede social</option></select>
+    </div>
+  </header>
+  <main>
+    <section class="metrics" id="metrics"></section>
+    <section class="table-wrap">
+      <table>
+        <thead><tr><th>Empresa</th><th>Segmento</th><th>Cidade</th><th>Prioridade</th><th>Telefone</th><th>Avaliacao</th><th>Site/Rede</th><th>WhatsApp</th><th>Oferta Alienxip</th><th>Proximo passo</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="10">Carregando prospects...</td></tr></tbody>
+      </table>
+    </section>
+  </main>
+  <script>
+    let rows = [];
+    const byId = id => document.getElementById(id);
+    const esc = value => String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const link = value => value ? '<a href="' + esc(value) + '" target="_blank" rel="noreferrer">abrir</a>' : '<span class="muted">-</span>';
+    const cityFromAddress = address => {
+      const m = String(address || '').match(/,\s*([^,-]+)\s*-\s*SP/i);
+      if (m) return m[1].trim();
+      if (/Jacare/i.test(address || '')) return 'Jacarei';
+      if (/S.o Jos/i.test(address || '')) return 'Sao Jose dos Campos';
+      return '';
+    };
+    const firstUrl = text => {
+      const m = String(text || '').match(/https?:\/\/[^"',\]\s]+/);
+      return m ? m[0] : '';
+    };
+    const socialFrom = row => {
+      const url = row.website || '';
+      if (/instagram|facebook|linkedin/i.test(url)) return url;
+      return '';
+    };
+    const priorityFor = row => {
+      const count = Number(String(row.ratingCount || '').replace(/\D/g, '')) || 0;
+      const site = row.website || '';
+      const booking = row.bookingLinks || '';
+      let score = 0;
+      if (count >= 100) score += 3; else if (count >= 30) score += 2; else if (count >= 10) score += 1;
+      if (!site) score += 2; else if (/instagram|facebook|linktr\.ee/i.test(site)) score += 1;
+      if (/wa\.me|whatsapp/i.test(booking)) score += 1;
+      return score >= 5 ? 'Alta' : score >= 3 ? 'Media' : 'Baixa';
+    };
+    const offerFor = row => {
+      const s = ((row.type || '') + ' ' + (row.types || '')).toLowerCase();
+      if (!row.website && !socialFrom(row)) return 'Presenca digital basica: site/landing page, Google Business otimizado, WhatsApp com rastreamento e formulario de lead.';
+      if (/odont|nutric|fisioterapia|psic|clinica|pilates|personal|academia/.test(s)) return 'Funil de agendamento: landing page, WhatsApp automatizado, CRM, lembretes e dashboard de consultas/leads.';
+      if (/pet|banho|tosa|veterin/.test(s)) return 'Agenda e recorrencia: cadastro de clientes/pets, lembretes, pacotes recorrentes, WhatsApp e painel operacional.';
+      if (/salao|beleza|cabeleireiro|estetica/.test(s)) return 'Agendamento e fidelizacao: landing page, agenda, WhatsApp, campanhas locais e painel de retorno por servico.';
+      if (/tatuagem|tatuador|piercing/.test(s)) return 'Portfolio e orcamento: site/portfolio, briefing, WhatsApp automatizado e funil para fechar sessoes.';
+      if (/advog|contab/.test(s)) return 'Autoridade e triagem: site institucional, captura de leads, triagem automatizada e dashboard comercial.';
+      return 'Diagnostico digital, automacoes de atendimento, CRM e painel de indicadores.';
+    };
+    const normalize = row => ({
+      empresa: row.title,
+      segmento: row.type,
+      cidade: cityFromAddress(row.address),
+      prioridade: priorityFor(row),
+      telefone: row.phoneNumber,
+      avaliacao: row.rating ? row.rating + ' (' + (row.ratingCount || '0') + ')' : '',
+      site: row.website,
+      social: socialFrom(row),
+      whatsapp: firstUrl(row.bookingLinks),
+      oferta: offerFor(row),
+      proximo: 'Validar redes sociais e preparar abordagem personalizada.'
+    });
+    const filteredRows = () => {
+      const q = byId('search').value.trim().toLowerCase();
+      const p = byId('priority').value;
+      const l = byId('hasLink').value;
+      return rows.filter(r => {
+        const blob = (r.empresa + ' ' + r.segmento + ' ' + r.cidade + ' ' + r.oferta).toLowerCase();
+        if (q && !blob.includes(q)) return false;
+        if (p && r.prioridade !== p) return false;
+        if (l === 'site' && !r.site) return false;
+        if (l === 'whatsapp' && !r.whatsapp) return false;
+        if (l === 'social' && !r.social) return false;
+        return true;
+      });
+    };
+    const renderMetrics = data => {
+      const metrics = [['Prospects', data.length], ['Prioridade alta', data.filter(r => r.prioridade === 'Alta').length], ['Com site', data.filter(r => r.site).length], ['Com rede social', data.filter(r => r.social).length], ['Com WhatsApp', data.filter(r => r.whatsapp).length]];
+      byId('metrics').innerHTML = metrics.map(([label, value]) => '<div class="metric"><strong>' + value + '</strong><span>' + esc(label) + '</span></div>').join('');
+    };
+    const render = () => {
+      const data = filteredRows();
+      renderMetrics(data);
+      byId('tbody').innerHTML = data.map(r => '<tr><td><strong>' + esc(r.empresa) + '</strong></td><td>' + esc(r.segmento) + '</td><td>' + esc(r.cidade) + '</td><td class="' + esc(r.prioridade) + '">' + esc(r.prioridade) + '</td><td>' + esc(r.telefone) + '</td><td>' + esc(r.avaliacao) + '</td><td>' + link(r.site || r.social) + '</td><td>' + link(r.whatsapp) + '</td><td>' + esc(r.oferta) + '</td><td>' + esc(r.proximo) + '</td></tr>').join('');
+    };
+    ['search','priority','hasLink'].forEach(id => byId(id).addEventListener('input', render));
+    fetch('/api/prospects').then(r => r.json()).then(data => { rows = data.map(normalize); render(); }).catch(err => { byId('tbody').innerHTML = '<tr><td colspan="10">Erro ao carregar dados: ' + esc(err.message) + '</td></tr>'; });
+  </script>
+</body>
+</html>
