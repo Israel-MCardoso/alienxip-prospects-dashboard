@@ -1,0 +1,16 @@
+node_modules/
+
+.env
+.env.local
+.env.*.local
+
+.dev-server.log
+.dev-server.err
+.legacy-sprint1.log
+.legacy-sprint1.err
+.next-sprint1.log
+.next-sprint1.err
+
+.vercel/
+.DS_Store
+Thumbs.db
