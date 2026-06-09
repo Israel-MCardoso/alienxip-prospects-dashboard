@@ -76,6 +76,7 @@ export type Database = {
           instagram_url: string | null;
           website_url: string | null;
           whatsapp: string | null;
+          owner_id: string | null;
           responsible_user_id: string | null;
           partner_name: string | null;
           partner_url: string | null;
@@ -102,6 +103,7 @@ export type Database = {
           instagram_url?: string | null;
           website_url?: string | null;
           whatsapp?: string | null;
+          owner_id?: string | null;
           responsible_user_id?: string | null;
           partner_name?: string | null;
           partner_url?: string | null;
@@ -207,6 +209,7 @@ export type Database = {
           instagram_url: string | null;
           whatsapp: string | null;
           notes: string | null;
+          owner_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -221,6 +224,7 @@ export type Database = {
           instagram_url?: string | null;
           whatsapp?: string | null;
           notes?: string | null;
+          owner_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -238,6 +242,7 @@ export type Database = {
           main_contact_name: string | null;
           main_contact_email: string | null;
           main_contact_phone: string | null;
+          owner_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -251,6 +256,7 @@ export type Database = {
           main_contact_name?: string | null;
           main_contact_email?: string | null;
           main_contact_phone?: string | null;
+          owner_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -264,6 +270,7 @@ export type Database = {
           company_id: string | null;
           client_id: string | null;
           project_id: string | null;
+          owner_id: string | null;
           assigned_to: string | null;
           title: string;
           description: string | null;
@@ -281,6 +288,7 @@ export type Database = {
           company_id?: string | null;
           client_id?: string | null;
           project_id?: string | null;
+          owner_id?: string | null;
           assigned_to?: string | null;
           title: string;
           description?: string | null;
@@ -351,6 +359,32 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["project_activities"]["Insert"]>;
+        Relationships: [];
+      };
+      activities: {
+        Row: {
+          id: string;
+          entity_type: string;
+          entity_id: string;
+          actor_id: string | null;
+          action: string;
+          title: string;
+          description: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          entity_type: string;
+          entity_id: string;
+          actor_id?: string | null;
+          action: string;
+          title: string;
+          description?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["activities"]["Insert"]>;
         Relationships: [];
       };
     };

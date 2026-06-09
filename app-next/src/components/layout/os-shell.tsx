@@ -7,6 +7,7 @@ import {
   Building2Icon,
   CalendarDaysIcon,
   ClipboardListIcon,
+  HistoryIcon,
   HomeIcon,
   LayoutDashboardIcon,
   LibraryIcon,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { GlobalSearch, type GlobalSearchData } from "@/components/layout/global-search";
 import { logoutAction } from "@/features/auth/actions";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +29,7 @@ const navigation = [
   { href: "/os/prospects/pipeline", label: "Pipeline", icon: ClipboardListIcon },
   { href: "/os/tasks", label: "Tarefas", icon: ListTodoIcon },
   { href: "/os/calendar", label: "Calendario", icon: CalendarDaysIcon },
+  { href: "/os/activity", label: "Activity", icon: HistoryIcon },
   { href: "/os/clients", label: "Clients", icon: Building2Icon },
   { href: "/os/companies", label: "Empresas", icon: BriefcaseBusinessIcon },
   { href: "/os/projects", label: "Projects", icon: BriefcaseBusinessIcon },
@@ -39,12 +42,14 @@ export function OsShell({
   children,
   isAuthConfigured,
   userEmail,
-  userRole
+  userRole,
+  searchData
 }: {
   children: React.ReactNode;
   isAuthConfigured: boolean;
   userEmail?: string | null;
   userRole?: string | null;
+  searchData?: GlobalSearchData;
 }) {
   const pathname = usePathname();
 
@@ -99,7 +104,7 @@ export function OsShell({
               <div className="font-medium text-foreground">{userEmail || "sem sessao"}</div>
               <div>{userRole || (isAuthConfigured ? "profile pendente" : "config pendente")}</div>
             </div>
-            <Button variant="outline" size="sm">Preview</Button>
+            {searchData ? <GlobalSearch data={searchData} /> : <Button variant="outline" size="sm">Search</Button>}
             <form action={logoutAction}>
               <Button size="sm" variant="secondary" type="submit" disabled={!isAuthConfigured}>
                 Sair

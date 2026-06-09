@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { recordActivity } from "@/features/workspace/activity";
 import { emptyToNull, formDataToProspectInput } from "./prospect-schema";
 import { diagnosticSchema, noteSchema } from "./workspace-helpers";
 
@@ -15,12 +16,17 @@ export async function createProspectAction(formData: FormData) {
   }
 
   const input = formDataToProspectInput(formData);
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
-  const { error } = await supabase.from("prospects").insert({
+  const { data: prospect, error } = await supabase.from("prospects").insert({
     name: input.name,
     status: input.status,
     temperature: input.temperature,
     source: "manual",
+    owner_id: user?.id || null,
+    responsible_user_id: user?.id || null,
     segment: emptyToNull(input.segment),
     city: emptyToNull(input.city),
     state: emptyToNull(input.state),
@@ -30,13 +36,25 @@ export async function createProspectAction(formData: FormData) {
     partner_name: emptyToNull(input.partner_name),
     partner_url: emptyToNull(input.partner_url),
     notes: emptyToNull(input.notes)
-  });
+  }).select("*").single();
 
   if (error) {
     throw new Error(error.message);
   }
 
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: prospect.id,
+    actor_id: user?.id || null,
+    action: "created",
+    title: "Prospect criado",
+    description: prospect.name,
+    metadata: { source: "manual" }
+  });
+
   revalidatePath("/os/prospects");
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
   redirect("/os/prospects");
 }
 
@@ -48,6 +66,9 @@ export async function updateProspectAction(id: string, formData: FormData) {
   }
 
   const input = formDataToProspectInput(formData);
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
   const { error } = await supabase
     .from("prospects")
@@ -73,13 +94,25 @@ export async function updateProspectAction(id: string, formData: FormData) {
 
   await supabase.from("prospect_activities").insert({
     prospect_id: id,
+    actor_id: user?.id || null,
     action_type: "updated",
+    description: "Dados principais do prospect atualizados.",
+    metadata: { source: "workspace" }
+  });
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: id,
+    actor_id: user?.id || null,
+    action: "updated",
+    title: "Prospect atualizado",
     description: "Dados principais do prospect atualizados.",
     metadata: { source: "workspace" }
   });
 
   revalidatePath("/os/prospects");
   revalidatePath(`/os/prospects/${id}`);
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
   redirect("/os/prospects");
 }
 
@@ -126,8 +159,19 @@ export async function saveDiagnosticAction(prospectId: string, diagnosticId: str
     description: diagnosticId ? "Diagnostico digital atualizado." : "Diagnostico digital criado.",
     metadata: { source: "workspace" }
   });
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: prospectId,
+    actor_id: user?.id || null,
+    action: diagnosticId ? "diagnostic_updated" : "diagnostic_created",
+    title: diagnosticId ? "Diagnostico atualizado" : "Diagnostico criado",
+    description: diagnosticId ? "Diagnostico digital atualizado." : "Diagnostico digital criado.",
+    metadata: { source: "workspace" }
+  });
 
   revalidatePath(`/os/prospects/${prospectId}`);
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
 }
 
 export async function createNoteAction(prospectId: string, formData: FormData) {
@@ -159,13 +203,26 @@ export async function createNoteAction(prospectId: string, formData: FormData) {
     description: "Nota interna criada.",
     metadata: { note_type: input.type }
   });
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: prospectId,
+    actor_id: user?.id || null,
+    action: "note_created",
+    title: "Nota criada",
+    description: "Nota interna criada.",
+    metadata: { note_type: input.type }
+  });
 
   revalidatePath(`/os/prospects/${prospectId}`);
+  revalidatePath("/os/activity");
 }
 
 export async function updateNoteAction(prospectId: string, noteId: string, formData: FormData) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) throw new Error("Supabase nao esta configurado.");
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
   const input = noteSchema.parse({
     content: formData.get("content") || "",
@@ -183,5 +240,16 @@ export async function updateNoteAction(prospectId: string, noteId: string, formD
 
   if (error) throw new Error(error.message);
 
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: prospectId,
+    actor_id: user?.id || null,
+    action: "note_updated",
+    title: "Nota atualizada",
+    description: "Nota interna atualizada.",
+    metadata: { note_id: noteId, note_type: input.type }
+  });
+
   revalidatePath(`/os/prospects/${prospectId}`);
+  revalidatePath("/os/activity");
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { CommercialTaskPriority, CommercialTaskStatus, ProjectPriority, ProjectStatus } from "@/types/database";
+import { recordActivity } from "@/features/workspace/activity";
 import { projectSchema, projectStatusUpdateSchema, taskSchema } from "./operations-helpers";
 
 function nullable(value: string | undefined) {
@@ -39,6 +40,7 @@ export async function createGeneralTaskAction(formData: FormData) {
       company_id: nullable(input.company_id),
       client_id: nullable(input.client_id),
       project_id: nullable(input.project_id),
+      owner_id: nullable(input.assigned_to) || userId,
       assigned_to: nullable(input.assigned_to) || userId,
       created_by: userId,
       title: input.title,
@@ -60,11 +62,32 @@ export async function createGeneralTaskAction(formData: FormData) {
       description: "Tarefa criada no projeto.",
       metadata: { task_id: task.id, title: task.title }
     });
+    await recordActivity(supabase, {
+      entity_type: "project",
+      entity_id: task.project_id,
+      actor_id: userId,
+      action: "task_created",
+      title: "Tarefa criada",
+      description: `Task ${task.title} criada.`,
+      metadata: { task_id: task.id, title: task.title }
+    });
     revalidatePath(`/os/projects/${task.project_id}`);
   }
 
+  await recordActivity(supabase, {
+    entity_type: "task",
+    entity_id: task.id,
+    actor_id: userId,
+    action: "task_created",
+    title: "Task criada",
+    description: task.title,
+    metadata: { project_id: task.project_id, prospect_id: task.prospect_id, client_id: task.client_id }
+  });
+
   revalidatePath("/os/tasks");
   revalidatePath("/os/calendar");
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
 }
 
 export async function completeGeneralTaskAction(taskId: string, projectId?: string | null) {
@@ -84,11 +107,32 @@ export async function completeGeneralTaskAction(taskId: string, projectId?: stri
       description: "Tarefa concluida no projeto.",
       metadata: { task_id: taskId }
     });
+    await recordActivity(supabase, {
+      entity_type: "project",
+      entity_id: projectId,
+      actor_id: userId,
+      action: "task_completed",
+      title: "Tarefa concluida",
+      description: "Uma tarefa do projeto foi concluida.",
+      metadata: { task_id: taskId }
+    });
     revalidatePath(`/os/projects/${projectId}`);
   }
 
+  await recordActivity(supabase, {
+    entity_type: "task",
+    entity_id: taskId,
+    actor_id: userId,
+    action: "task_completed",
+    title: "Task concluida",
+    description: "Tarefa marcada como concluida.",
+    metadata: { project_id: projectId || null }
+  });
+
   revalidatePath("/os/tasks");
   revalidatePath("/os/calendar");
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
 }
 
 export async function createProjectAction(formData: FormData) {
@@ -131,8 +175,19 @@ export async function createProjectAction(formData: FormData) {
     description: "Projeto criado.",
     metadata: { status: project.status, priority: project.priority }
   });
+  await recordActivity(supabase, {
+    entity_type: "project",
+    entity_id: project.id,
+    actor_id: userId,
+    action: "project_created",
+    title: "Projeto criado",
+    description: project.name,
+    metadata: { status: project.status, priority: project.priority, client_id: project.client_id }
+  });
 
   revalidatePath("/os/projects");
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
   if (project.client_id) revalidatePath(`/os/clients/${project.client_id}`);
 }
 
@@ -157,7 +212,18 @@ export async function updateProjectStatusAction(projectId: string, formData: For
     description: input.status === "completed" ? "Projeto concluido." : "Status do projeto atualizado.",
     metadata: { status: input.status }
   });
+  await recordActivity(supabase, {
+    entity_type: "project",
+    entity_id: projectId,
+    actor_id: userId,
+    action: input.status === "completed" ? "project_completed" : "project_status_changed",
+    title: input.status === "completed" ? "Projeto concluido" : "Status de projeto atualizado",
+    description: `Projeto mudou para ${input.status}.`,
+    metadata: { status: input.status }
+  });
 
   revalidatePath("/os/projects");
   revalidatePath(`/os/projects/${projectId}`);
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
 }

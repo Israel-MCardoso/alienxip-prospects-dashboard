@@ -36,10 +36,15 @@ export async function getCompany(id: string) {
   return { data, error: error?.message || null, isConfigured: true };
 }
 
-export async function getClients() {
+export async function getClients(filters?: { mine?: string }) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { data: [] as ClientRow[], error: "Supabase nao configurado.", isConfigured: false };
-  const { data, error } = await supabase.from("clients").select("*").order("updated_at", { ascending: false });
+  let query = supabase.from("clients").select("*");
+  if (filters?.mine === "1") {
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user?.id) query = query.eq("owner_id", userData.user.id);
+  }
+  const { data, error } = await query.order("updated_at", { ascending: false });
   return { data: data || [], error: error?.message || null, isConfigured: true };
 }
 

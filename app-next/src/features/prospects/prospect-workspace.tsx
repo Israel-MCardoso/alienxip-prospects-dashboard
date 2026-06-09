@@ -189,6 +189,7 @@ function OverviewTab({ prospect }: { prospect: ProspectRow }) {
     ["Localizacao", [prospect.city, prospect.state].filter(Boolean).join(" / ") || "-"],
     ["Oferta sugerida", prospect.suggested_offer || "-"],
     ["Prioridade", String(prospect.priority_score)],
+    ["Cliente convertido", prospect.converted_client_id || "-"],
     ["Observacoes", prospect.notes || "-"]
   ];
 
@@ -202,7 +203,11 @@ function OverviewTab({ prospect }: { prospect: ProspectRow }) {
         {rows.map(([label, value]) => (
           <div key={label} className="rounded-lg border bg-background p-3">
             <div className="text-xs text-muted-foreground">{label}</div>
-            <div className="text-sm font-medium">{value}</div>
+            <div className="text-sm font-medium">
+              {label === "Cliente convertido" && prospect.converted_client_id ? (
+                <Link className="text-primary hover:underline" href={`/os/clients/${prospect.converted_client_id}`}>{prospect.converted_client_id}</Link>
+              ) : value}
+            </div>
           </div>
         ))}
       </CardContent>

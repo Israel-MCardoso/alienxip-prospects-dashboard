@@ -73,10 +73,15 @@ export async function getTasks(filters: TaskFilters = {}) {
   if (!supabase) return { data: [] as TaskRow[], error: "Supabase nao configurado.", isConfigured: false };
 
   let query = supabase.from("commercial_tasks").select("*");
+  if (filters.assigned_to === "me") {
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user?.id) query = query.or(`assigned_to.eq.${userData.user.id},owner_id.eq.${userData.user.id}`);
+  } else if (filters.assigned_to) {
+    query = query.eq("assigned_to", filters.assigned_to);
+  }
   if (filters.q) query = query.ilike("title", `%${filters.q}%`);
   if (filters.status) query = query.eq("status", filters.status as TaskRow["status"]);
   if (filters.priority) query = query.eq("priority", filters.priority as TaskRow["priority"]);
-  if (filters.assigned_to) query = query.eq("assigned_to", filters.assigned_to);
   if (filters.project_id) query = query.eq("project_id", filters.project_id);
   if (filters.client_id) query = query.eq("client_id", filters.client_id);
   if (filters.due === "overdue") query = query.lt("due_date", todayISO()).neq("status", "completed");
@@ -117,7 +122,12 @@ export async function getProjects(filters: ProjectFilters = {}) {
   if (filters.q) query = query.ilike("name", `%${filters.q}%`);
   if (filters.status) query = query.eq("status", filters.status as ProjectRow["status"]);
   if (filters.priority) query = query.eq("priority", filters.priority as ProjectRow["priority"]);
-  if (filters.owner_id) query = query.eq("owner_id", filters.owner_id);
+  if (filters.owner_id === "me") {
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user?.id) query = query.eq("owner_id", userData.user.id);
+  } else if (filters.owner_id) {
+    query = query.eq("owner_id", filters.owner_id);
+  }
   if (filters.client_id) query = query.eq("client_id", filters.client_id);
 
   const { data, error } = await query.order("updated_at", { ascending: false });

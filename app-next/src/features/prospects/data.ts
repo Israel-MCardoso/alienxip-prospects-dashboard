@@ -12,6 +12,7 @@ export async function getProspects(filters?: {
   q?: string;
   status?: string;
   temperature?: string;
+  mine?: string;
 }) {
   const supabase = await createSupabaseServerClient();
 
@@ -38,6 +39,13 @@ export async function getProspects(filters?: {
 
   if (filters?.temperature && prospectTemperatures.includes(filters.temperature as ProspectTemperature)) {
     query = query.eq("temperature", filters.temperature as ProspectTemperature);
+  }
+
+  if (filters?.mine === "1") {
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user?.id) {
+      query = query.or(`owner_id.eq.${userData.user.id},responsible_user_id.eq.${userData.user.id}`);
+    }
   }
 
   const { data, error } = await query;

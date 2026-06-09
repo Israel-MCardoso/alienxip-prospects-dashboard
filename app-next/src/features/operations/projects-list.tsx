@@ -86,6 +86,7 @@ export function ProjectsList({
             </select>
             <select name="owner_id" className="h-8 rounded-lg border bg-background px-2 text-sm">
               <option value="">Todos responsaveis</option>
+              <option value="me">Meus projetos</option>
               {profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.full_name || profile.email}</option>)}
             </select>
             <Button type="submit">Filtrar</Button>
@@ -116,8 +117,12 @@ export function ProjectsList({
                     <TableCell><Link className="font-medium text-primary hover:underline" href={`/os/projects/${project.id}`}>{project.name}</Link></TableCell>
                     <TableCell><Badge variant="outline">{statusLabel(project.status)}</Badge></TableCell>
                     <TableCell>{priorityLabel(project.priority)}</TableCell>
-                    <TableCell>{clientName(clients, project.client_id)}</TableCell>
-                    <TableCell>{companyName(companies, project.company_id)}</TableCell>
+                    <TableCell>
+                      {project.client_id ? <Link className="text-primary hover:underline" href={`/os/clients/${project.client_id}`}>{clientName(clients, project.client_id)}</Link> : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {project.company_id ? <Link className="text-primary hover:underline" href={`/os/companies/${project.company_id}`}>{companyName(companies, project.company_id)}</Link> : "-"}
+                    </TableCell>
                     <TableCell>{profileName(profiles, project.owner_id)}</TableCell>
                     <TableCell>{formatDate(project.due_date)}</TableCell>
                   </TableRow>

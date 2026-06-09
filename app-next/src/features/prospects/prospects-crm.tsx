@@ -60,7 +60,7 @@ export function ProspectsCrm({
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <form className="grid gap-3 md:grid-cols-[1fr_180px_180px_auto]">
+          <form className="grid gap-3 md:grid-cols-[1fr_180px_180px_160px_auto]">
             <Input name="q" placeholder="Buscar por nome" />
             <select name="status" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
               <option value="">Todos status</option>
@@ -69,6 +69,10 @@ export function ProspectsCrm({
             <select name="temperature" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
               <option value="">Todas temperaturas</option>
               {prospectTemperatures.map((temperature) => <option key={temperature} value={temperature}>{temperature}</option>)}
+            </select>
+            <select name="mine" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
+              <option value="">Todos</option>
+              <option value="1">Meus prospects</option>
             </select>
             <Button type="submit" variant="outline">Filtrar</Button>
           </form>

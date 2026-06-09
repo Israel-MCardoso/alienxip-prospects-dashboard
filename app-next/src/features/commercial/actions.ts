@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { recordActivity } from "@/features/workspace/activity";
 import type { ClientStatus, CommercialTaskPriority, CommercialTaskStatus, ContractStatus, ProspectStatus } from "@/types/database";
 import { buildCompanyClientFromProspect, conversionSchema, taskSchema } from "./commercial-helpers";
 
@@ -25,6 +26,7 @@ export async function createTaskAction(prospectId: string, formData: FormData) {
 
   const { error } = await supabase.from("commercial_tasks").insert({
     prospect_id: prospectId,
+    owner_id: userData.user?.id || null,
     assigned_to: userData.user?.id || null,
     created_by: userData.user?.id || null,
     title: input.title,
@@ -43,9 +45,20 @@ export async function createTaskAction(prospectId: string, formData: FormData) {
     description: "Follow-up/tarefa criada.",
     metadata: { title: input.title, priority: input.priority }
   });
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: prospectId,
+    actor_id: userData.user?.id || null,
+    action: "task_created",
+    title: "Task criada",
+    description: input.title,
+    metadata: { priority: input.priority }
+  });
 
   revalidatePath(`/os/prospects/${prospectId}`);
   revalidatePath("/os/prospects/pipeline");
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
 }
 
 export async function completeTaskAction(prospectId: string, taskId: string) {
@@ -67,9 +80,20 @@ export async function completeTaskAction(prospectId: string, taskId: string) {
     description: "Follow-up/tarefa concluida.",
     metadata: { task_id: taskId }
   });
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: prospectId,
+    actor_id: userData.user?.id || null,
+    action: "task_completed",
+    title: "Task concluida",
+    description: "Follow-up/tarefa concluida.",
+    metadata: { task_id: taskId }
+  });
 
   revalidatePath(`/os/prospects/${prospectId}`);
   revalidatePath("/os/prospects/pipeline");
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
 }
 
 export async function convertProspectAction(prospectId: string, formData: FormData) {
@@ -100,7 +124,7 @@ export async function convertProspectAction(prospectId: string, formData: FormDa
   const payload = buildCompanyClientFromProspect(prospect, conversion);
   const { data: company, error: companyError } = await supabase
     .from("companies")
-    .insert(payload.company)
+    .insert({ ...payload.company, owner_id: userData.user?.id || null })
     .select("*")
     .single();
 
@@ -116,7 +140,8 @@ export async function convertProspectAction(prospectId: string, formData: FormDa
       start_date: payload.client.start_date,
       main_contact_name: payload.client.main_contact_name,
       main_contact_email: payload.client.main_contact_email,
-      main_contact_phone: payload.client.main_contact_phone
+      main_contact_phone: payload.client.main_contact_phone,
+      owner_id: userData.user?.id || null
     })
     .select("*")
     .single();
@@ -127,6 +152,7 @@ export async function convertProspectAction(prospectId: string, formData: FormDa
     .from("prospects")
     .update({
       status: "fechado" as ProspectStatus,
+      owner_id: userData.user?.id || null,
       converted_company_id: company.id,
       converted_client_id: client.id,
       converted_at: new Date().toISOString()
@@ -140,8 +166,19 @@ export async function convertProspectAction(prospectId: string, formData: FormDa
     description: "Prospect convertido em empresa/cliente.",
     metadata: { company_id: company.id, client_id: client.id }
   });
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: prospectId,
+    actor_id: userData.user?.id || null,
+    action: "converted_to_client",
+    title: "Prospect convertido em cliente",
+    description: "Prospect convertido em empresa/cliente.",
+    metadata: { company_id: company.id, client_id: client.id }
+  });
 
   revalidatePath(`/os/prospects/${prospectId}`);
   revalidatePath("/os/clients");
   revalidatePath("/os/companies");
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
 }

@@ -47,6 +47,8 @@ function TaskTable({ tasks, profiles, projects }: { tasks: TaskRow[]; profiles: 
             <TableCell>{profileName(profiles, task.assigned_to)}</TableCell>
             <TableCell>
               {task.project_id ? <Link className="text-primary hover:underline" href={`/os/projects/${task.project_id}`}>{projectName(projects, task.project_id)}</Link> : "-"}
+              {task.prospect_id ? <div><Link className="text-xs text-primary hover:underline" href={`/os/prospects/${task.prospect_id}`}>Prospect vinculado</Link></div> : null}
+              {task.client_id ? <div><Link className="text-xs text-primary hover:underline" href={`/os/clients/${task.client_id}`}>Cliente vinculado</Link></div> : null}
             </TableCell>
             <TableCell>{formatDate(task.due_date)}</TableCell>
             <TableCell>
@@ -132,6 +134,7 @@ export function TasksCenter({
             </select>
             <select name="assigned_to" className="h-8 rounded-lg border bg-background px-2 text-sm">
               <option value="">Todos responsaveis</option>
+              <option value="me">Minhas tarefas</option>
               {profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.full_name || profile.email}</option>)}
             </select>
             <select name="due" className="h-8 rounded-lg border bg-background px-2 text-sm">

@@ -1,11 +1,7 @@
-import { ModulePage } from "@/features/os/module-page";
+import { DashboardCenter } from "@/features/workspace/dashboard-center";
+import { getDashboardOverview } from "@/features/workspace/data";
 
-export default function DashboardPage() {
-  return (
-    <ModulePage
-      title="Dashboard"
-      description="Visao consolidada futura de pipeline, clientes, projetos, tarefas e riscos operacionais."
-      items={["Metricas gerais da operacao", "Resumo do pipeline comercial", "Projetos ativos e bloqueios", "Atividades recentes"]}
-    />
-  );
+export default async function DashboardPage() {
+  const { metrics, activities, myPending, error } = await getDashboardOverview();
+  return <DashboardCenter metrics={metrics} activities={activities} myPending={myPending} error={error} />;
 }
