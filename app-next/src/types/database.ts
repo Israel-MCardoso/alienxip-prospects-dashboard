@@ -12,12 +12,13 @@ export type ProspectStatus =
 
 export type ProspectTemperature = "cold" | "warm" | "hot";
 export type ProspectSource = "manual" | "google_sheet" | "referral" | "instagram" | "website" | "other";
-export type ProspectNoteType = "general" | "call" | "diagnostic" | "follow_up" | "internal";
+export type ProspectNoteType = "observacao" | "follow_up" | "reuniao" | "decisao" | "risco";
 export type ProspectActivityType =
   | "created"
   | "updated"
   | "imported"
   | "diagnostic_created"
+  | "diagnostic_updated"
   | "note_created"
   | "status_changed";
 
@@ -116,6 +117,60 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["prospect_activities"]["Insert"]>;
+        Relationships: [];
+      };
+      prospect_diagnostics: {
+        Row: {
+          id: string;
+          prospect_id: string;
+          facebook_notes: string | null;
+          instagram_notes: string | null;
+          whatsapp_notes: string | null;
+          website_notes: string | null;
+          google_business_notes: string | null;
+          diagnosis_summary: string | null;
+          opportunities: Json;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          prospect_id: string;
+          facebook_notes?: string | null;
+          instagram_notes?: string | null;
+          whatsapp_notes?: string | null;
+          website_notes?: string | null;
+          google_business_notes?: string | null;
+          diagnosis_summary?: string | null;
+          opportunities?: Json;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["prospect_diagnostics"]["Insert"]>;
+        Relationships: [];
+      };
+      prospect_notes: {
+        Row: {
+          id: string;
+          prospect_id: string;
+          author_id: string | null;
+          content: string;
+          type: ProspectNoteType;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          prospect_id: string;
+          author_id?: string | null;
+          content: string;
+          type?: ProspectNoteType;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["prospect_notes"]["Insert"]>;
         Relationships: [];
       };
     };

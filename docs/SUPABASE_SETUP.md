@@ -124,6 +124,33 @@ npm run lint
 npm run build
 ```
 
+## Teste Manual de RLS
+
+Leitura autenticada:
+
+1. Entre em `/os/login` com um usuario criado no Supabase Auth.
+2. Abra `/os/prospects`.
+3. A lista deve carregar registros da tabela `prospects`.
+
+Bloqueio anonimo:
+
+1. Abra uma janela anonima sem login.
+2. Acesse `/os/prospects`.
+3. O app deve redirecionar para `/os/login` quando Supabase estiver configurado.
+4. Chamadas anonimas diretas pelo Supabase REST devem falhar por ausencia de policy para `anon`.
+
+Criacao autenticada:
+
+1. Logado, abra `/os/prospects`.
+2. Preencha o formulario de novo prospect.
+3. Confirme que o registro aparece na tabela.
+
+Limitacoes atuais:
+
+- As policies permitem edicao ampla para usuarios autenticados durante a fase dev.
+- Delete ja fica restrito a `admin`/`owner`.
+- Edicao de nota propria ainda depende de refinamento futuro de policy por `author_id`.
+
 ## Troubleshooting
 
 ### Login mostra configuracao pendente

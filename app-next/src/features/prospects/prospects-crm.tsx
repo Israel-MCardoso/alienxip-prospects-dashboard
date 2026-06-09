@@ -17,8 +17,10 @@ import {
   TableRow
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ProspectForm } from "./prospect-form";
 import type { ProspectRow } from "./data";
+import { prospectStatuses, prospectTemperatures } from "./prospect-schema";
 
 export function ProspectsCrm({
   prospects,
@@ -57,7 +59,20 @@ export function ProspectsCrm({
             Dados lidos da tabela `prospects` quando Supabase esta configurado.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-4">
+          <form className="grid gap-3 md:grid-cols-[1fr_180px_180px_auto]">
+            <Input name="q" placeholder="Buscar por nome" />
+            <select name="status" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
+              <option value="">Todos status</option>
+              {prospectStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
+            </select>
+            <select name="temperature" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
+              <option value="">Todas temperaturas</option>
+              {prospectTemperatures.map((temperature) => <option key={temperature} value={temperature}>{temperature}</option>)}
+            </select>
+            <Button type="submit" variant="outline">Filtrar</Button>
+          </form>
+
           {prospects.length === 0 ? (
             <div className="rounded-lg border bg-muted/40 p-6 text-sm text-muted-foreground">
               Nenhum prospect encontrado. Configure Supabase e crie ou importe registros para iniciar o CRM.
@@ -77,7 +92,11 @@ export function ProspectsCrm({
               <TableBody>
                 {prospects.map((prospect) => (
                   <TableRow key={prospect.id}>
-                    <TableCell className="font-medium">{prospect.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link href={`/os/prospects/${prospect.id}`} className="hover:underline">
+                        {prospect.name}
+                      </Link>
+                    </TableCell>
                     <TableCell>{prospect.status}</TableCell>
                     <TableCell>
                       <Badge variant={prospect.temperature === "hot" ? "destructive" : "outline"}>
@@ -87,6 +106,9 @@ export function ProspectsCrm({
                     <TableCell>{[prospect.city, prospect.state].filter(Boolean).join(" / ") || "-"}</TableCell>
                     <TableCell>{prospect.source}</TableCell>
                     <TableCell>
+                      <Button variant="outline" size="sm" render={<Link href={`/os/prospects/${prospect.id}`} />}>
+                        Abrir
+                      </Button>
                       <Button variant="outline" size="sm" render={<Link href={`/os/prospects/${prospect.id}/edit`} />}>
                         Editar
                       </Button>

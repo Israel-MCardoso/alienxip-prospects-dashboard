@@ -4,8 +4,8 @@ create type public.app_role as enum ('owner', 'admin', 'manager', 'member', 'vie
 create type public.prospect_status as enum ('new', 'qualified', 'contacted', 'meeting_scheduled', 'proposal_sent', 'won', 'lost', 'archived');
 create type public.prospect_temperature as enum ('cold', 'warm', 'hot');
 create type public.prospect_source as enum ('manual', 'google_sheet', 'referral', 'instagram', 'website', 'other');
-create type public.prospect_note_type as enum ('general', 'call', 'diagnostic', 'follow_up', 'internal');
-create type public.prospect_activity_type as enum ('created', 'updated', 'imported', 'diagnostic_created', 'note_created', 'status_changed');
+create type public.prospect_note_type as enum ('observacao', 'follow_up', 'reuniao', 'decisao', 'risco');
+create type public.prospect_activity_type as enum ('created', 'updated', 'imported', 'diagnostic_created', 'diagnostic_updated', 'note_created', 'status_changed');
 
 create or replace function public.set_updated_at()
 returns trigger

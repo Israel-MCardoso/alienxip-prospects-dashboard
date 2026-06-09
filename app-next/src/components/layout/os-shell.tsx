@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { logoutAction } from "@/features/auth/actions";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -30,10 +31,14 @@ const navigation = [
 
 export function OsShell({
   children,
-  isAuthConfigured
+  isAuthConfigured,
+  userEmail,
+  userRole
 }: {
   children: React.ReactNode;
   isAuthConfigured: boolean;
+  userEmail?: string | null;
+  userRole?: string | null;
 }) {
   const pathname = usePathname();
 
@@ -83,9 +88,17 @@ export function OsShell({
             <ClipboardListIcon className="text-muted-foreground" data-icon="inline-start" />
             <span className="text-sm font-medium">Workspace interno</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="hidden text-right text-xs text-muted-foreground sm:block">
+              <div className="font-medium text-foreground">{userEmail || "sem sessao"}</div>
+              <div>{userRole || (isAuthConfigured ? "profile pendente" : "config pendente")}</div>
+            </div>
             <Button variant="outline" size="sm">Preview</Button>
-            <Button size="sm">{isAuthConfigured ? "Auth dev" : "Config pendente"}</Button>
+            <form action={logoutAction}>
+              <Button size="sm" variant="secondary" type="submit" disabled={!isAuthConfigured}>
+                Sair
+              </Button>
+            </form>
           </div>
         </header>
 

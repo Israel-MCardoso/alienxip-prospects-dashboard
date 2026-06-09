@@ -14,7 +14,23 @@ export default async function ProtectedOsLayout({ children }: { children: React.
     if (!user) {
       redirect("/os/login");
     }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role,email")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    return (
+      <OsShell
+        isAuthConfigured
+        userEmail={profile?.email || user.email}
+        userRole={profile?.role || null}
+      >
+        {children}
+      </OsShell>
+    );
   }
 
-  return <OsShell isAuthConfigured={Boolean(supabase)}>{children}</OsShell>;
+  return <OsShell isAuthConfigured={false}>{children}</OsShell>;
 }

@@ -1,9 +1,17 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database";
+import type { Database, ProspectStatus, ProspectTemperature } from "@/types/database";
+import { prospectStatuses, prospectTemperatures } from "./prospect-schema";
 
 export type ProspectRow = Database["public"]["Tables"]["prospects"]["Row"];
+export type ProspectDiagnosticRow = Database["public"]["Tables"]["prospect_diagnostics"]["Row"];
+export type ProspectNoteRow = Database["public"]["Tables"]["prospect_notes"]["Row"];
+export type ProspectActivityRow = Database["public"]["Tables"]["prospect_activities"]["Row"];
 
-export async function getProspects() {
+export async function getProspects(filters?: {
+  q?: string;
+  status?: string;
+  temperature?: string;
+}) {
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
@@ -14,10 +22,24 @@ export async function getProspects() {
     };
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("prospects")
     .select("*")
     .order("updated_at", { ascending: false });
+
+  if (filters?.q) {
+    query = query.ilike("name", `%${filters.q}%`);
+  }
+
+  if (filters?.status && prospectStatuses.includes(filters.status as ProspectStatus)) {
+    query = query.eq("status", filters.status as ProspectStatus);
+  }
+
+  if (filters?.temperature && prospectTemperatures.includes(filters.temperature as ProspectTemperature)) {
+    query = query.eq("temperature", filters.temperature as ProspectTemperature);
+  }
+
+  const { data, error } = await query;
 
   return {
     data: data || [],
@@ -42,6 +64,45 @@ export async function getProspect(id: string) {
   return {
     data,
     error: error?.message || null,
+    isConfigured: true
+  };
+}
+
+export async function getProspectWorkspace(id: string) {
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return {
+      prospect: null,
+      diagnostic: null,
+      notes: [] as ProspectNoteRow[],
+      activities: [] as ProspectActivityRow[],
+      profile: null,
+      error: "Supabase nao configurado.",
+      isConfigured: false
+    };
+  }
+
+  const [prospectResult, diagnosticResult, notesResult, activitiesResult, userResult] = await Promise.all([
+    supabase.from("prospects").select("*").eq("id", id).single(),
+    supabase.from("prospect_diagnostics").select("*").eq("prospect_id", id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("prospect_notes").select("*").eq("prospect_id", id).order("created_at", { ascending: false }),
+    supabase.from("prospect_activities").select("*").eq("prospect_id", id).order("created_at", { ascending: false }),
+    supabase.auth.getUser()
+  ]);
+
+  const userId = userResult.data.user?.id;
+  const profileResult = userId
+    ? await supabase.from("profiles").select("*").eq("id", userId).maybeSingle()
+    : { data: null };
+
+  return {
+    prospect: prospectResult.data,
+    diagnostic: diagnosticResult.data,
+    notes: notesResult.data || [],
+    activities: activitiesResult.data || [],
+    profile: profileResult.data,
+    error: prospectResult.error?.message || diagnosticResult.error?.message || notesResult.error?.message || activitiesResult.error?.message || null,
     isConfigured: true
   };
 }
