@@ -9,7 +9,7 @@ export default async function ProspectWorkspacePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { prospect, diagnostic, notes, activities, tasks, isConfigured, error } = await getProspectWorkspace(id);
+  const { prospect, diagnostic, notes, activities, tasks, files, isConfigured, error } = await getProspectWorkspace(id);
 
   if (!isConfigured || error || !prospect) {
     notFound();
@@ -22,6 +22,7 @@ export default async function ProspectWorkspacePage({
       notes={notes}
       activities={activities}
       tasks={tasks}
+      files={files}
     />
   );
 }

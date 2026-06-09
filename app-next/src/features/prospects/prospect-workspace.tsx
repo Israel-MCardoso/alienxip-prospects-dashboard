@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
   CommercialTaskRow,
+  FileRow,
   ProspectActivityRow,
   ProspectDiagnosticRow,
   ProspectNoteRow,
@@ -22,19 +23,22 @@ import { createNoteAction, saveDiagnosticAction, updateNoteAction } from "./acti
 import { activityLabel, formatActivityDate } from "./workspace-helpers";
 import { completeTaskAction, convertProspectAction, createTaskAction } from "@/features/commercial/actions";
 import { taskPriorities, taskStatuses } from "@/features/commercial/commercial-helpers";
+import { FileList } from "@/features/tech/file-list";
 
 export function ProspectWorkspace({
   prospect,
   diagnostic,
   notes,
   activities,
-  tasks
+  tasks,
+  files
 }: {
   prospect: ProspectRow;
   diagnostic: ProspectDiagnosticRow | null;
   notes: ProspectNoteRow[];
   activities: ProspectActivityRow[];
   tasks: CommercialTaskRow[];
+  files: FileRow[];
 }) {
   return (
     <div className="flex flex-col gap-5">
@@ -88,7 +92,7 @@ export function ProspectWorkspace({
           <TimelineTab activities={activities} />
         </TabsContent>
         <TabsContent value="files">
-          <Placeholder title="Arquivos" description="Storage e anexos entram em sprint futura." />
+          <FileList files={files} entityLabel="este prospect" />
         </TabsContent>
         <TabsContent value="conversations">
           <Placeholder title="Conversas" description="Chat real e integracoes externas ainda nao foram implementados." />

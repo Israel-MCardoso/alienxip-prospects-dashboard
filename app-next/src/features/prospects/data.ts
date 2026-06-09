@@ -7,6 +7,7 @@ export type ProspectDiagnosticRow = Database["public"]["Tables"]["prospect_diagn
 export type ProspectNoteRow = Database["public"]["Tables"]["prospect_notes"]["Row"];
 export type ProspectActivityRow = Database["public"]["Tables"]["prospect_activities"]["Row"];
 export type CommercialTaskRow = Database["public"]["Tables"]["commercial_tasks"]["Row"];
+export type FileRow = Database["public"]["Tables"]["files"]["Row"];
 
 export async function getProspects(filters?: {
   q?: string;
@@ -87,18 +88,20 @@ export async function getProspectWorkspace(id: string) {
       notes: [] as ProspectNoteRow[],
       activities: [] as ProspectActivityRow[],
       tasks: [] as CommercialTaskRow[],
+      files: [] as FileRow[],
       profile: null,
       error: "Supabase nao configurado.",
       isConfigured: false
     };
   }
 
-  const [prospectResult, diagnosticResult, notesResult, activitiesResult, tasksResult, userResult] = await Promise.all([
+  const [prospectResult, diagnosticResult, notesResult, activitiesResult, tasksResult, filesResult, userResult] = await Promise.all([
     supabase.from("prospects").select("*").eq("id", id).single(),
     supabase.from("prospect_diagnostics").select("*").eq("prospect_id", id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("prospect_notes").select("*").eq("prospect_id", id).order("created_at", { ascending: false }),
     supabase.from("prospect_activities").select("*").eq("prospect_id", id).order("created_at", { ascending: false }),
     supabase.from("commercial_tasks").select("*").eq("prospect_id", id).order("due_date", { ascending: true }),
+    supabase.from("files").select("*").eq("entity_type", "prospect").eq("entity_id", id).order("created_at", { ascending: false }),
     supabase.auth.getUser()
   ]);
 
@@ -113,8 +116,9 @@ export async function getProspectWorkspace(id: string) {
     notes: notesResult.data || [],
     activities: activitiesResult.data || [],
     tasks: tasksResult.data || [],
+    files: filesResult.data || [],
     profile: profileResult.data,
-    error: prospectResult.error?.message || diagnosticResult.error?.message || notesResult.error?.message || activitiesResult.error?.message || tasksResult.error?.message || null,
+    error: prospectResult.error?.message || diagnosticResult.error?.message || notesResult.error?.message || activitiesResult.error?.message || tasksResult.error?.message || filesResult.error?.message || null,
     isConfigured: true
   };
 }

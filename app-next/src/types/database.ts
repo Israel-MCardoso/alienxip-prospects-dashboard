@@ -37,6 +37,15 @@ export type ClientStatus = "active" | "paused" | "former";
 export type ContractStatus = "draft" | "active" | "paused" | "cancelled";
 export type ProjectStatus = "planning" | "active" | "paused" | "completed" | "canceled";
 export type ProjectPriority = "low" | "medium" | "high" | "urgent";
+export type TechBugStatus = "open" | "triage" | "in_progress" | "fixed" | "wont_fix" | "closed";
+export type TechIncidentStatus = "investigating" | "identified" | "monitoring" | "resolved";
+export type TechSeverity = "low" | "medium" | "high" | "critical";
+export type TechPriority = "low" | "medium" | "high" | "urgent";
+export type TechBacklogType = "refactor" | "infrastructure" | "feature" | "debt" | "security" | "performance";
+export type TechBacklogStatus = "open" | "planned" | "in_progress" | "done" | "archived";
+export type TechRoadmapStatus = "planned" | "in_progress" | "shipped" | "paused" | "canceled";
+export type TechnicalDecisionStatus = "proposed" | "accepted" | "deprecated" | "superseded";
+export type ProjectNoteType = "general" | "technical" | "meeting" | "risk" | "decision";
 
 export type Database = {
   public: {
@@ -387,6 +396,216 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["activities"]["Insert"]>;
         Relationships: [];
       };
+      tech_bugs: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          status: TechBugStatus;
+          severity: TechSeverity;
+          priority: TechPriority;
+          project_id: string | null;
+          client_id: string | null;
+          company_id: string | null;
+          assigned_to: string | null;
+          reported_by: string | null;
+          resolved_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          status?: TechBugStatus;
+          severity?: TechSeverity;
+          priority?: TechPriority;
+          project_id?: string | null;
+          client_id?: string | null;
+          company_id?: string | null;
+          assigned_to?: string | null;
+          reported_by?: string | null;
+          resolved_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["tech_bugs"]["Insert"]>;
+        Relationships: [];
+      };
+      tech_incidents: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          status: TechIncidentStatus;
+          severity: TechSeverity;
+          started_at: string | null;
+          resolved_at: string | null;
+          project_id: string | null;
+          client_id: string | null;
+          owner_id: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          status?: TechIncidentStatus;
+          severity?: TechSeverity;
+          started_at?: string | null;
+          resolved_at?: string | null;
+          project_id?: string | null;
+          client_id?: string | null;
+          owner_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["tech_incidents"]["Insert"]>;
+        Relationships: [];
+      };
+      tech_backlog_items: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          status: TechBacklogStatus;
+          priority: TechPriority;
+          type: TechBacklogType;
+          project_id: string | null;
+          owner_id: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          status?: TechBacklogStatus;
+          priority?: TechPriority;
+          type?: TechBacklogType;
+          project_id?: string | null;
+          owner_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["tech_backlog_items"]["Insert"]>;
+        Relationships: [];
+      };
+      tech_roadmap_items: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          status: TechRoadmapStatus;
+          priority: TechPriority;
+          target_date: string | null;
+          project_id: string | null;
+          owner_id: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          status?: TechRoadmapStatus;
+          priority?: TechPriority;
+          target_date?: string | null;
+          project_id?: string | null;
+          owner_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["tech_roadmap_items"]["Insert"]>;
+        Relationships: [];
+      };
+      technical_decisions: {
+        Row: {
+          id: string;
+          title: string;
+          context: string;
+          decision: string;
+          consequences: string | null;
+          status: TechnicalDecisionStatus;
+          project_id: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          context: string;
+          decision: string;
+          consequences?: string | null;
+          status?: TechnicalDecisionStatus;
+          project_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["technical_decisions"]["Insert"]>;
+        Relationships: [];
+      };
+      project_notes: {
+        Row: {
+          id: string;
+          project_id: string;
+          author_id: string | null;
+          title: string;
+          content: string;
+          type: ProjectNoteType;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          author_id?: string | null;
+          title: string;
+          content: string;
+          type?: ProjectNoteType;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["project_notes"]["Insert"]>;
+        Relationships: [];
+      };
+      files: {
+        Row: {
+          id: string;
+          bucket: string;
+          path: string;
+          file_name: string;
+          file_type: string | null;
+          file_size: number | null;
+          entity_type: string;
+          entity_id: string;
+          uploaded_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          bucket?: string;
+          path: string;
+          file_name: string;
+          file_type?: string | null;
+          file_size?: number | null;
+          entity_type: string;
+          entity_id: string;
+          uploaded_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["files"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -403,6 +622,15 @@ export type Database = {
       contract_status: ContractStatus;
       project_status: ProjectStatus;
       project_priority: ProjectPriority;
+      tech_bug_status: TechBugStatus;
+      tech_incident_status: TechIncidentStatus;
+      tech_severity: TechSeverity;
+      tech_priority: TechPriority;
+      tech_backlog_type: TechBacklogType;
+      tech_backlog_status: TechBacklogStatus;
+      tech_roadmap_status: TechRoadmapStatus;
+      technical_decision_status: TechnicalDecisionStatus;
+      project_note_type: ProjectNoteType;
     };
     CompositeTypes: Record<string, never>;
   };

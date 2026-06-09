@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { buildGlobalSearchResults } from "@/features/workspace/workspace-helpers";
 import type { ClientRow, CompanyRow, ProjectRow, ProspectRow, TaskRow } from "@/features/workspace/data";
+import { buildTechSearchResults } from "@/features/tech/tech-helpers";
+import type { ProjectNoteRow, TechBacklogRow, TechBugRow, TechIncidentRow, TechRoadmapRow, TechnicalDecisionRow } from "@/features/tech/data";
 
 export type GlobalSearchData = {
   prospects: ProspectRow[];
@@ -15,12 +17,28 @@ export type GlobalSearchData = {
   clients: ClientRow[];
   projects: ProjectRow[];
   tasks: TaskRow[];
+  bugs?: TechBugRow[];
+  incidents?: TechIncidentRow[];
+  backlog?: TechBacklogRow[];
+  roadmap?: TechRoadmapRow[];
+  decisions?: TechnicalDecisionRow[];
+  projectNotes?: ProjectNoteRow[];
 };
 
 export function GlobalSearch({ data }: { data: GlobalSearchData }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const results = useMemo(() => buildGlobalSearchResults(query, data), [query, data]);
+  const results = useMemo(() => [
+    ...buildGlobalSearchResults(query, data),
+    ...buildTechSearchResults(query, {
+      bugs: data.bugs || [],
+      incidents: data.incidents || [],
+      backlog: data.backlog || [],
+      roadmap: data.roadmap || [],
+      decisions: data.decisions || [],
+      projectNotes: data.projectNotes || []
+    })
+  ].slice(0, 16), [query, data]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {

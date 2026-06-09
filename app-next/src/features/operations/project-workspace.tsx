@@ -8,15 +8,22 @@ import { completeGeneralTaskAction, updateProjectStatusAction } from "./actions"
 import { calculateProjectProgress } from "./operations-helpers";
 import type { ProjectActivityRow, ProjectRow, TaskRow } from "./data";
 import { formatDate, priorityLabel, statusLabel } from "./format";
+import { FileList } from "@/features/tech/file-list";
+import { ProjectNotes } from "@/features/tech/project-notes";
+import type { FileRow, ProjectNoteRow } from "@/features/tech/data";
 
 export function ProjectWorkspace({
   project,
   tasks,
-  activities
+  activities,
+  notes,
+  files
 }: {
   project: ProjectRow;
   tasks: TaskRow[];
   activities: ProjectActivityRow[];
+  notes: ProjectNoteRow[];
+  files: FileRow[];
 }) {
   const progress = calculateProjectProgress(tasks);
   const openTasks = tasks.filter((task) => task.status !== "completed" && task.status !== "canceled").length;
@@ -131,8 +138,8 @@ export function ProjectWorkspace({
           </Card>
         </TabsContent>
 
-        <TabsContent value="files"><Card><CardHeader><CardTitle>Arquivos</CardTitle><CardDescription>Placeholder para Supabase Storage na Sprint futura.</CardDescription></CardHeader><CardContent><Button variant="outline" disabled>Adicionar arquivo</Button></CardContent></Card></TabsContent>
-        <TabsContent value="notes"><Card><CardHeader><CardTitle>Notas</CardTitle><CardDescription>Placeholder funcional para notas de projeto.</CardDescription></CardHeader><CardContent className="flex flex-col gap-2"><textarea className="min-h-24 rounded-lg border bg-background p-3 text-sm" placeholder="Notas de projeto serao persistidas em sprint futura." disabled /><Button variant="outline" disabled>Salvar nota</Button></CardContent></Card></TabsContent>
+        <TabsContent value="files"><FileList files={files} entityLabel="este projeto" /></TabsContent>
+        <TabsContent value="notes"><ProjectNotes projectId={project.id} notes={notes} /></TabsContent>
         <TabsContent value="settings"><Card><CardHeader><CardTitle>Settings</CardTitle><CardDescription>Placeholder para configuracoes do projeto.</CardDescription></CardHeader><CardContent className="text-sm text-muted-foreground">Ownership, permissoes e automacoes serao refinados nas proximas sprints.</CardContent></Card></TabsContent>
       </Tabs>
     </div>

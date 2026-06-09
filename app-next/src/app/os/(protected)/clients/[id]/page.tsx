@@ -6,13 +6,16 @@ import { getClient } from "@/features/commercial/data";
 import { getClientProjects, getTaskReferenceData } from "@/features/operations/data";
 import { formatDate, statusLabel } from "@/features/operations/format";
 import { ProjectForm } from "@/features/operations/project-form";
+import { FileList } from "@/features/tech/file-list";
+import { getEntityFiles } from "@/features/tech/data";
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [{ data }, projectsResult, refs] = await Promise.all([
+  const [{ data }, projectsResult, refs, files] = await Promise.all([
     getClient(id),
     getClientProjects(id),
-    getTaskReferenceData()
+    getTaskReferenceData(),
+    getEntityFiles("client", id)
   ]);
   if (!data) notFound();
 
@@ -57,6 +60,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           />
         </CardContent>
       </Card>
+      <FileList files={files.data} entityLabel="este cliente" />
     </div>
   );
 }

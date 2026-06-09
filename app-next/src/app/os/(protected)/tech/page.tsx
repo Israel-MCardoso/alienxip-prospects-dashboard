@@ -1,11 +1,7 @@
-import { ModulePage } from "@/features/os/module-page";
+import { getTechOverview } from "@/features/tech/data";
+import { TechCenter } from "@/features/tech/tech-center";
 
-export default function TechPage() {
-  return (
-    <ModulePage
-      title="Tech"
-      description="Area futura para bugs, debitos tecnicos, decisoes arquiteturais e saude da plataforma."
-      items={["Bugs", "Decisoes tecnicas", "Pendencias de infraestrutura", "Checklist de release"]}
-    />
-  );
+export default async function TechPage() {
+  const { bugs, incidents, backlog, roadmap, decisions, error } = await getTechOverview();
+  return <TechCenter bugs={bugs} incidents={incidents} backlog={backlog} roadmap={roadmap} decisions={decisions} error={error} />;
 }

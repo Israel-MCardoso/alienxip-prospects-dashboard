@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { OsShell } from "@/components/layout/os-shell";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getGlobalSearchData } from "@/features/workspace/data";
+import { getTechSearchData } from "@/features/tech/data";
 
 export default async function ProtectedOsLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServerClient();
@@ -21,14 +22,14 @@ export default async function ProtectedOsLayout({ children }: { children: React.
       .select("role,email")
       .eq("id", user.id)
       .maybeSingle();
-    const searchData = await getGlobalSearchData();
+    const [searchData, techSearchData] = await Promise.all([getGlobalSearchData(), getTechSearchData()]);
 
     return (
       <OsShell
         isAuthConfigured
         userEmail={profile?.email || user.email}
         userRole={profile?.role || null}
-        searchData={searchData}
+        searchData={{ ...searchData, ...techSearchData }}
       >
         {children}
       </OsShell>
