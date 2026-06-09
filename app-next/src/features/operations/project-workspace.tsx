@@ -11,19 +11,25 @@ import { formatDate, priorityLabel, statusLabel } from "./format";
 import { FileList } from "@/features/tech/file-list";
 import { ProjectNotes } from "@/features/tech/project-notes";
 import type { FileRow, ProjectNoteRow } from "@/features/tech/data";
+import { ProjectWikiLinks } from "@/features/knowledge/project-wiki-links";
+import type { WikiPageRow } from "@/features/knowledge/data";
 
 export function ProjectWorkspace({
   project,
   tasks,
   activities,
   notes,
-  files
+  files,
+  wikiPages,
+  allWikiPages
 }: {
   project: ProjectRow;
   tasks: TaskRow[];
   activities: ProjectActivityRow[];
   notes: ProjectNoteRow[];
   files: FileRow[];
+  wikiPages: WikiPageRow[];
+  allWikiPages: WikiPageRow[];
 }) {
   const progress = calculateProjectProgress(tasks);
   const openTasks = tasks.filter((task) => task.status !== "completed" && task.status !== "canceled").length;
@@ -62,6 +68,7 @@ export function ProjectWorkspace({
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="files">Arquivos</TabsTrigger>
           <TabsTrigger value="notes">Notas</TabsTrigger>
+          <TabsTrigger value="wiki">Wiki Links</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -138,8 +145,9 @@ export function ProjectWorkspace({
           </Card>
         </TabsContent>
 
-        <TabsContent value="files"><FileList files={files} entityLabel="este projeto" /></TabsContent>
+        <TabsContent value="files"><FileList files={files} entityLabel="este projeto" entityType="project" entityId={project.id} /></TabsContent>
         <TabsContent value="notes"><ProjectNotes projectId={project.id} notes={notes} /></TabsContent>
+        <TabsContent value="wiki"><ProjectWikiLinks projectId={project.id} pages={wikiPages} allPages={allWikiPages} /></TabsContent>
         <TabsContent value="settings"><Card><CardHeader><CardTitle>Settings</CardTitle><CardDescription>Placeholder para configuracoes do projeto.</CardDescription></CardHeader><CardContent className="text-sm text-muted-foreground">Ownership, permissoes e automacoes serao refinados nas proximas sprints.</CardContent></Card></TabsContent>
       </Tabs>
     </div>

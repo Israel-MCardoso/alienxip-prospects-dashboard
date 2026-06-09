@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database, Json } from "@/types/database";
 
-export type ActivityEntityType = "prospect" | "company" | "client" | "project" | "task" | "diagnostic" | "note";
+export type ActivityEntityType = "prospect" | "company" | "client" | "project" | "task" | "diagnostic" | "note" | "wiki" | "playbook" | "file";
 
 export async function recordActivity(
   supabase: SupabaseClient<Database>,

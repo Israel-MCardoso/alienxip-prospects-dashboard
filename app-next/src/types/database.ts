@@ -46,6 +46,8 @@ export type TechBacklogStatus = "open" | "planned" | "in_progress" | "done" | "a
 export type TechRoadmapStatus = "planned" | "in_progress" | "shipped" | "paused" | "canceled";
 export type TechnicalDecisionStatus = "proposed" | "accepted" | "deprecated" | "superseded";
 export type ProjectNoteType = "general" | "technical" | "meeting" | "risk" | "decision";
+export type KnowledgeStatus = "draft" | "published" | "archived";
+export type KnowledgeCategory = "vendas" | "prospeccao" | "desenvolvimento" | "design" | "operacao" | "suporte" | "financeiro" | "geral";
 
 export type Database = {
   public: {
@@ -606,6 +608,80 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["files"]["Insert"]>;
         Relationships: [];
       };
+      wiki_pages: {
+        Row: {
+          id: string;
+          title: string;
+          slug: string;
+          content: string;
+          category: KnowledgeCategory;
+          status: KnowledgeStatus;
+          created_by: string | null;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          slug: string;
+          content: string;
+          category?: KnowledgeCategory;
+          status?: KnowledgeStatus;
+          created_by?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["wiki_pages"]["Insert"]>;
+        Relationships: [];
+      };
+      playbooks: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          content: string;
+          category: KnowledgeCategory;
+          status: KnowledgeStatus;
+          created_by: string | null;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          content: string;
+          category?: KnowledgeCategory;
+          status?: KnowledgeStatus;
+          created_by?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["playbooks"]["Insert"]>;
+        Relationships: [];
+      };
+      project_wiki_links: {
+        Row: {
+          id: string;
+          project_id: string;
+          wiki_page_id: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          wiki_page_id: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["project_wiki_links"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -631,6 +707,8 @@ export type Database = {
       tech_roadmap_status: TechRoadmapStatus;
       technical_decision_status: TechnicalDecisionStatus;
       project_note_type: ProjectNoteType;
+      knowledge_status: KnowledgeStatus;
+      knowledge_category: KnowledgeCategory;
     };
     CompositeTypes: Record<string, never>;
   };

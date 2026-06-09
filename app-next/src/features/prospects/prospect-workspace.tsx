@@ -92,7 +92,7 @@ export function ProspectWorkspace({
           <TimelineTab activities={activities} />
         </TabsContent>
         <TabsContent value="files">
-          <FileList files={files} entityLabel="este prospect" />
+          <FileList files={files} entityLabel="este prospect" entityType="prospect" entityId={prospect.id} />
         </TabsContent>
         <TabsContent value="conversations">
           <Placeholder title="Conversas" description="Chat real e integracoes externas ainda nao foram implementados." />

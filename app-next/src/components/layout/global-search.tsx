@@ -10,6 +10,8 @@ import { buildGlobalSearchResults } from "@/features/workspace/workspace-helpers
 import type { ClientRow, CompanyRow, ProjectRow, ProspectRow, TaskRow } from "@/features/workspace/data";
 import { buildTechSearchResults } from "@/features/tech/tech-helpers";
 import type { ProjectNoteRow, TechBacklogRow, TechBugRow, TechIncidentRow, TechRoadmapRow, TechnicalDecisionRow } from "@/features/tech/data";
+import { buildKnowledgeSearchResults } from "@/features/knowledge/knowledge-helpers";
+import type { FileRow, PlaybookRow, WikiPageRow } from "@/features/knowledge/data";
 
 export type GlobalSearchData = {
   prospects: ProspectRow[];
@@ -23,6 +25,9 @@ export type GlobalSearchData = {
   roadmap?: TechRoadmapRow[];
   decisions?: TechnicalDecisionRow[];
   projectNotes?: ProjectNoteRow[];
+  wikiPages?: WikiPageRow[];
+  playbooks?: PlaybookRow[];
+  files?: FileRow[];
 };
 
 export function GlobalSearch({ data }: { data: GlobalSearchData }) {
@@ -37,6 +42,11 @@ export function GlobalSearch({ data }: { data: GlobalSearchData }) {
       roadmap: data.roadmap || [],
       decisions: data.decisions || [],
       projectNotes: data.projectNotes || []
+    }),
+    ...buildKnowledgeSearchResults(query, {
+      wikiPages: data.wikiPages || [],
+      playbooks: data.playbooks || [],
+      files: data.files || []
     })
   ].slice(0, 16), [query, data]);
 

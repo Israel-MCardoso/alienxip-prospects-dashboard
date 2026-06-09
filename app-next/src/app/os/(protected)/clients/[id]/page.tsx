@@ -8,14 +8,16 @@ import { formatDate, statusLabel } from "@/features/operations/format";
 import { ProjectForm } from "@/features/operations/project-form";
 import { FileList } from "@/features/tech/file-list";
 import { getEntityFiles } from "@/features/tech/data";
+import { getPlaybooks } from "@/features/knowledge/data";
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [{ data }, projectsResult, refs, files] = await Promise.all([
+  const [{ data }, projectsResult, refs, files, playbooks] = await Promise.all([
     getClient(id),
     getClientProjects(id),
     getTaskReferenceData(),
-    getEntityFiles("client", id)
+    getEntityFiles("client", id),
+    getPlaybooks({ status: "published" })
   ]);
   if (!data) notFound();
 
@@ -60,7 +62,19 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           />
         </CardContent>
       </Card>
-      <FileList files={files.data} entityLabel="este cliente" />
+      <Card>
+        <CardHeader><CardTitle>Playbooks relacionados</CardTitle><CardDescription>Processos úteis para atendimento e operação do cliente.</CardDescription></CardHeader>
+        <CardContent className="flex flex-col gap-2">
+          {playbooks.data.slice(0, 5).map((playbook) => (
+            <div key={playbook.id} className="rounded-lg border p-3">
+              <div className="font-medium">{playbook.title}</div>
+              <div className="text-sm text-muted-foreground">{playbook.category}</div>
+            </div>
+          ))}
+          {playbooks.data.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum playbook publicado ainda.</p> : null}
+        </CardContent>
+      </Card>
+      <FileList files={files.data} entityLabel="este cliente" entityType="client" entityId={data.id} />
     </div>
   );
 }

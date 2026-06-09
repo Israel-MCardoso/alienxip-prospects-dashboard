@@ -7,6 +7,7 @@ import {
   Building2Icon,
   CalendarDaysIcon,
   ClipboardListIcon,
+  FilesIcon,
   HistoryIcon,
   HomeIcon,
   LayoutDashboardIcon,
@@ -35,6 +36,8 @@ const navigation = [
   { href: "/os/projects", label: "Projects", icon: BriefcaseBusinessIcon },
   { href: "/os/tech", label: "Tech", icon: WrenchIcon },
   { href: "/os/wiki", label: "Wiki", icon: LibraryIcon },
+  { href: "/os/playbooks", label: "Playbooks", icon: ClipboardListIcon },
+  { href: "/os/files", label: "Files", icon: FilesIcon },
   { href: "/os/settings", label: "Settings", icon: SettingsIcon }
 ];
 

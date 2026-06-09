@@ -1,11 +1,8 @@
-import { ModulePage } from "@/features/os/module-page";
+import { getWikiPages } from "@/features/knowledge/data";
+import { WikiList } from "@/features/knowledge/wiki-pages";
 
-export default function WikiPage() {
-  return (
-    <ModulePage
-      title="Wiki"
-      description="Base futura de conhecimento, processos internos, playbooks comerciais e documentacao de projetos."
-      items={["Playbooks", "Processos", "Documentacao de clientes", "Notas de produto"]}
-    />
-  );
+export default async function WikiPage({ searchParams }: { searchParams: Promise<{ q?: string; category?: string; status?: string }> }) {
+  const filters = await searchParams;
+  const { data, error } = await getWikiPages(filters);
+  return <WikiList pages={data} error={error} />;
 }

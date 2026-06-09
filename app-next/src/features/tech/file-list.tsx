@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FileRow } from "./data";
+import { UploadForm } from "@/features/knowledge/upload-form";
 
-export function FileList({ files, entityLabel }: { files: FileRow[]; entityLabel: string }) {
+export function FileList({ files, entityLabel, entityType, entityId }: { files: FileRow[]; entityLabel: string; entityType?: string; entityId?: string }) {
   return (
     <Card>
       <CardHeader>
@@ -17,7 +17,7 @@ export function FileList({ files, entityLabel }: { files: FileRow[]; entityLabel
             <div className="text-xs text-muted-foreground">{file.bucket}/{file.path}</div>
           </div>
         ))}
-        <Button variant="outline" disabled>Registrar arquivo</Button>
+        {entityType && entityId ? <UploadForm entityType={entityType} entityId={entityId} /> : null}
       </CardContent>
     </Card>
   );
