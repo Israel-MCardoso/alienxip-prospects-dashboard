@@ -1,6 +1,13 @@
 import { z } from "zod";
 
 export const prospectStatuses = [
+  "frio",
+  "contato_inicial",
+  "diagnostico",
+  "proposta",
+  "negociacao",
+  "fechado",
+  "perdido",
   "new",
   "qualified",
   "contacted",

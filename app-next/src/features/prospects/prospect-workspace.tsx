@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
+  CommercialTaskRow,
   ProspectActivityRow,
   ProspectDiagnosticRow,
   ProspectNoteRow,
@@ -19,17 +20,21 @@ import type {
 } from "./data";
 import { createNoteAction, saveDiagnosticAction, updateNoteAction } from "./actions";
 import { activityLabel, formatActivityDate } from "./workspace-helpers";
+import { completeTaskAction, convertProspectAction, createTaskAction } from "@/features/commercial/actions";
+import { taskPriorities, taskStatuses } from "@/features/commercial/commercial-helpers";
 
 export function ProspectWorkspace({
   prospect,
   diagnostic,
   notes,
-  activities
+  activities,
+  tasks
 }: {
   prospect: ProspectRow;
   diagnostic: ProspectDiagnosticRow | null;
   notes: ProspectNoteRow[];
   activities: ProspectActivityRow[];
+  tasks: CommercialTaskRow[];
 }) {
   return (
     <div className="flex flex-col gap-5">
@@ -61,6 +66,7 @@ export function ProspectWorkspace({
           <TabsTrigger value="overview">Visao Geral</TabsTrigger>
           <TabsTrigger value="diagnostic">Diagnostico Digital</TabsTrigger>
           <TabsTrigger value="notes">Notas</TabsTrigger>
+          <TabsTrigger value="tasks">Follow-ups</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="files">Arquivos</TabsTrigger>
           <TabsTrigger value="conversations">Conversas</TabsTrigger>
@@ -75,6 +81,9 @@ export function ProspectWorkspace({
         <TabsContent value="notes">
           <NotesTab prospectId={prospect.id} notes={notes} />
         </TabsContent>
+        <TabsContent value="tasks">
+          <TasksTab prospect={prospect} tasks={tasks} />
+        </TabsContent>
         <TabsContent value="timeline">
           <TimelineTab activities={activities} />
         </TabsContent>
@@ -85,6 +94,89 @@ export function ProspectWorkspace({
           <Placeholder title="Conversas" description="Chat real e integracoes externas ainda nao foram implementados." />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function TasksTab({ prospect, tasks }: { prospect: ProspectRow; tasks: CommercialTaskRow[] }) {
+  const action = createTaskAction.bind(null, prospect.id);
+  const convertAction = convertProspectAction.bind(null, prospect.id);
+  const alreadyConverted = Boolean(prospect.converted_client_id);
+
+  return (
+    <div className="grid gap-4 xl:grid-cols-[380px_1fr]">
+      <div className="flex flex-col gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Novo follow-up</CardTitle>
+            <CardDescription>Crie a proxima acao comercial para este prospect.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={action} className="flex flex-col gap-3">
+              <Input name="title" required placeholder="Titulo da tarefa" />
+              <Input name="description" placeholder="Descricao" />
+              <select name="status" defaultValue="pending" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
+                {taskStatuses.map((status: string) => <option key={status} value={status}>{status}</option>)}
+              </select>
+              <select name="priority" defaultValue="medium" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
+                {taskPriorities.map((priority: string) => <option key={priority} value={priority}>{priority}</option>)}
+              </select>
+              <Input name="due_date" type="date" />
+              <Button type="submit">Criar tarefa</Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Conversao</CardTitle>
+            <CardDescription>
+              {alreadyConverted ? "Este prospect ja foi convertido." : prospect.status === "fechado" ? "Pronto para conversao." : "Pode converter com aviso mesmo antes de fechado."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={convertAction} className="flex flex-col gap-3">
+              <Input name="main_contact_name" placeholder="Contato principal" disabled={alreadyConverted} />
+              <Input name="main_contact_email" placeholder="Email do contato" disabled={alreadyConverted} />
+              <Input name="main_contact_phone" placeholder="Telefone do contato" disabled={alreadyConverted} />
+              <Input name="monthly_value" placeholder="Valor mensal futuro" disabled={alreadyConverted} />
+              <select name="contract_status" defaultValue="draft" disabled={alreadyConverted} className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
+                <option value="draft">draft</option>
+                <option value="active">active</option>
+                <option value="paused">paused</option>
+                <option value="cancelled">cancelled</option>
+              </select>
+              <Button type="submit" disabled={alreadyConverted}>{alreadyConverted ? "Convertido" : "Converter em Cliente"}</Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Follow-ups</CardTitle>
+          <CardDescription>{tasks.length} tarefa(s) vinculadas.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          {tasks.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma tarefa ainda.</p> : null}
+          {tasks.map((task) => (
+            <div key={task.id} className="rounded-lg border bg-background p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="font-medium">{task.title}</div>
+                <Badge variant="outline">{task.status}</Badge>
+                <Badge variant={task.priority === "urgent" || task.priority === "high" ? "destructive" : "secondary"}>{task.priority}</Badge>
+              </div>
+              {task.description ? <p className="mt-1 text-sm text-muted-foreground">{task.description}</p> : null}
+              <div className="mt-2 text-xs text-muted-foreground">Prazo: {task.due_date || "sem prazo"}</div>
+              {task.status !== "completed" ? (
+                <form action={completeTaskAction.bind(null, prospect.id, task.id)} className="mt-3">
+                  <Button type="submit" size="sm" variant="outline">Marcar como concluida</Button>
+                </form>
+              ) : null}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }
