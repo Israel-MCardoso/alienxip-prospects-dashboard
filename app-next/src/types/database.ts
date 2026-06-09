@@ -35,6 +35,8 @@ export type CommercialTaskStatus = "pending" | "in_progress" | "completed" | "ca
 export type CommercialTaskPriority = "low" | "medium" | "high" | "urgent";
 export type ClientStatus = "active" | "paused" | "former";
 export type ContractStatus = "draft" | "active" | "paused" | "cancelled";
+export type ProjectStatus = "planning" | "active" | "paused" | "completed" | "canceled";
+export type ProjectPriority = "low" | "medium" | "high" | "urgent";
 
 export type Database = {
   public: {
@@ -261,6 +263,7 @@ export type Database = {
           prospect_id: string | null;
           company_id: string | null;
           client_id: string | null;
+          project_id: string | null;
           assigned_to: string | null;
           title: string;
           description: string | null;
@@ -277,6 +280,7 @@ export type Database = {
           prospect_id?: string | null;
           company_id?: string | null;
           client_id?: string | null;
+          project_id?: string | null;
           assigned_to?: string | null;
           title: string;
           description?: string | null;
@@ -289,6 +293,64 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["commercial_tasks"]["Insert"]>;
+        Relationships: [];
+      };
+      projects: {
+        Row: {
+          id: string;
+          client_id: string | null;
+          company_id: string | null;
+          name: string;
+          description: string | null;
+          status: ProjectStatus;
+          priority: ProjectPriority;
+          start_date: string | null;
+          due_date: string | null;
+          completed_at: string | null;
+          owner_id: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id?: string | null;
+          company_id?: string | null;
+          name: string;
+          description?: string | null;
+          status?: ProjectStatus;
+          priority?: ProjectPriority;
+          start_date?: string | null;
+          due_date?: string | null;
+          completed_at?: string | null;
+          owner_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["projects"]["Insert"]>;
+        Relationships: [];
+      };
+      project_activities: {
+        Row: {
+          id: string;
+          project_id: string;
+          actor_id: string | null;
+          action_type: string;
+          description: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          actor_id?: string | null;
+          action_type: string;
+          description?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["project_activities"]["Insert"]>;
         Relationships: [];
       };
     };
@@ -305,6 +367,8 @@ export type Database = {
       commercial_task_priority: CommercialTaskPriority;
       client_status: ClientStatus;
       contract_status: ContractStatus;
+      project_status: ProjectStatus;
+      project_priority: ProjectPriority;
     };
     CompositeTypes: Record<string, never>;
   };

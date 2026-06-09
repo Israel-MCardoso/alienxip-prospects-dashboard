@@ -5,10 +5,12 @@ import { usePathname } from "next/navigation";
 import {
   BriefcaseBusinessIcon,
   Building2Icon,
+  CalendarDaysIcon,
   ClipboardListIcon,
   HomeIcon,
   LayoutDashboardIcon,
   LibraryIcon,
+  ListTodoIcon,
   SettingsIcon,
   TargetIcon,
   WrenchIcon
@@ -23,6 +25,8 @@ const navigation = [
   { href: "/os/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
   { href: "/os/prospects", label: "Prospects", icon: TargetIcon },
   { href: "/os/prospects/pipeline", label: "Pipeline", icon: ClipboardListIcon },
+  { href: "/os/tasks", label: "Tarefas", icon: ListTodoIcon },
+  { href: "/os/calendar", label: "Calendario", icon: CalendarDaysIcon },
   { href: "/os/clients", label: "Clients", icon: Building2Icon },
   { href: "/os/companies", label: "Empresas", icon: BriefcaseBusinessIcon },
   { href: "/os/projects", label: "Projects", icon: BriefcaseBusinessIcon },
