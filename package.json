@@ -8,9 +8,10 @@
     "dev:legacy": "node scripts/dev-server.mjs",
     "start": "node scripts/dev-server.mjs",
     "build": "npm run build:legacy && npm run build:next",
-    "build:legacy": "node --check api/prospects.js && node --check scripts/dev-server.mjs",
+    "build:legacy": "node --check api/prospects.js && node --check scripts/dev-server.mjs && node --check scripts/import-prospects.mjs",
     "build:next": "npm --prefix app-next run build",
     "test": "node --test",
-    "lint": "npm --prefix app-next run lint"
+    "lint": "npm --prefix app-next run lint",
+    "import:prospects": "node scripts/import-prospects.mjs"
   }
 }

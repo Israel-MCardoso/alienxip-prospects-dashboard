@@ -130,3 +130,69 @@ export function normalizeProspect(row) {
     proximo: "Validar redes sociais e preparar abordagem personalizada."
   };
 }
+
+function stablePart(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function phonePart(value) {
+  return stablePart(value);
+}
+
+export function temperatureFromPriority(priority) {
+  if (priority === "Alta") return "hot";
+  if (priority === "Media") return "warm";
+  return "cold";
+}
+
+export function buildProspectExternalId(row) {
+  const city = cityFromAddress(row.address);
+  const parts = [
+    stablePart(row.title),
+    stablePart(city),
+    phonePart(row.phoneNumber)
+  ].filter(Boolean);
+
+  if (parts.length) return parts.join("-");
+  return stablePart(JSON.stringify(row));
+}
+
+export function buildProspectImportRows(rows) {
+  const byExternalId = new Map();
+
+  for (const row of rows) {
+    const legacy = normalizeProspect(row);
+    const externalId = buildProspectExternalId(row);
+    const priority = priorityFor(row);
+
+    if (!externalId || byExternalId.has(externalId)) continue;
+
+    byExternalId.set(externalId, {
+      name: legacy.empresa || "",
+      segment: legacy.segmento || null,
+      status: "new",
+      temperature: temperatureFromPriority(priority),
+      source: "google_sheet",
+      city: legacy.cidade || null,
+      state: legacy.cidade ? "SP" : null,
+      instagram_url: legacy.social || null,
+      website_url: legacy.site || null,
+      whatsapp: legacy.whatsapp || null,
+      responsible_user_id: null,
+      partner_name: null,
+      partner_url: null,
+      priority_score: priority === "Alta" ? 100 : priority === "Media" ? 60 : 20,
+      suggested_offer: legacy.oferta,
+      notes: legacy.proximo,
+      imported_from: "google_sheet",
+      external_source_id: externalId
+    });
+  }
+
+  return [...byExternalId.values()];
+}

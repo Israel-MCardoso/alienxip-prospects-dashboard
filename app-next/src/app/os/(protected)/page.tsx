@@ -9,19 +9,19 @@ import {
 
 const foundations = [
   ["Fallback preservado", "Dashboard estatico e /api/prospects continuam como base segura."],
-  ["Next.js paralelo", "Nova ALIENXIP OS vive em /app-next e nas rotas /os."],
-  ["Supabase futuro", "Banco, auth e RLS ficam preparados para a Sprint 2."],
-  ["Prospects primeiro", "O modulo atual vira a primeira area migrada com paridade."]
+  ["Supabase dev", "Auth, migrations e prospects editaveis entram sem trocar producao."],
+  ["RLS primeiro", "Tabelas novas nascem protegidas contra acesso anonimo."],
+  ["Prospects editavel", "CRM inicial com criacao, edicao e importacao idempotente."]
 ];
 
 export default function OsHomePage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <Badge variant="secondary">Fundacao tecnica</Badge>
+        <Badge variant="secondary">Sprint 2</Badge>
         <h1 className="text-3xl font-semibold tracking-tight">ALIENXIP OS</h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Base inicial da plataforma interna da ALIENXIP, criada em paralelo ao dashboard legado para evoluir CRM, clientes, projetos, tech, roadmap e wiki sem interromper o que ja funciona.
+          Base interna com Supabase dev, autenticacao e CRM inicial de prospects, preservando o dashboard legado como fallback.
         </p>
       </div>
 
@@ -40,11 +40,11 @@ export default function OsHomePage() {
         <CardHeader>
           <CardTitle>Proxima decisao operacional</CardTitle>
           <CardDescription>
-            A Sprint 2 deve conectar Supabase em ambiente de desenvolvimento, criar migrations iniciais e importar prospects com idempotencia.
+            A Sprint 3 deve fortalecer o CRM com diagnosticos, notas, atividades e fluxo de conversao para cliente/projeto.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Nenhuma autenticacao real, storage ou banco de producao foi conectado nesta sprint.
+          Supabase em producao ainda nao foi conectado. Use ambiente dev e variaveis locais.
         </CardContent>
       </Card>
     </div>

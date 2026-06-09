@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  buildProspectImportRows,
   cityFromAddress,
   firstUrl,
   normalizeProspect,
@@ -77,4 +78,45 @@ test("normalizeProspect returns the same shape consumed by the legacy dashboard"
     oferta: "Presenca digital basica: site/landing page, Google Business otimizado, WhatsApp com rastreamento e formulario de lead.",
     proximo: "Validar redes sociais e preparar abordagem personalizada."
   });
+});
+
+test("buildProspectImportRows creates stable external ids and deduplicates rows", () => {
+  const rows = buildProspectImportRows([
+    {
+      title: "Vale Odontologia",
+      type: "Clinica odontologica",
+      address: "R. Santo Ivo, 371 - Cidade Salvador, Jacareí - SP",
+      phoneNumber: "(12) 99999-9999",
+      rating: "5",
+      ratingCount: "120",
+      website: "",
+      bookingLinks: '["https://wa.me/5512999999999"]'
+    },
+    {
+      title: "Vale Odontologia",
+      type: "Clinica odontologica",
+      address: "R. Santo Ivo, 371 - Cidade Salvador, Jacareí - SP",
+      phoneNumber: "(12) 99999-9999",
+      rating: "5",
+      ratingCount: "120",
+      website: "",
+      bookingLinks: '["https://wa.me/5512999999999"]'
+    }
+  ]);
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].external_source_id, "vale-odontologia-jacarei-12-99999-9999");
+  assert.equal(rows[0].status, "new");
+  assert.equal(rows[0].temperature, "hot");
+  assert.equal(rows[0].source, "google_sheet");
+});
+
+test("buildProspectImportRows maps current priorities to valid temperatures", () => {
+  const rows = buildProspectImportRows([
+    { title: "Baixa", ratingCount: "1", website: "https://site.com", bookingLinks: "" },
+    { title: "Media", ratingCount: "30", website: "https://instagram.com/acme", bookingLinks: "" },
+    { title: "Alta", ratingCount: "100", website: "", bookingLinks: "https://wa.me/5512" }
+  ]);
+
+  assert.deepEqual(rows.map((row) => row.temperature), ["cold", "warm", "hot"]);
 });

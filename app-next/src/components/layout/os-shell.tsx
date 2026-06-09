@@ -28,7 +28,13 @@ const navigation = [
   { href: "/os/settings", label: "Settings", icon: SettingsIcon }
 ];
 
-export function OsShell({ children }: { children: React.ReactNode }) {
+export function OsShell({
+  children,
+  isAuthConfigured
+}: {
+  children: React.ReactNode;
+  isAuthConfigured: boolean;
+}) {
   const pathname = usePathname();
 
   return (
@@ -79,7 +85,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">Preview</Button>
-            <Button size="sm">Sem auth real</Button>
+            <Button size="sm">{isAuthConfigured ? "Auth dev" : "Config pendente"}</Button>
           </div>
         </header>
 

@@ -10,6 +10,10 @@ node_modules/
 .legacy-sprint1.err
 .next-sprint1.log
 .next-sprint1.err
+.legacy-sprint2.log
+.legacy-sprint2.err
+.next-sprint2.log
+.next-sprint2.err
 
 .vercel/
 .DS_Store
