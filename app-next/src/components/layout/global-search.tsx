@@ -33,7 +33,8 @@ export type GlobalSearchData = {
 export function GlobalSearch({ data }: { data: GlobalSearchData }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const results = useMemo(() => [
+  const [rpcResults, setRpcResults] = useState<Array<{ entity_type: string; entity_id: string; title: string; subtitle: string; url: string; rank: number }>>([]);
+  const fallbackResults = useMemo(() => [
     ...buildGlobalSearchResults(query, data),
     ...buildTechSearchResults(query, {
       bugs: data.bugs || [],
@@ -49,6 +50,7 @@ export function GlobalSearch({ data }: { data: GlobalSearchData }) {
       files: data.files || []
     })
   ].slice(0, 16), [query, data]);
+  const results = query.trim() && rpcResults.length > 0 ? rpcResults.map((item) => ({ type: item.entity_type, title: item.title, href: item.url, description: item.subtitle })) : fallbackResults;
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -62,6 +64,27 @@ export function GlobalSearch({ data }: { data: GlobalSearchData }) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!query.trim()) {
+      return;
+    }
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/global-search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (payload?.isConfigured && Array.isArray(payload.data)) setRpcResults(payload.data);
+      } catch {
+        setRpcResults([]);
+      }
+    }, 220);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [query]);
 
   return (
     <>

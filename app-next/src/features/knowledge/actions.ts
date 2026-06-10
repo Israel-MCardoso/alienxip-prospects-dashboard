@@ -82,6 +82,23 @@ export async function createPlaybookAction(formData: FormData) {
   revalidatePath("/os/activity");
 }
 
+export async function updatePlaybookAction(id: string, formData: FormData) {
+  const { supabase, userId } = await getClientAndUser();
+  const input = playbookSchema.parse(Object.fromEntries(formData));
+  const { data, error } = await supabase.from("playbooks").update({
+    title: input.title,
+    description: nullable(input.description),
+    content: input.content,
+    category: input.category as KnowledgeCategory,
+    status: input.status as KnowledgeStatus,
+    updated_by: userId
+  }).eq("id", id).select("*").single();
+  if (error) throw new Error(error.message);
+  await recordActivity(supabase, { entity_type: "playbook", entity_id: data.id, actor_id: userId, action: "playbook_updated", title: "Playbook atualizado", description: data.title, metadata: { category: data.category } });
+  revalidatePath("/os/playbooks");
+  revalidatePath(`/os/playbooks/${id}`);
+}
+
 export async function uploadEntityFileAction(entityType: string, entityId: string, formData: FormData) {
   const { supabase, userId } = await getClientAndUser();
   const file = formData.get("file");

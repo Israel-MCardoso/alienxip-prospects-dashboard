@@ -48,6 +48,7 @@ export type TechnicalDecisionStatus = "proposed" | "accepted" | "deprecated" | "
 export type ProjectNoteType = "general" | "technical" | "meeting" | "risk" | "decision";
 export type KnowledgeStatus = "draft" | "published" | "archived";
 export type KnowledgeCategory = "vendas" | "prospeccao" | "desenvolvimento" | "design" | "operacao" | "suporte" | "financeiro" | "geral";
+export type KnowledgeReviewStatus = "needs_review" | "approved" | "outdated";
 
 export type Database = {
   public: {
@@ -57,7 +58,7 @@ export type Database = {
           id: string;
           full_name: string | null;
           email: string;
-          role: "owner" | "admin" | "manager" | "member" | "viewer";
+          role: "owner" | "admin" | "operator" | "manager" | "member" | "viewer";
           is_active: boolean;
           created_at: string;
           updated_at: string;
@@ -66,7 +67,7 @@ export type Database = {
           id: string;
           full_name?: string | null;
           email: string;
-          role?: "owner" | "admin" | "manager" | "member" | "viewer";
+          role?: "owner" | "admin" | "operator" | "manager" | "member" | "viewer";
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -591,6 +592,9 @@ export type Database = {
           entity_type: string;
           entity_id: string;
           uploaded_by: string | null;
+          removed_at: string | null;
+          removed_by: string | null;
+          removal_reason: string | null;
           created_at: string;
         };
         Insert: {
@@ -603,6 +607,9 @@ export type Database = {
           entity_type: string;
           entity_id: string;
           uploaded_by?: string | null;
+          removed_at?: string | null;
+          removed_by?: string | null;
+          removal_reason?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["files"]["Insert"]>;
@@ -616,6 +623,9 @@ export type Database = {
           content: string;
           category: KnowledgeCategory;
           status: KnowledgeStatus;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          review_status: KnowledgeReviewStatus;
           created_by: string | null;
           updated_by: string | null;
           created_at: string;
@@ -628,6 +638,9 @@ export type Database = {
           content: string;
           category?: KnowledgeCategory;
           status?: KnowledgeStatus;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          review_status?: KnowledgeReviewStatus;
           created_by?: string | null;
           updated_by?: string | null;
           created_at?: string;
@@ -644,6 +657,9 @@ export type Database = {
           content: string;
           category: KnowledgeCategory;
           status: KnowledgeStatus;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          review_status: KnowledgeReviewStatus;
           created_by: string | null;
           updated_by: string | null;
           created_at: string;
@@ -656,6 +672,9 @@ export type Database = {
           content: string;
           category?: KnowledgeCategory;
           status?: KnowledgeStatus;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          review_status?: KnowledgeReviewStatus;
           created_by?: string | null;
           updated_by?: string | null;
           created_at?: string;
@@ -684,9 +703,25 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      global_search: {
+        Args: {
+          search_query: string;
+          result_limit?: number;
+        };
+        Returns: Array<{
+          entity_type: string;
+          entity_id: string;
+          title: string;
+          subtitle: string;
+          url: string;
+          rank: number;
+          created_at: string | null;
+        }>;
+      };
+    };
     Enums: {
-      app_role: "owner" | "admin" | "manager" | "member" | "viewer";
+      app_role: "owner" | "admin" | "operator" | "manager" | "member" | "viewer";
       prospect_status: ProspectStatus;
       prospect_temperature: ProspectTemperature;
       prospect_source: ProspectSource;
@@ -709,6 +744,7 @@ export type Database = {
       project_note_type: ProjectNoteType;
       knowledge_status: KnowledgeStatus;
       knowledge_category: KnowledgeCategory;
+      knowledge_review_status: KnowledgeReviewStatus;
     };
     CompositeTypes: Record<string, never>;
   };

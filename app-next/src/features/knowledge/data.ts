@@ -6,13 +6,14 @@ export type PlaybookRow = Database["public"]["Tables"]["playbooks"]["Row"];
 export type FileRow = Database["public"]["Tables"]["files"]["Row"];
 export type ProjectWikiLinkRow = Database["public"]["Tables"]["project_wiki_links"]["Row"];
 
-export async function getWikiPages(filters?: { q?: string; category?: string; status?: string }) {
+export async function getWikiPages(filters?: { q?: string; category?: string; status?: string; review_status?: string }) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { data: [] as WikiPageRow[], error: "Supabase nao configurado.", isConfigured: false };
   let query = supabase.from("wiki_pages").select("*");
   if (filters?.q) query = query.or(`title.ilike.%${filters.q}%,content.ilike.%${filters.q}%`);
   if (filters?.category) query = query.eq("category", filters.category as WikiPageRow["category"]);
   if (filters?.status) query = query.eq("status", filters.status as WikiPageRow["status"]);
+  if (filters?.review_status) query = query.eq("review_status", filters.review_status as WikiPageRow["review_status"]);
   const { data, error } = await query.order("updated_at", { ascending: false });
   return { data: data || [], error: error?.message || null, isConfigured: true };
 }
@@ -24,15 +25,23 @@ export async function getWikiPageBySlug(slug: string) {
   return { data, error: error?.message || null, isConfigured: true };
 }
 
-export async function getPlaybooks(filters?: { q?: string; category?: string; status?: string }) {
+export async function getPlaybooks(filters?: { q?: string; category?: string; status?: string; review_status?: string }) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { data: [] as PlaybookRow[], error: "Supabase nao configurado.", isConfigured: false };
   let query = supabase.from("playbooks").select("*");
   if (filters?.q) query = query.or(`title.ilike.%${filters.q}%,content.ilike.%${filters.q}%`);
   if (filters?.category) query = query.eq("category", filters.category as PlaybookRow["category"]);
   if (filters?.status) query = query.eq("status", filters.status as PlaybookRow["status"]);
+  if (filters?.review_status) query = query.eq("review_status", filters.review_status as PlaybookRow["review_status"]);
   const { data, error } = await query.order("updated_at", { ascending: false });
   return { data: data || [], error: error?.message || null, isConfigured: true };
+}
+
+export async function getPlaybook(id: string) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { data: null, error: "Supabase nao configurado.", isConfigured: false };
+  const { data, error } = await supabase.from("playbooks").select("*").eq("id", id).single();
+  return { data, error: error?.message || null, isConfigured: true };
 }
 
 export async function getFiles(filters?: { q?: string; entity_type?: string; file_type?: string }) {
@@ -42,6 +51,7 @@ export async function getFiles(filters?: { q?: string; entity_type?: string; fil
   if (filters?.q) query = query.ilike("file_name", `%${filters.q}%`);
   if (filters?.entity_type) query = query.eq("entity_type", filters.entity_type);
   if (filters?.file_type) query = query.ilike("file_type", `%${filters.file_type}%`);
+  query = query.is("removed_at", null);
   const { data, error } = await query.order("created_at", { ascending: false }).limit(100);
   return { data: data || [], error: error?.message || null, isConfigured: true };
 }
