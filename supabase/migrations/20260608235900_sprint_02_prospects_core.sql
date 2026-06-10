@@ -72,7 +72,7 @@ create table public.prospect_notes (
   prospect_id uuid not null references public.prospects(id) on delete cascade,
   author_id uuid references public.profiles(id) on delete set null,
   content text not null,
-  type public.prospect_note_type not null default 'general',
+  type public.prospect_note_type not null default 'observacao',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
