@@ -25,6 +25,7 @@ export type ProjectFilters = {
   priority?: string;
   owner_id?: string;
   client_id?: string;
+  company_id?: string;
 };
 
 function todayISO() {
@@ -129,6 +130,7 @@ export async function getProjects(filters: ProjectFilters = {}) {
     query = query.eq("owner_id", filters.owner_id);
   }
   if (filters.client_id) query = query.eq("client_id", filters.client_id);
+  if (filters.company_id) query = query.eq("company_id", filters.company_id);
 
   const { data, error } = await query.order("updated_at", { ascending: false });
   return { data: data || [], error: error?.message || null, isConfigured: true };

@@ -141,10 +141,14 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         <CardHeader><CardTitle>Playbooks relacionados</CardTitle><CardDescription>Processos úteis para atendimento e operação do cliente.</CardDescription></CardHeader>
         <CardContent className="flex flex-col gap-2">
           {playbooks.data.slice(0, 5).map((playbook) => (
-            <div key={playbook.id} className="rounded-lg border p-3">
-              <div className="font-medium">{playbook.title}</div>
+            <Link
+              key={playbook.id}
+              href={`/os/playbooks/${playbook.id}`}
+              className="rounded-lg border p-3 hover:bg-muted/50 block transition-colors"
+            >
+              <div className="font-medium text-white hover:text-primary transition-colors">{playbook.title}</div>
               <div className="text-sm text-muted-foreground">{playbook.category}</div>
-            </div>
+            </Link>
           ))}
           {playbooks.data.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum playbook publicado ainda.</p> : null}
         </CardContent>

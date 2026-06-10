@@ -105,7 +105,13 @@ export async function getProjectNotes(projectId: string) {
 export async function getEntityFiles(entityType: string, entityId: string) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { data: [] as FileRow[], error: "Supabase nao configurado.", isConfigured: false };
-  const { data, error } = await supabase.from("files").select("*").eq("entity_type", entityType).eq("entity_id", entityId).order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("files")
+    .select("*")
+    .eq("entity_type", entityType)
+    .eq("entity_id", entityId)
+    .is("removed_at", null)
+    .order("created_at", { ascending: false });
   return { data: data || [], error: error?.message || null, isConfigured: true };
 }
 

@@ -59,6 +59,9 @@ export async function removeFileAction(fileId: string, formData: FormData) {
   if (error) throw new Error(error.message);
   await recordActivity(supabase, { entity_type: "file", entity_id: fileId, actor_id: userId, action: "file_removed", title: "Arquivo removido", description: data.file_name, metadata: { reason } });
   revalidatePath("/os/files");
+  if (data.entity_type && data.entity_id) {
+    revalidatePath(`/os/${data.entity_type}s/${data.entity_id}`);
+  }
 }
 
 export async function seedOfficialTemplatesAction() {

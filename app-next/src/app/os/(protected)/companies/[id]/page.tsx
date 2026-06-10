@@ -13,15 +13,15 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const [{ data }, clientsResult, projectsResult] = await Promise.all([
     getCompany(id),
-    getClients(),
-    getProjects()
+    getClients({ company_id: id }),
+    getProjects({ company_id: id })
   ]);
 
   if (!data) notFound();
 
   // Filter clients and projects for this company
-  const companyClients = clientsResult.data.filter((c) => c.company_id === data.id);
-  const companyProjects = projectsResult.data.filter((p) => p.company_id === data.id);
+  const companyClients = clientsResult.data;
+  const companyProjects = projectsResult.data;
 
   return (
     <div className="flex flex-col gap-4">

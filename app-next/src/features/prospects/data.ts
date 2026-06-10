@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database, ProspectStatus, ProspectTemperature } from "@/types/database";
 import { prospectStatuses, prospectTemperatures } from "./prospect-schema";
+import { getEntityFiles } from "@/features/tech/data";
 
 export type ProspectRow = Database["public"]["Tables"]["prospects"]["Row"];
 export type ProspectDiagnosticRow = Database["public"]["Tables"]["prospect_diagnostics"]["Row"];
@@ -101,7 +102,7 @@ export async function getProspectWorkspace(id: string) {
     supabase.from("prospect_notes").select("*").eq("prospect_id", id).order("created_at", { ascending: false }),
     supabase.from("prospect_activities").select("*").eq("prospect_id", id).order("created_at", { ascending: false }),
     supabase.from("commercial_tasks").select("*").eq("prospect_id", id).order("due_date", { ascending: true }),
-    supabase.from("files").select("*").eq("entity_type", "prospect").eq("entity_id", id).order("created_at", { ascending: false }),
+    getEntityFiles("prospect", id),
     supabase.auth.getUser()
   ]);
 
@@ -118,7 +119,7 @@ export async function getProspectWorkspace(id: string) {
     tasks: tasksResult.data || [],
     files: filesResult.data || [],
     profile: profileResult.data,
-    error: prospectResult.error?.message || diagnosticResult.error?.message || notesResult.error?.message || activitiesResult.error?.message || tasksResult.error?.message || filesResult.error?.message || null,
+    error: prospectResult.error?.message || diagnosticResult.error?.message || notesResult.error?.message || activitiesResult.error?.message || tasksResult.error?.message || filesResult.error || null,
     isConfigured: true
   };
 }

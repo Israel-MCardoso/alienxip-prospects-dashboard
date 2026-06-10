@@ -7,6 +7,7 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import type { ProspectRow } from "./data";
 import { createProspectAction, updateProspectAction } from "./actions";
 import { prospectStatuses, prospectTemperatures } from "./prospect-schema";
@@ -27,7 +28,7 @@ export function ProspectForm({
       <CardHeader>
         <CardTitle>{prospect ? "Editar prospect" : "Novo prospect"}</CardTitle>
         <CardDescription>
-          Cadastro basico para validar o CRM editavel antes da migracao completa.
+          {prospect ? "Atualize as informações operacionais do prospect." : "Cadastro básico para validar o CRM de prospects."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -52,10 +53,19 @@ export function ProspectForm({
           <Input name="partner_name" placeholder="Parceiro" defaultValue={prospect?.partner_name || ""} disabled={!isConfigured} />
           <Input name="partner_url" placeholder="URL do parceiro" defaultValue={prospect?.partner_url || ""} disabled={!isConfigured} />
           <Input name="notes" placeholder="Observacoes" defaultValue={prospect?.notes || ""} disabled={!isConfigured} />
-          <div className="md:col-span-2">
-            <Button type="submit" disabled={!isConfigured}>
-              {prospect ? "Salvar alteracoes" : "Criar prospect"}
+          <div className="md:col-span-2 flex flex-wrap gap-2">
+            <Button type="submit" disabled={!isConfigured} className="bg-[#7B2EFF] hover:bg-[#9D5CFF] text-white">
+              {prospect ? "Salvar alterações" : "Criar prospect"}
             </Button>
+            {prospect ? (
+              <Button type="button" variant="outline" render={<Link href={`/os/prospects/${prospect.id}`} />}>
+                Cancelar
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" render={<Link href="/os/prospects" />}>
+                Voltar
+              </Button>
+            )}
           </div>
         </form>
       </CardContent>

@@ -96,23 +96,23 @@ export async function getDashboardOverview() {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id || null;
   const [prospects, clients, projects, tasks, activities, bugs, incidents, files, playbooks, profiles] = await Promise.all([
-    supabase.from("prospects").select("*"),
-    supabase.from("clients").select("*"),
-    supabase.from("projects").select("*"),
-    supabase.from("commercial_tasks").select("*"),
-    supabase.from("activities").select("*").order("created_at", { ascending: false }).limit(20),
-    supabase.from("tech_bugs").select("*"),
-    supabase.from("tech_incidents").select("*"),
-    supabase.from("files").select("*").is("removed_at", null).order("created_at", { ascending: false }).limit(8),
-    supabase.from("playbooks").select("*").eq("status", "published").order("created_at", { ascending: false }).limit(8),
-    supabase.from("profiles").select("*")
+    supabase.from("prospects").select("id, name, status, temperature, owner_id, responsible_user_id, segment, converted_at"),
+    supabase.from("clients").select("id, company_id, status, contract_status, main_contact_name, main_contact_email"),
+    supabase.from("projects").select("id, name, status, priority, owner_id, created_by, completed_at"),
+    supabase.from("commercial_tasks").select("id, prospect_id, client_id, project_id, owner_id, assigned_to, title, description, status, priority, due_date"),
+    supabase.from("activities").select("id, entity_type, entity_id, actor_id, action, title, description, metadata, created_at").order("created_at", { ascending: false }).limit(20),
+    supabase.from("tech_bugs").select("id, title, status, severity, priority, project_id, client_id, company_id, assigned_to"),
+    supabase.from("tech_incidents").select("id, title, description, status, severity, started_at, resolved_at, project_id, client_id, owner_id"),
+    supabase.from("files").select("id, file_name, bucket, path, file_type, file_size, entity_type, entity_id, created_at").is("removed_at", null).order("created_at", { ascending: false }).limit(8),
+    supabase.from("playbooks").select("id, title, description, category, status, created_at").eq("status", "published").order("created_at", { ascending: false }).limit(8),
+    supabase.from("profiles").select("id, full_name, email")
   ]);
 
   const dashboardData = {
-    prospects: prospects.data || [],
-    clients: clients.data || [],
-    projects: projects.data || [],
-    tasks: tasks.data || []
+    prospects: (prospects.data || []) as unknown as ProspectRow[],
+    clients: (clients.data || []) as unknown as ClientRow[],
+    projects: (projects.data || []) as unknown as ProjectRow[],
+    tasks: (tasks.data || []) as unknown as TaskRow[]
   };
   const openTasks = dashboardData.tasks.filter((task) => task.status !== "completed" && task.status !== "canceled");
 
@@ -130,16 +130,16 @@ export async function getDashboardOverview() {
 
   return {
     metrics: calculateDashboardMetrics(dashboardData, { userId }),
-    activities: activities.data || [],
+    activities: (activities.data || []) as unknown as ActivityRow[],
     myPending: userId ? openTasks.filter((task) => task.owner_id === userId || task.assigned_to === userId).slice(0, 8) : openTasks.slice(0, 8),
-    bugs: bugs.data || [],
-    incidents: incidents.data || [],
-    recentFiles: files.data || [],
-    recentPlaybooks: playbooks.data || [],
-    profiles: profiles.data || [],
-    prospects: prospects.data || [],
-    clients: clients.data || [],
-    projects: projects.data || [],
+    bugs: (bugs.data || []) as unknown as TechBugRow[],
+    incidents: (incidents.data || []) as unknown as TechIncidentRow[],
+    recentFiles: (files.data || []) as unknown as FileRow[],
+    recentPlaybooks: (playbooks.data || []) as unknown as PlaybookRow[],
+    profiles: (profiles.data || []) as unknown as ProfileRow[],
+    prospects: (prospects.data || []) as unknown as ProspectRow[],
+    clients: (clients.data || []) as unknown as ClientRow[],
+    projects: (projects.data || []) as unknown as ProjectRow[],
     error: errorMsg,
     isConfigured: true
   };

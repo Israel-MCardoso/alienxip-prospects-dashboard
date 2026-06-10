@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +22,7 @@ import type {
   ProspectNoteRow,
   ProspectRow
 } from "./data";
+import type { ProfileRow, ClientRow, CompanyRow } from "@/features/workspace/data";
 import {
   archiveProspectAction,
   createNoteAction,
@@ -38,7 +42,10 @@ export function ProspectWorkspace({
   notes,
   activities,
   tasks,
-  files
+  files,
+  profiles = [],
+  clients = [],
+  companies = []
 }: {
   prospect: ProspectRow;
   diagnostic: ProspectDiagnosticRow | null;
@@ -46,7 +53,16 @@ export function ProspectWorkspace({
   activities: ProspectActivityRow[];
   tasks: CommercialTaskRow[];
   files: FileRow[];
+  profiles?: ProfileRow[];
+  clients?: ClientRow[];
+  companies?: CompanyRow[];
 }) {
+  const clientObj = clients.find((c) => c.id === prospect.converted_client_id);
+  const clientCompany = companies.find((c) => c.id === clientObj?.company_id);
+  const resolvedClientLabel = clientCompany
+    ? `${clientObj?.main_contact_name || "Contato"} (${clientCompany.name})`
+    : (clientObj?.main_contact_name || prospect.converted_client_id || "-");
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -59,7 +75,7 @@ export function ProspectWorkspace({
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">{prospect.name}</h1>
           <p className="text-sm text-muted-foreground">
-            Responsavel: {prospect.responsible_user_id || "nao definido"}
+            Responsável: {profiles.find((p) => p.id === prospect.responsible_user_id)?.full_name || profiles.find((p) => p.id === prospect.responsible_user_id)?.email || prospect.responsible_user_id || "não definido"}
           </p>
         </div>
 
@@ -96,13 +112,13 @@ export function ProspectWorkspace({
         </TabsList>
 
         <TabsContent value="overview">
-          <OverviewTab prospect={prospect} />
+          <OverviewTab prospect={prospect} resolvedClientLabel={resolvedClientLabel} />
         </TabsContent>
         <TabsContent value="diagnostic">
           <DiagnosticTab prospectId={prospect.id} diagnostic={diagnostic} />
         </TabsContent>
         <TabsContent value="notes">
-          <NotesTab prospectId={prospect.id} notes={notes} />
+          <NotesTab prospectId={prospect.id} notes={notes} profiles={profiles} />
         </TabsContent>
         <TabsContent value="tasks">
           <TasksTab prospect={prospect} tasks={tasks} />
@@ -204,7 +220,7 @@ function TasksTab({ prospect, tasks }: { prospect: ProspectRow; tasks: Commercia
   );
 }
 
-function OverviewTab({ prospect }: { prospect: ProspectRow }) {
+function OverviewTab({ prospect, resolvedClientLabel }: { prospect: ProspectRow; resolvedClientLabel: string }) {
   const rows = [
     ["Parceiro", prospect.partner_name || "-"],
     ["Parceiro URL", prospect.partner_url || "-"],
@@ -212,7 +228,7 @@ function OverviewTab({ prospect }: { prospect: ProspectRow }) {
     ["Localizacao", [prospect.city, prospect.state].filter(Boolean).join(" / ") || "-"],
     ["Oferta sugerida", prospect.suggested_offer || "-"],
     ["Prioridade", String(prospect.priority_score)],
-    ["Cliente convertido", prospect.converted_client_id || "-"],
+    ["Cliente convertido", resolvedClientLabel],
     ["Observacoes", prospect.notes || "-"]
   ];
 
@@ -228,7 +244,7 @@ function OverviewTab({ prospect }: { prospect: ProspectRow }) {
             <div className="text-xs text-muted-foreground">{label}</div>
             <div className="text-sm font-medium">
               {label === "Cliente convertido" && prospect.converted_client_id ? (
-                <Link className="text-primary hover:underline" href={`/os/clients/${prospect.converted_client_id}`}>{prospect.converted_client_id}</Link>
+                <Link className="text-primary hover:underline" href={`/os/clients/${prospect.converted_client_id}`}>{resolvedClientLabel}</Link>
               ) : value}
             </div>
           </div>
@@ -266,8 +282,26 @@ function DiagnosticTab({ prospectId, diagnostic }: { prospectId: string; diagnos
   );
 }
 
-function NotesTab({ prospectId, notes }: { prospectId: string; notes: ProspectNoteRow[] }) {
+function NotesTab({
+  prospectId,
+  notes,
+  profiles = []
+}: {
+  prospectId: string;
+  notes: ProspectNoteRow[];
+  profiles?: ProfileRow[];
+}) {
   const action = createNoteAction.bind(null, prospectId);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+
+  const handleSaveNote = async (noteId: string, formData: FormData) => {
+    try {
+      await updateNoteAction(prospectId, noteId, formData);
+      setEditingNoteId(null);
+    } catch (err) {
+      alert("Erro ao salvar nota: " + (err instanceof Error ? err.message : String(err)));
+    }
+  };
 
   return (
     <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
@@ -298,28 +332,47 @@ function NotesTab({ prospectId, notes }: { prospectId: string; notes: ProspectNo
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {notes.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma nota ainda.</p> : null}
-          {notes.map((note) => (
-            <div key={note.id} className="rounded-lg border bg-background p-3">
-              <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="outline">{note.type}</Badge>
-                <span>{formatActivityDate(note.created_at)}</span>
-                <span>autor: {note.author_id || "nao identificado"}</span>
-              </div>
-              <form action={updateNoteAction.bind(null, prospectId, note.id)} className="mt-2 flex flex-col gap-2">
-                <select name="type" defaultValue={note.type} className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
-                  <option value="observacao">observacao</option>
-                  <option value="follow_up">follow-up</option>
-                  <option value="reuniao">reuniao</option>
-                  <option value="decisao">decisao</option>
-                  <option value="risco">risco</option>
-                </select>
-                <textarea name="content" defaultValue={note.content} className="min-h-20 rounded-lg border border-input bg-background px-3 py-2 text-sm" />
-                <div>
-                  <Button type="submit" variant="outline" size="sm">Salvar nota</Button>
+          {notes.map((note) => {
+            const isEditing = editingNoteId === note.id;
+            const author = profiles.find((p) => p.id === note.author_id);
+            const authorName = author ? (author.full_name || author.email) : "não identificado";
+
+            return (
+              <div key={note.id} className="rounded-lg border bg-background p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline">{note.type}</Badge>
+                    <span>{formatActivityDate(note.created_at)}</span>
+                    <span className="font-medium text-white">autor: {authorName}</span>
+                  </div>
+                  {!isEditing && (
+                    <Button variant="ghost" size="xs" onClick={() => setEditingNoteId(note.id)}>
+                      Editar
+                    </Button>
+                  )}
                 </div>
-              </form>
-            </div>
-          ))}
+
+                {isEditing ? (
+                  <form action={handleSaveNote.bind(null, note.id)} className="mt-2 flex flex-col gap-2">
+                    <select name="type" defaultValue={note.type} className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
+                      <option value="observacao">observacao</option>
+                      <option value="follow_up">follow-up</option>
+                      <option value="reuniao">reuniao</option>
+                      <option value="decisao">decisao</option>
+                      <option value="risco">risco</option>
+                    </select>
+                    <textarea name="content" defaultValue={note.content} className="min-h-20 rounded-lg border border-input bg-background px-3 py-2 text-sm" required />
+                    <div className="flex gap-2">
+                      <Button type="submit" variant="outline" size="sm" className="bg-[#7B2EFF] text-white hover:bg-[#9D5CFF]">Salvar nota</Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setEditingNoteId(null)}>Cancelar</Button>
+                    </div>
+                  </form>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">{note.content}</p>
+                )}
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
     </div>

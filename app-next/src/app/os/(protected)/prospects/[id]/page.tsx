@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getProspectWorkspace } from "@/features/prospects/data";
 import { ProspectWorkspace } from "@/features/prospects/prospect-workspace";
+import { getTaskReferenceData } from "@/features/operations/data";
 
 export default async function ProspectWorkspacePage({
   params
@@ -9,7 +10,10 @@ export default async function ProspectWorkspacePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { prospect, diagnostic, notes, activities, tasks, files, isConfigured, error } = await getProspectWorkspace(id);
+  const [{ prospect, diagnostic, notes, activities, tasks, files, isConfigured, error }, refs] = await Promise.all([
+    getProspectWorkspace(id),
+    getTaskReferenceData()
+  ]);
 
   if (!isConfigured || error || !prospect) {
     notFound();
@@ -23,6 +27,9 @@ export default async function ProspectWorkspacePage({
       activities={activities}
       tasks={tasks}
       files={files}
+      profiles={refs.profiles}
+      clients={refs.clients}
+      companies={refs.companies}
     />
   );
 }
