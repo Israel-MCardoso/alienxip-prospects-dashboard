@@ -18,7 +18,8 @@ import {
   TargetIcon,
   WrenchIcon,
   MenuIcon,
-  XIcon
+  XIcon,
+  FileTextIcon
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,21 +28,21 @@ import { logoutAction } from "@/features/auth/actions";
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { href: "/os", label: "Home", icon: HomeIcon },
-  { href: "/os/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
+  { href: "/os", label: "Início", icon: HomeIcon },
+  { href: "/os/dashboard", label: "Painel", icon: LayoutDashboardIcon },
   { href: "/os/prospects", label: "Prospects", icon: TargetIcon },
-  { href: "/os/prospects/pipeline", label: "Pipeline", icon: ClipboardListIcon },
+  { href: "/os/prospects/pipeline", label: "Funil de Vendas", icon: ClipboardListIcon },
   { href: "/os/tasks", label: "Tarefas", icon: ListTodoIcon },
-  { href: "/os/calendar", label: "Calendario", icon: CalendarDaysIcon },
-  { href: "/os/activity", label: "Activity", icon: HistoryIcon },
-  { href: "/os/clients", label: "Clients", icon: Building2Icon },
-  { href: "/os/companies", label: "Empresas", icon: BriefcaseBusinessIcon },
-  { href: "/os/projects", label: "Projects", icon: BriefcaseBusinessIcon },
-  { href: "/os/tech", label: "Tech", icon: WrenchIcon },
+  { href: "/os/calendar", label: "Calendário", icon: CalendarDaysIcon },
+  { href: "/os/activity", label: "Atividades", icon: HistoryIcon },
+  { href: "/os/clients", label: "Clientes", icon: Building2Icon },
+  { href: "/os/companies", label: "Empresas", icon: Building2Icon },
+  { href: "/os/projects", label: "Projetos", icon: BriefcaseBusinessIcon },
+  { href: "/os/tech", label: "Tecnologia", icon: WrenchIcon },
   { href: "/os/wiki", label: "Wiki", icon: LibraryIcon },
-  { href: "/os/playbooks", label: "Playbooks", icon: ClipboardListIcon },
-  { href: "/os/files", label: "Files", icon: FilesIcon },
-  { href: "/os/settings", label: "Settings", icon: SettingsIcon }
+  { href: "/os/playbooks", label: "Playbooks", icon: FileTextIcon },
+  { href: "/os/files", label: "Arquivos", icon: FilesIcon },
+  { href: "/os/settings", label: "Configurações", icon: SettingsIcon }
 ];
 
 export function OsShell({

@@ -18,7 +18,12 @@ export function TaskForm({
 }) {
   function getClientCompanyName(client: ClientRow, companies: CompanyRow[]) {
     const company = companies.find((c) => c.id === client.company_id);
-    return company?.name || client.main_contact_name || client.id;
+    const contact = client.main_contact_name;
+    const compName = company?.name;
+    if (contact && compName) {
+      return `${contact} (${compName})`;
+    }
+    return compName || contact || client.id;
   }
 
   return (

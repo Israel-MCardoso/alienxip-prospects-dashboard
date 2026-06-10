@@ -18,10 +18,14 @@ export default function OsHomePage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <Badge variant="secondary">Sprint 2</Badge>
+        <div className="flex">
+          <Badge variant="secondary" className="bg-purple-900/40 text-purple-300 border-purple-800/50 hover:bg-purple-900/60">
+            Sprint 10 (Hardening)
+          </Badge>
+        </div>
         <h1 className="text-3xl font-semibold tracking-tight">ALIENXIP OS</h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Base interna com Supabase dev, autenticacao e CRM inicial de prospects, preservando o dashboard legado como fallback.
+          Plataforma operacional consolidada com Supabase, autenticação integrada, gestão de prospects, clientes, projetos, arquivos, tarefas, playbooks e atividades, preservando o dashboard legado.
         </p>
       </div>
 
@@ -36,15 +40,15 @@ export default function OsHomePage() {
         ))}
       </div>
 
-      <Card>
+      <Card className="border-purple-500/20 bg-[#080808]">
         <CardHeader>
-          <CardTitle>Proxima decisao operacional</CardTitle>
+          <CardTitle className="text-purple-400">Estado da Plataforma</CardTitle>
           <CardDescription>
-            A Sprint 3 deve fortalecer o CRM com diagnosticos, notas, atividades e fluxo de conversao para cliente/projeto.
+            Sistema operacional totalmente consolidado após a Sprint 10 (Hardening), com foco em estabilidade, performance e UX premium.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Supabase em producao ainda nao foi conectado. Use ambiente dev e variaveis locais.
+          As integrações e banco de dados estão otimizados. Para novas demandas, siga o fluxo de governança e migrations.
         </CardContent>
       </Card>
     </div>

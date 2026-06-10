@@ -32,7 +32,12 @@ function clientName(clients: ClientRow[], companies: CompanyRow[], id: string | 
   const client = clients.find((item) => item.id === id);
   if (!client) return "-";
   const company = companies.find((item) => item.id === client.company_id);
-  return company?.name || client.main_contact_name || client.id;
+  const contact = client.main_contact_name;
+  const compName = company?.name;
+  if (contact && compName) {
+    return `${contact} (${compName})`;
+  }
+  return compName || contact || client.id;
 }
 
 function companyName(companies: CompanyRow[], id: string | null) {
