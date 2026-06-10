@@ -12,6 +12,7 @@
     "build:next": "npm --prefix app-next run build",
     "test": "node --test",
     "lint": "npm --prefix app-next run lint",
-    "import:prospects": "node scripts/import-prospects.mjs"
+    "import:prospects": "node scripts/import-prospects.mjs",
+    "seed:knowledge": "node scripts/seed-knowledge.mjs"
   }
 }

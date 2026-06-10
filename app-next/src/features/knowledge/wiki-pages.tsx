@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { createWikiPageAction, updateWikiPageAction, updateWikiStatusAction } from "./actions";
 import type { WikiPageRow } from "./data";
 import { slugify, wikiCategories, wikiStatuses } from "./knowledge-helpers";
-import { seedOfficialTemplatesAction, updateKnowledgeReviewAction } from "@/features/governance/actions";
+import { seedOfficialTemplatesAction, updateKnowledgeReviewAction, duplicateWikiPageAction } from "@/features/governance/actions";
 import { reviewStatuses } from "@/features/governance/governance-helpers";
 
 export function WikiList({ pages, error }: { pages: WikiPageRow[]; error: string | null }) {
@@ -30,9 +30,14 @@ export function WikiDetail({ page }: { page: WikiPageRow }) {
       <div><Button variant="outline" size="sm" render={<Link href="/os/wiki" />}>Voltar</Button></div>
       <Card><CardHeader><CardTitle>{page.title}</CardTitle><CardDescription>{page.category} | {page.status}</CardDescription></CardHeader><CardContent className="whitespace-pre-wrap text-sm">{page.content}</CardContent></Card>
       <Card><CardHeader><CardTitle>Editar página</CardTitle></CardHeader><CardContent><WikiForm page={page} /></CardContent></Card>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <form action={updateWikiStatusAction.bind(null, page.id, "published")}><Button type="submit">Publicar</Button></form>
-        <form action={updateWikiStatusAction.bind(null, page.id, "archived")}><Button type="submit" variant="outline">Arquivar</Button></form>
+        {page.status === "archived" ? (
+          <form action={updateWikiStatusAction.bind(null, page.id, "draft")}><Button type="submit" variant="outline">Restaurar para Rascunho</Button></form>
+        ) : (
+          <form action={updateWikiStatusAction.bind(null, page.id, "archived")}><Button type="submit" variant="outline">Arquivar</Button></form>
+        )}
+        <form action={duplicateWikiPageAction.bind(null, page.id)}><Button type="submit" variant="outline">Duplicar</Button></form>
         <form action={updateKnowledgeReviewAction.bind(null, "wiki", page.id, "approved")}><Button type="submit" variant="outline">Aprovar revisão</Button></form>
         <form action={updateKnowledgeReviewAction.bind(null, "wiki", page.id, "outdated")}><Button type="submit" variant="outline">Marcar outdated</Button></form>
       </div>

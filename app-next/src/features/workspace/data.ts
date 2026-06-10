@@ -67,6 +67,11 @@ export async function getWorkspaceReferenceData() {
   };
 }
 
+export type TechBugRow = Database["public"]["Tables"]["tech_bugs"]["Row"];
+export type TechIncidentRow = Database["public"]["Tables"]["tech_incidents"]["Row"];
+export type FileRow = Database["public"]["Tables"]["files"]["Row"];
+export type PlaybookRow = Database["public"]["Tables"]["playbooks"]["Row"];
+
 export async function getDashboardOverview() {
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
@@ -75,6 +80,14 @@ export async function getDashboardOverview() {
       metrics: calculateDashboardMetrics(emptyData),
       activities: [] as ActivityRow[],
       myPending: [] as TaskRow[],
+      bugs: [] as TechBugRow[],
+      incidents: [] as TechIncidentRow[],
+      recentFiles: [] as FileRow[],
+      recentPlaybooks: [] as PlaybookRow[],
+      profiles: [] as ProfileRow[],
+      prospects: [] as ProspectRow[],
+      clients: [] as ClientRow[],
+      projects: [] as ProjectRow[],
       error: "Supabase nao configurado.",
       isConfigured: false
     };
@@ -82,12 +95,17 @@ export async function getDashboardOverview() {
 
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id || null;
-  const [prospects, clients, projects, tasks, activities] = await Promise.all([
+  const [prospects, clients, projects, tasks, activities, bugs, incidents, files, playbooks, profiles] = await Promise.all([
     supabase.from("prospects").select("*"),
     supabase.from("clients").select("*"),
     supabase.from("projects").select("*"),
     supabase.from("commercial_tasks").select("*"),
-    supabase.from("activities").select("*").order("created_at", { ascending: false }).limit(12)
+    supabase.from("activities").select("*").order("created_at", { ascending: false }).limit(20),
+    supabase.from("tech_bugs").select("*"),
+    supabase.from("tech_incidents").select("*"),
+    supabase.from("files").select("*").is("removed_at", null).order("created_at", { ascending: false }).limit(8),
+    supabase.from("playbooks").select("*").eq("status", "published").order("created_at", { ascending: false }).limit(8),
+    supabase.from("profiles").select("*")
   ]);
 
   const dashboardData = {
@@ -98,11 +116,31 @@ export async function getDashboardOverview() {
   };
   const openTasks = dashboardData.tasks.filter((task) => task.status !== "completed" && task.status !== "canceled");
 
+  const errorMsg = prospects.error?.message ||
+    clients.error?.message ||
+    projects.error?.message ||
+    tasks.error?.message ||
+    activities.error?.message ||
+    bugs.error?.message ||
+    incidents.error?.message ||
+    files.error?.message ||
+    playbooks.error?.message ||
+    profiles.error?.message ||
+    null;
+
   return {
     metrics: calculateDashboardMetrics(dashboardData, { userId }),
     activities: activities.data || [],
     myPending: userId ? openTasks.filter((task) => task.owner_id === userId || task.assigned_to === userId).slice(0, 8) : openTasks.slice(0, 8),
-    error: prospects.error?.message || clients.error?.message || projects.error?.message || tasks.error?.message || activities.error?.message || null,
+    bugs: bugs.data || [],
+    incidents: incidents.data || [],
+    recentFiles: files.data || [],
+    recentPlaybooks: playbooks.data || [],
+    profiles: profiles.data || [],
+    prospects: prospects.data || [],
+    clients: clients.data || [],
+    projects: projects.data || [],
+    error: errorMsg,
     isConfigured: true
   };
 }

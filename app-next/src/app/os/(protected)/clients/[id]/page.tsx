@@ -9,6 +9,9 @@ import { ProjectForm } from "@/features/operations/project-form";
 import { FileList } from "@/features/tech/file-list";
 import { getEntityFiles } from "@/features/tech/data";
 import { getPlaybooks } from "@/features/knowledge/data";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { updateClientAction, archiveClientAction, restoreClientAction } from "@/features/commercial/actions";
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,19 +24,91 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   ]);
   if (!data) notFound();
 
+  const company = refs.companies.find((c) => c.id === data.company_id);
+  const companyName = company?.name || "-";
+
   return (
     <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader><CardTitle>Cliente {data.main_contact_name || data.id}</CardTitle></CardHeader>
-        <CardContent className="grid gap-2 text-sm">
-          <div>Status: {data.status}</div>
-          <div>Contrato: {data.contract_status}</div>
-          <div>Contato: {data.main_contact_name || "-"}</div>
-          <div>Email: {data.main_contact_email || "-"}</div>
-          <div>Telefone: {data.main_contact_phone || "-"}</div>
-          <div>Valor mensal: {data.monthly_value ?? "-"}</div>
-        </CardContent>
-      </Card>
+      {/* Breadcrumbs */}
+      <div className="text-xs text-muted-foreground mb-1">
+        <Link href="/os/dashboard" className="hover:underline">Dashboard</Link>
+        {" > "}
+        <Link href="/os/clients" className="hover:underline">Clientes</Link>
+        {" > "}
+        <span className="text-white">{data.main_contact_name || companyName}</span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Cliente: {data.main_contact_name || companyName}</h1>
+          <p className="text-sm text-muted-foreground">
+            Status: {statusLabel(data.status)} | Empresa vinculada:{" "}
+            <Link href={`/os/companies/${data.company_id}`} className="text-primary hover:underline">
+              {companyName}
+            </Link>
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {data.status === "former" ? (
+            <form action={restoreClientAction.bind(null, data.id)}>
+              <Button variant="outline" size="sm" type="submit">Restaurar Cliente</Button>
+            </form>
+          ) : (
+            <form action={archiveClientAction.bind(null, data.id)}>
+              <Button variant="outline" size="sm" type="submit">Arquivar Cliente</Button>
+            </form>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle>Informações do Cliente</CardTitle></CardHeader>
+          <CardContent className="grid gap-2 text-sm">
+            <div>
+              <strong>Empresa:</strong>{" "}
+              <Link href={`/os/companies/${data.company_id}`} className="text-primary hover:underline">
+                {companyName}
+              </Link>
+            </div>
+            <div><strong>Status:</strong> {data.status}</div>
+            <div><strong>Contrato:</strong> {data.contract_status}</div>
+            <div><strong>Contato Principal:</strong> {data.main_contact_name || "-"}</div>
+            <div><strong>Email:</strong> {data.main_contact_email || "-"}</div>
+            <div><strong>Telefone:</strong> {data.main_contact_phone || "-"}</div>
+            <div><strong>Valor Mensal:</strong> {data.monthly_value ?? "-"}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Editar Cliente</CardTitle>
+            <CardDescription>Atualizar informações e contrato.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={updateClientAction.bind(null, data.id)} className="grid gap-3">
+              <Input name="main_contact_name" placeholder="Contato principal" defaultValue={data.main_contact_name || ""} />
+              <Input name="main_contact_email" placeholder="Email" defaultValue={data.main_contact_email || ""} />
+              <Input name="main_contact_phone" placeholder="Telefone" defaultValue={data.main_contact_phone || ""} />
+              <Input name="monthly_value" type="number" placeholder="Valor mensal" defaultValue={data.monthly_value || ""} />
+              <div className="grid grid-cols-2 gap-2">
+                <select name="status" defaultValue={data.status} className="h-8 rounded-lg border bg-background px-2 text-sm">
+                  <option value="active">active</option>
+                  <option value="paused">paused</option>
+                  <option value="former">former</option>
+                </select>
+                <select name="contract_status" defaultValue={data.contract_status} className="h-8 rounded-lg border bg-background px-2 text-sm">
+                  <option value="draft">draft</option>
+                  <option value="active">active</option>
+                  <option value="paused">paused</option>
+                  <option value="cancelled">cancelled</option>
+                </select>
+              </div>
+              <Button type="submit">Salvar Alterações</Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>

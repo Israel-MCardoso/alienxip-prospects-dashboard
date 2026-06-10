@@ -81,3 +81,27 @@ export async function seedOfficialTemplatesAction() {
   await recordActivity(supabase, { entity_type: "wiki", entity_id: userId || "00000000-0000-0000-0000-000000000000", actor_id: userId, action: "knowledge_templates_seeded", title: "Templates oficiais criados", description: "Templates oficiais da ALIENXIP foram inseridos sem duplicar.", metadata: { count: officialKnowledgeTemplates.length } });
   revalidatePath("/os/wiki");
 }
+
+export async function duplicateWikiPageAction(wikiId: string) {
+  const { supabase, userId } = await getClientAndUser();
+  const { data: original, error: fetchError } = await supabase.from("wiki_pages").select("*").eq("id", wikiId).single();
+  if (fetchError) throw new Error(fetchError.message);
+  
+  const title = `Cópia de ${original.title}`;
+  const slug = slugify(original.title) + "-" + Math.floor(Math.random() * 10000);
+  
+  const { data, error } = await supabase.from("wiki_pages").insert({
+    title,
+    slug,
+    content: original.content,
+    category: original.category as KnowledgeCategory,
+    status: "draft" as KnowledgeStatus,
+    review_status: "needs_review" as KnowledgeReviewStatus,
+    created_by: userId,
+    updated_by: userId
+  }).select("*").single();
+  if (error) throw new Error(error.message);
+  
+  await recordActivity(supabase, { entity_type: "wiki", entity_id: data.id, actor_id: userId, action: "wiki_duplicated", title: "Wiki duplicada", description: data.title, metadata: { original_id: wikiId } });
+  revalidatePath("/os/wiki");
+}

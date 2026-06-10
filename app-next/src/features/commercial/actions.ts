@@ -182,3 +182,207 @@ export async function convertProspectAction(prospectId: string, formData: FormDa
   revalidatePath("/os/activity");
   revalidatePath("/os/dashboard");
 }
+
+export async function createCompanyAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase nao esta configurado.");
+  const { data: userData } = await supabase.auth.getUser();
+
+  const name = String(formData.get("name") || "");
+  const legal_name = String(formData.get("legal_name") || "");
+  const segment = String(formData.get("segment") || "");
+  const city = String(formData.get("city") || "");
+  const state = String(formData.get("state") || "");
+  const website_url = String(formData.get("website_url") || "");
+  const instagram_url = String(formData.get("instagram_url") || "");
+  const whatsapp = String(formData.get("whatsapp") || "");
+  const notes = String(formData.get("notes") || "");
+
+  if (!name) throw new Error("Nome da empresa e obrigatorio.");
+
+  const { data, error } = await supabase
+    .from("companies")
+    .insert({
+      name,
+      legal_name: nullable(legal_name),
+      segment: nullable(segment),
+      city: nullable(city),
+      state: nullable(state),
+      website_url: nullable(website_url),
+      instagram_url: nullable(instagram_url),
+      whatsapp: nullable(whatsapp),
+      notes: nullable(notes),
+      owner_id: userData.user?.id || null
+    })
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  await recordActivity(supabase, {
+    entity_type: "company",
+    entity_id: data.id,
+    actor_id: userData.user?.id || null,
+    action: "company_created",
+    title: "Empresa criada",
+    description: data.name,
+    metadata: { source: "manual" }
+  });
+
+  revalidatePath("/os/companies");
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
+}
+
+export async function updateCompanyAction(id: string, formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase nao esta configurado.");
+  const { data: userData } = await supabase.auth.getUser();
+
+  const name = String(formData.get("name") || "");
+  const legal_name = String(formData.get("legal_name") || "");
+  const segment = String(formData.get("segment") || "");
+  const city = String(formData.get("city") || "");
+  const state = String(formData.get("state") || "");
+  const website_url = String(formData.get("website_url") || "");
+  const instagram_url = String(formData.get("instagram_url") || "");
+  const whatsapp = String(formData.get("whatsapp") || "");
+  const notes = String(formData.get("notes") || "");
+
+  if (!name) throw new Error("Nome da empresa e obrigatorio.");
+
+  const { error } = await supabase
+    .from("companies")
+    .update({
+      name,
+      legal_name: nullable(legal_name),
+      segment: nullable(segment),
+      city: nullable(city),
+      state: nullable(state),
+      website_url: nullable(website_url),
+      instagram_url: nullable(instagram_url),
+      whatsapp: nullable(whatsapp),
+      notes: nullable(notes)
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  await recordActivity(supabase, {
+    entity_type: "company",
+    entity_id: id,
+    actor_id: userData.user?.id || null,
+    action: "company_updated",
+    title: "Empresa atualizada",
+    description: name,
+    metadata: { source: "manual" }
+  });
+
+  revalidatePath("/os/companies");
+  revalidatePath(`/os/companies/${id}`);
+  revalidatePath("/os/activity");
+}
+
+export async function updateClientAction(id: string, formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase nao esta configurado.");
+  const { data: userData } = await supabase.auth.getUser();
+
+  const status = String(formData.get("status") || "active") as ClientStatus;
+  const contract_status = String(formData.get("contract_status") || "draft") as ContractStatus;
+  const monthly_value = formData.get("monthly_value") ? Number(formData.get("monthly_value")) : null;
+  const main_contact_name = String(formData.get("main_contact_name") || "");
+  const main_contact_email = String(formData.get("main_contact_email") || "");
+  const main_contact_phone = String(formData.get("main_contact_phone") || "");
+
+  const { error } = await supabase
+    .from("clients")
+    .update({
+      status,
+      contract_status,
+      monthly_value,
+      main_contact_name: nullable(main_contact_name),
+      main_contact_email: nullable(main_contact_email),
+      main_contact_phone: nullable(main_contact_phone)
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  await recordActivity(supabase, {
+    entity_type: "client",
+    entity_id: id,
+    actor_id: userData.user?.id || null,
+    action: "client_updated",
+    title: "Cliente atualizado",
+    description: main_contact_name || id,
+    metadata: { status, contract_status }
+  });
+
+  revalidatePath("/os/clients");
+  revalidatePath(`/os/clients/${id}`);
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
+}
+
+export async function archiveClientAction(id: string) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase nao esta configurado.");
+  const { data: userData } = await supabase.auth.getUser();
+
+  const { error } = await supabase
+    .from("clients")
+    .update({
+      status: "former" as ClientStatus,
+      contract_status: "cancelled" as ContractStatus
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  await recordActivity(supabase, {
+    entity_type: "client",
+    entity_id: id,
+    actor_id: userData.user?.id || null,
+    action: "client_archived",
+    title: "Cliente arquivado",
+    description: "Cliente definido como 'former' e contrato cancelado.",
+    metadata: { status: "former", contract_status: "cancelled" }
+  });
+
+  revalidatePath("/os/clients");
+  revalidatePath(`/os/clients/${id}`);
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
+}
+
+export async function restoreClientAction(id: string) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase nao esta configurado.");
+  const { data: userData } = await supabase.auth.getUser();
+
+  const { error } = await supabase
+    .from("clients")
+    .update({
+      status: "active" as ClientStatus,
+      contract_status: "active" as ContractStatus
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  await recordActivity(supabase, {
+    entity_type: "client",
+    entity_id: id,
+    actor_id: userData.user?.id || null,
+    action: "client_restored",
+    title: "Cliente restaurado",
+    description: "Cliente reativado no workspace.",
+    metadata: { status: "active", contract_status: "active" }
+  });
+
+  revalidatePath("/os/clients");
+  revalidatePath(`/os/clients/${id}`);
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
+}

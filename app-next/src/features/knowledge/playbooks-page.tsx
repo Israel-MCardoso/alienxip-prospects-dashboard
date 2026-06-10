@@ -28,7 +28,11 @@ export function PlaybookDetailView({ playbook }: { playbook: PlaybookRow }) {
       <Card><CardHeader><CardTitle>Editar playbook</CardTitle></CardHeader><CardContent><form action={updatePlaybookAction.bind(null, playbook.id)} className="grid gap-3 md:grid-cols-2"><Input name="title" defaultValue={playbook.title} required /><Input name="description" defaultValue={playbook.description || ""} /><select name="category" defaultValue={playbook.category} className="h-8 rounded-lg border bg-background px-2 text-sm">{wikiCategories.map((item: string) => <option key={item} value={item}>{item}</option>)}</select><select name="status" defaultValue={playbook.status} className="h-8 rounded-lg border bg-background px-2 text-sm">{playbookStatuses.map((item: string) => <option key={item} value={item}>{item}</option>)}</select><textarea name="content" defaultValue={playbook.content} required className="min-h-36 rounded-lg border bg-background p-3 text-sm md:col-span-2" /><Button type="submit">Salvar</Button></form></CardContent></Card>
       <div className="flex flex-wrap gap-2">
         <form action={updatePlaybookStatusAction.bind(null, playbook.id, "published")}><Button type="submit">Publicar</Button></form>
-        <form action={updatePlaybookStatusAction.bind(null, playbook.id, "archived")}><Button type="submit" variant="outline">Arquivar</Button></form>
+        {playbook.status === "archived" ? (
+          <form action={updatePlaybookStatusAction.bind(null, playbook.id, "draft")}><Button type="submit" variant="outline">Restaurar para Rascunho</Button></form>
+        ) : (
+          <form action={updatePlaybookStatusAction.bind(null, playbook.id, "archived")}><Button type="submit" variant="outline">Arquivar</Button></form>
+        )}
         <form action={duplicatePlaybookAction.bind(null, playbook.id)}><Button type="submit" variant="outline">Duplicar</Button></form>
         <form action={updateKnowledgeReviewAction.bind(null, "playbook", playbook.id, "approved")}><Button type="submit" variant="outline">Aprovar revisão</Button></form>
         <form action={updateKnowledgeReviewAction.bind(null, "playbook", playbook.id, "outdated")}><Button type="submit" variant="outline">Marcar outdated</Button></form>

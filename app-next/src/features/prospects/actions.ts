@@ -253,3 +253,115 @@ export async function updateNoteAction(prospectId: string, noteId: string, formD
   revalidatePath(`/os/prospects/${prospectId}`);
   revalidatePath("/os/activity");
 }
+
+export async function archiveProspectAction(id: string) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase nao esta configurado.");
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { error } = await supabase
+    .from("prospects")
+    .update({ status: "archived" })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: id,
+    actor_id: user?.id || null,
+    action: "archived",
+    title: "Prospect arquivado",
+    description: "Prospect movido para o arquivo.",
+    metadata: { status: "archived" }
+  });
+
+  revalidatePath("/os/prospects");
+  revalidatePath(`/os/prospects/${id}`);
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
+  redirect("/os/prospects");
+}
+
+export async function restoreProspectAction(id: string) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase nao esta configurado.");
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { error } = await supabase
+    .from("prospects")
+    .update({ status: "new" })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: id,
+    actor_id: user?.id || null,
+    action: "restored",
+    title: "Prospect restaurado",
+    description: "Prospect restaurado para o status 'new'.",
+    metadata: { status: "new" }
+  });
+
+  revalidatePath("/os/prospects");
+  revalidatePath(`/os/prospects/${id}`);
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
+}
+
+export async function duplicateProspectAction(id: string) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase nao esta configurado.");
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data: prospect, error: fetchError } = await supabase
+    .from("prospects")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const { data: newProspect, error: insertError } = await supabase
+    .from("prospects")
+    .insert({
+      name: `Cópia de ${prospect.name}`,
+      status: "new",
+      temperature: prospect.temperature,
+      source: prospect.source,
+      segment: prospect.segment,
+      city: prospect.city,
+      state: prospect.state,
+      instagram_url: prospect.instagram_url,
+      website_url: prospect.website_url,
+      whatsapp: prospect.whatsapp,
+      owner_id: user?.id || null,
+      responsible_user_id: user?.id || null,
+      partner_name: prospect.partner_name,
+      partner_url: prospect.partner_url,
+      priority_score: prospect.priority_score,
+      suggested_offer: prospect.suggested_offer,
+      notes: prospect.notes
+    })
+    .select("*")
+    .single();
+
+  if (insertError) throw new Error(insertError.message);
+
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: newProspect.id,
+    actor_id: user?.id || null,
+    action: "created",
+    title: "Prospect duplicado",
+    description: `Criada cópia de ${prospect.name}.`,
+    metadata: { source: "duplicate", original_id: id }
+  });
+
+  revalidatePath("/os/prospects");
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
+  redirect(`/os/prospects/${newProspect.id}`);
+}

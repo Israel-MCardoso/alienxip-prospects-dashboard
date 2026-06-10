@@ -19,7 +19,14 @@ import type {
   ProspectNoteRow,
   ProspectRow
 } from "./data";
-import { createNoteAction, saveDiagnosticAction, updateNoteAction } from "./actions";
+import {
+  archiveProspectAction,
+  createNoteAction,
+  duplicateProspectAction,
+  restoreProspectAction,
+  saveDiagnosticAction,
+  updateNoteAction
+} from "./actions";
 import { activityLabel, formatActivityDate } from "./workspace-helpers";
 import { completeTaskAction, convertProspectAction, createTaskAction } from "@/features/commercial/actions";
 import { taskPriorities, taskStatuses } from "@/features/commercial/commercial-helpers";
@@ -56,9 +63,21 @@ export function ProspectWorkspace({
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           <Button variant="outline" render={<Link href="/os/prospects" />}>Voltar</Button>
           <Button variant="outline" render={<Link href={`/os/prospects/${prospect.id}/edit`} />}>Editar</Button>
+          <form action={duplicateProspectAction.bind(null, prospect.id)}>
+            <Button variant="outline" type="submit">Duplicar</Button>
+          </form>
+          {prospect.status === "archived" ? (
+            <form action={restoreProspectAction.bind(null, prospect.id)}>
+              <Button variant="outline" type="submit">Restaurar</Button>
+            </form>
+          ) : (
+            <form action={archiveProspectAction.bind(null, prospect.id)}>
+              <Button variant="outline" type="submit">Arquivar</Button>
+            </form>
+          )}
           {prospect.instagram_url ? <Button variant="outline" render={<a href={prospect.instagram_url} target="_blank" rel="noreferrer" />}>Instagram</Button> : null}
           {prospect.website_url ? <Button variant="outline" render={<a href={prospect.website_url} target="_blank" rel="noreferrer" />}>Site</Button> : null}
           {prospect.whatsapp ? <Button variant="outline" render={<a href={prospect.whatsapp} target="_blank" rel="noreferrer" />}>WhatsApp</Button> : null}
