@@ -9,18 +9,22 @@ import { Input } from "@/components/ui/input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import Image from "next/image";
 
-export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
+export function LoginForm({ isConfigured, initialMessage }: { isConfigured: boolean; initialMessage?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [forgotPasswordMsg, setForgotPasswordMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(
+    initialMessage === "senha_alterada" ? "Senha redefinida com sucesso! Faça login com suas novas credenciais." : null
+  );
   const [isPending, setIsPending] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setForgotPasswordMsg(null);
+    setSuccessMsg(null);
     setIsPending(true);
 
     try {
@@ -44,8 +48,43 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
     }
   }
 
-  function handleForgotPassword() {
-    setForgotPasswordMsg("A recuperação de senha será configurada em breve. Contate o administrador.");
+  async function handleForgotPassword() {
+    if (!email || !email.trim()) {
+      setError("Preencha o campo de e-mail acima para solicitar a recuperação de senha.");
+      setForgotPasswordMsg(null);
+      setSuccessMsg(null);
+      return;
+    }
+    setError(null);
+    setForgotPasswordMsg(null);
+    setSuccessMsg(null);
+    setIsPending(true);
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: "https://alienxip-prospects-dashboard.vercel.app/os/reset-password",
+      });
+
+      if (resetError) {
+        let errorMsg = resetError.message;
+        if (errorMsg.includes("User not found")) {
+          errorMsg = "Usuário não cadastrado no sistema.";
+        } else if (errorMsg.includes("rate limit")) {
+          errorMsg = "Muitas solicitações seguidas. Aguarde alguns minutos antes de tentar novamente.";
+        } else {
+          errorMsg = `Erro ao enviar e-mail: ${resetError.message}`;
+        }
+        setError(errorMsg);
+      } else {
+        setForgotPasswordMsg("E-mail de recuperação enviado com sucesso! Verifique sua caixa de entrada.");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro inesperado.";
+      setError(msg);
+    } finally {
+      setIsPending(false);
+    }
   }
 
   return (
@@ -117,6 +156,12 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
             Esqueci minha senha
           </button>
         </div>
+
+        {successMsg ? (
+          <p className="text-xs text-emerald-400 font-medium bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-2.5 leading-normal">
+            {successMsg}
+          </p>
+        ) : null}
 
         {forgotPasswordMsg ? (
           <p className="text-[10px] text-amber-400 bg-amber-500/5 border border-yellow-500/10 rounded-lg p-2.5 leading-normal">
