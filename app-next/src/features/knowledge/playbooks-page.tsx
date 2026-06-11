@@ -313,8 +313,8 @@ export function PlaybookDetailView({ playbook }: { playbook: PlaybookRow }) {
                 </CardDescription>
               )}
             </CardHeader>
-            <CardContent className="pt-6 whitespace-pre-wrap text-sm text-white/90 leading-relaxed font-sans max-w-none">
-              {playbook.content}
+            <CardContent className="pt-6 text-sm text-white/90 leading-relaxed font-sans max-w-none">
+              {renderMarkdown(playbook.content)}
             </CardContent>
           </Card>
 
@@ -504,4 +504,120 @@ function PlaybookForm({ playbook, onSuccess }: { playbook?: PlaybookRow; onSucce
       </div>
     </form>
   );
+}
+
+// Simple React-based Markdown Parser to achieve Notion/GitBook style escaneabilidade
+function renderMarkdown(content: string) {
+  if (!content) return null;
+
+  // Split by code blocks first to preserve code block content
+  const parts = content.split(/(```[\s\S]*?```)/g);
+
+  return parts.map((part, index) => {
+    if (part.startsWith("```")) {
+      const match = part.match(/```(\w*)\n([\s\S]*?)```/);
+      const language = match ? match[1] : "";
+      const code = match ? match[2] : part.replace(/```/g, "");
+      return (
+        <pre key={index} className="bg-black/60 border border-white/5 rounded-xl p-4 my-4 overflow-x-auto font-mono text-xs text-purple-300">
+          {language && <div className="text-[9px] uppercase tracking-wider text-muted-foreground/60 mb-2 font-mono">{language}</div>}
+          <code>{code.trim()}</code>
+        </pre>
+      );
+    }
+
+    const lines = part.split("\n");
+    let inList = false;
+    const renderedElements: React.ReactNode[] = [];
+    let listItems: string[] = [];
+
+    const flushList = (key: string) => {
+      if (listItems.length > 0) {
+        renderedElements.push(
+          <ul key={key} className="list-disc pl-6 my-3 space-y-1.5 text-zinc-300">
+            {listItems.map((item, itemIdx) => (
+              <li key={itemIdx}>{processInlineFormatting(item)}</li>
+            ))}
+          </ul>
+        );
+        listItems = [];
+        inList = false;
+      }
+    };
+
+    lines.forEach((line, lineIdx) => {
+      const key = `${index}-${lineIdx}`;
+      const trimmedLine = line.trim();
+
+      if (trimmedLine.startsWith("# ")) {
+        flushList(key);
+        renderedElements.push(
+          <h1 key={key} className="text-2xl font-bold font-mono text-white mt-6 mb-3 tracking-tight border-b border-white/5 pb-2 uppercase tracking-wide bg-gradient-to-r from-white via-purple-100 to-purple-300 bg-clip-text text-transparent">
+            {processInlineFormatting(trimmedLine.slice(2))}
+          </h1>
+        );
+      } else if (trimmedLine.startsWith("## ")) {
+        flushList(key);
+        renderedElements.push(
+          <h2 key={key} className="text-xl font-semibold font-mono text-purple-200 mt-5 mb-2.5 border-b border-white/5 pb-1">
+            {processInlineFormatting(trimmedLine.slice(3))}
+          </h2>
+        );
+      } else if (trimmedLine.startsWith("### ")) {
+        flushList(key);
+        renderedElements.push(
+          <h3 key={key} className="text-md font-semibold font-mono text-white mt-4 mb-2">
+            {processInlineFormatting(trimmedLine.slice(4))}
+          </h3>
+        );
+      } else if (trimmedLine.startsWith("> ")) {
+        flushList(key);
+        renderedElements.push(
+          <blockquote key={key} className="border-l-2 border-purple-500 bg-purple-950/10 rounded-r-lg px-4 py-3 my-4 text-xs text-purple-300 italic leading-relaxed">
+            {processInlineFormatting(trimmedLine.slice(2))}
+          </blockquote>
+        );
+      } else if (trimmedLine.startsWith("- ") || trimmedLine.startsWith("* ")) {
+        inList = true;
+        listItems.push(trimmedLine.slice(2));
+      } else if (trimmedLine === "") {
+        flushList(key);
+      } else {
+        if (inList) {
+          if (listItems.length > 0) {
+            listItems[listItems.length - 1] += " " + trimmedLine;
+          } else {
+            flushList(key);
+            renderedElements.push(
+              <p key={key} className="my-3 text-zinc-300 leading-relaxed text-sm font-sans">
+                {processInlineFormatting(trimmedLine)}
+              </p>
+            );
+          }
+        } else {
+          renderedElements.push(
+            <p key={key} className="my-3 text-zinc-300 leading-relaxed text-sm font-sans">
+              {processInlineFormatting(trimmedLine)}
+            </p>
+          );
+        }
+      }
+    });
+
+    flushList(`flush-${index}`);
+    return <div key={index}>{renderedElements}</div>;
+  });
+}
+
+function processInlineFormatting(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*|`.*?`)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={idx} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return <code key={idx} className="bg-white/5 border border-white/5 px-1.5 py-0.5 rounded font-mono text-xs text-purple-300">{part.slice(1, -1)}</code>;
+    }
+    return part;
+  });
 }

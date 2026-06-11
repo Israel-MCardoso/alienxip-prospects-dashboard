@@ -12,51 +12,60 @@ import { cn } from "@/lib/utils";
 import { updateProspectStatusAction } from "@/features/prospects/actions";
 
 // PT-BR Mappings for Column Headers
-const columnMeta: Record<string, { label: string; colorClass: string; glowClass: string }> = {
+const columnMeta: Record<string, { label: string; colorClass: string; glowClass: string; dotClass: string }> = {
   new: {
     label: "Novo Lead",
-    colorClass: "border-t-2 border-t-zinc-400 bg-zinc-500/5",
-    glowClass: "group-hover:border-zinc-500/30"
+    colorClass: "border-t-2 border-t-zinc-500/40 bg-[#08080a]/60",
+    glowClass: "shadow-[0_0_15px_rgba(161,161,170,0.05)]",
+    dotClass: "bg-zinc-400"
   },
   qualified: {
     label: "Qualificação",
-    colorClass: "border-t-2 border-t-pink-500 bg-pink-500/5",
-    glowClass: "group-hover:border-pink-500/30"
+    colorClass: "border-t-2 border-t-pink-500/40 bg-[#08080a]/60",
+    glowClass: "shadow-[0_0_15px_rgba(236,72,153,0.05)]",
+    dotClass: "bg-pink-400"
   },
   diagnostico: {
     label: "Diagnóstico",
-    colorClass: "border-t-2 border-t-blue-500 bg-blue-500/5",
-    glowClass: "group-hover:border-blue-500/30"
+    colorClass: "border-t-2 border-t-blue-500/40 bg-[#08080a]/60",
+    glowClass: "shadow-[0_0_15px_rgba(59,130,246,0.05)]",
+    dotClass: "bg-blue-400"
   },
   contato_inicial: {
     label: "Primeiro Contato",
-    colorClass: "border-t-2 border-t-indigo-500 bg-indigo-500/5",
-    glowClass: "group-hover:border-indigo-500/30"
+    colorClass: "border-t-2 border-t-indigo-500/40 bg-[#08080a]/60",
+    glowClass: "shadow-[0_0_15px_rgba(99,102,241,0.05)]",
+    dotClass: "bg-indigo-400"
   },
   meeting_scheduled: {
     label: "Reunião Agendada",
-    colorClass: "border-t-2 border-t-teal-500 bg-teal-500/5",
-    glowClass: "group-hover:border-teal-500/30"
+    colorClass: "border-t-2 border-t-teal-500/40 bg-[#08080a]/60",
+    glowClass: "shadow-[0_0_15px_rgba(20,184,166,0.05)]",
+    dotClass: "bg-teal-400"
   },
   proposta: {
     label: "Proposta Enviada",
-    colorClass: "border-t-2 border-t-purple-500 bg-purple-500/5",
-    glowClass: "group-hover:border-purple-500/30"
+    colorClass: "border-t-2 border-t-purple-500/40 bg-[#08080a]/60",
+    glowClass: "shadow-[0_0_15px_rgba(168,85,247,0.05)]",
+    dotClass: "bg-purple-400"
   },
   negociacao: {
     label: "Negociação",
-    colorClass: "border-t-2 border-t-amber-500 bg-amber-500/5",
-    glowClass: "group-hover:border-amber-500/30"
+    colorClass: "border-t-2 border-t-amber-500/40 bg-[#08080a]/60",
+    glowClass: "shadow-[0_0_15px_rgba(245,158,11,0.05)]",
+    dotClass: "bg-amber-400"
   },
   fechado: {
     label: "Fechado Ganho",
-    colorClass: "border-t-2 border-t-emerald-500 bg-emerald-500/5",
-    glowClass: "group-hover:border-emerald-500/30"
+    colorClass: "border-t-2 border-t-emerald-500/40 bg-[#08080a]/60",
+    glowClass: "shadow-[0_0_15px_rgba(16,185,129,0.05)]",
+    dotClass: "bg-emerald-400"
   },
   perdido: {
     label: "Fechado Perdido",
-    colorClass: "border-t-2 border-t-red-500 bg-red-500/5",
-    glowClass: "group-hover:border-red-500/30"
+    colorClass: "border-t-2 border-t-red-500/40 bg-[#08080a]/60",
+    glowClass: "shadow-[0_0_15px_rgba(239,68,68,0.05)]",
+    dotClass: "bg-red-400"
   }
 };
 
@@ -171,24 +180,28 @@ export function PipelineBoard({
             0
           );
 
-          const isOver = activeOverColumn === status;
-
+          const hasDot = "dotClass" in meta;
           return (
             <Card
               key={status}
               onDragOver={(e) => handleDragOver(e, status)}
+              onDragLeave={() => setActiveOverColumn(null)}
               onDrop={(e) => handleDrop(e, status)}
               className={cn(
                 "min-w-[290px] w-[290px] shrink-0 bg-[#08080a]/60 border-white/5 backdrop-blur-md flex flex-col justify-between overflow-hidden transition-all duration-300",
                 meta.colorClass,
-                isOver ? "border-purple-500/40 bg-purple-950/5 scale-[1.01]" : ""
+                activeOverColumn === status ? "border-purple-500/35 bg-purple-950/5 scale-[1.015] shadow-lg shadow-purple-950/10" : "",
+                meta.glowClass
               )}
             >
               <CardHeader className="pb-3 border-b border-white/5 bg-zinc-950/20">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xs font-bold font-mono text-white uppercase tracking-wider">
-                    {meta.label}
-                  </CardTitle>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {hasDot && <span className={cn("size-1.5 rounded-full shrink-0", meta.dotClass)} />}
+                    <CardTitle className="text-xs font-bold font-mono text-white uppercase tracking-wider truncate">
+                      {meta.label}
+                    </CardTitle>
+                  </div>
                   <span className="text-[10px] font-mono bg-white/5 px-2 py-0.5 rounded-full border border-white/5 text-muted-foreground">
                     {list.length}
                   </span>
@@ -225,8 +238,8 @@ export function PipelineBoard({
                           whileHover={{ scale: 1.015 }}
                           whileTap={{ scale: 0.985 }}
                           className={cn(
-                            "group cursor-grab active:cursor-grabbing flex flex-col justify-between rounded-xl border border-white/5 bg-[#0a0a0c]/80 p-3.5 hover:bg-purple-950/10 hover:border-purple-500/20 transition-all duration-200",
-                            draggedId === prospect.id ? "opacity-40 border-purple-500/10" : ""
+                            "group cursor-grab active:cursor-grabbing flex flex-col justify-between rounded-xl border border-white/5 bg-[#0b0b0e] p-3.5 hover:bg-purple-950/10 hover:border-purple-500/25 hover:shadow-md hover:shadow-purple-950/5 transition-all duration-300",
+                            draggedId === prospect.id ? "opacity-30 border-purple-500/15" : ""
                           )}
                         >
                           <div>
@@ -237,20 +250,20 @@ export function PipelineBoard({
                               >
                                 {prospect.name}
                               </Link>
-                              <span className="text-[10px] text-purple-300/80 font-semibold font-mono whitespace-nowrap">
+                              <span className="text-[10px] text-purple-300 font-bold font-mono whitespace-nowrap bg-purple-950/30 px-1.5 py-0.5 rounded border border-purple-800/20">
                                 {formatCurrency(potentialVal)}
                               </span>
                             </div>
 
-                            <div className="mt-2.5 flex flex-wrap items-center gap-1">
+                            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                               <span
                                 className={cn(
-                                  "text-[8px] font-bold px-1.5 py-0.5 rounded-full border uppercase font-mono",
+                                  "text-[8px] font-bold px-1.5 py-0.5 rounded-full border uppercase font-mono shadow-sm",
                                   isHot
-                                    ? "bg-red-950/40 text-red-400 border-red-800/40"
+                                    ? "bg-rose-950/30 text-rose-300 border-rose-500/20 shadow-rose-950/10"
                                     : isWarm
-                                    ? "bg-amber-950/40 text-amber-400 border-amber-800/40"
-                                    : "bg-blue-950/40 text-blue-400 border-blue-800/40"
+                                    ? "bg-amber-950/30 text-amber-300 border-amber-500/20 shadow-amber-950/10"
+                                    : "bg-blue-950/30 text-blue-300 border-blue-500/20 shadow-blue-950/10"
                                 )}
                               >
                                 {temperatureLabel(prospect.temperature)}

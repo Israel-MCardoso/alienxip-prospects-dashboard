@@ -23,7 +23,11 @@ import {
   FilesIcon,
   LibraryIcon,
   SparklesIcon,
-  LayoutDashboardIcon
+  LayoutDashboardIcon,
+  UserPlusIcon,
+  SendIcon,
+  TrendingUpIcon,
+  ClockIcon
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,9 +39,18 @@ interface WorkspaceHomeProps {
   userEmail: string | null;
   userRole: string | null;
   preferredArea: AreaKey;
+  metrics: {
+    leadsDoDia: number;
+    diagnosticosPendentes: number;
+    propostasEnviadas: number;
+    fechamentosDoMes: number;
+    projetosAtivos: number;
+    bugsCriticos: number;
+    tarefasAtrasadas: number;
+  };
 }
 
-export function WorkspaceHome({ userEmail, userRole, preferredArea }: WorkspaceHomeProps) {
+export function WorkspaceHome({ userEmail, userRole, preferredArea, metrics }: WorkspaceHomeProps) {
   const [activeArea, setActiveArea] = useState<AreaKey>(preferredArea);
   const [prevPreferredArea, setPrevPreferredArea] = useState<AreaKey>(preferredArea);
 
@@ -133,15 +146,122 @@ export function WorkspaceHome({ userEmail, userRole, preferredArea }: WorkspaceH
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="bg-purple-950/40 text-purple-300 border-purple-800/40 font-mono">
-              Sprint 11 (Motherxip)
+              Sprint 12.5 (Mission Control)
             </Badge>
             <span className="text-xs text-muted-foreground">Sessão: {userEmail}</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white font-mono">MOTHERXIP</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white font-mono uppercase tracking-widest bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent">
+            MOTHERXIP MISSION CONTROL
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Centro operacional integrado da <span className="text-purple-400 font-semibold">ALIENXIP</span>.
+            Painel operacional e monitoramento unificado da <span className="text-purple-400 font-semibold">ALIENXIP</span>.
           </p>
         </div>
+      </div>
+
+      {/* Mission Control KPIs */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        {[
+          {
+            label: "Leads do Dia",
+            value: metrics?.leadsDoDia ?? 0,
+            icon: UserPlusIcon,
+            color: "border-pink-500/10 hover:border-pink-500/30 hover:shadow-pink-950/10",
+            iconColor: "text-pink-400",
+            bgGlow: "group-hover:bg-pink-500/5",
+            href: "/os/prospects"
+          },
+          {
+            label: "Diagnósticos",
+            value: metrics?.diagnosticosPendentes ?? 0,
+            sub: "Pendentes",
+            icon: TargetIcon,
+            color: "border-amber-500/10 hover:border-amber-500/30 hover:shadow-amber-950/10",
+            iconColor: "text-amber-400",
+            bgGlow: "group-hover:bg-amber-500/5",
+            href: "/os/prospects"
+          },
+          {
+            label: "Propostas",
+            value: metrics?.propostasEnviadas ?? 0,
+            sub: "Enviadas",
+            icon: SendIcon,
+            color: "border-blue-500/10 hover:border-blue-500/30 hover:shadow-blue-950/10",
+            iconColor: "text-blue-400",
+            bgGlow: "group-hover:bg-blue-500/5",
+            href: "/os/prospects/pipeline"
+          },
+          {
+            label: "Fechamentos",
+            value: metrics?.fechamentosDoMes ?? 0,
+            sub: "no Mês",
+            icon: TrendingUpIcon,
+            color: "border-emerald-500/10 hover:border-emerald-500/30 hover:shadow-emerald-950/10",
+            iconColor: "text-emerald-400",
+            bgGlow: "group-hover:bg-emerald-500/5",
+            href: "/os/prospects/pipeline"
+          },
+          {
+            label: "Projetos Ativos",
+            value: metrics?.projetosAtivos ?? 0,
+            icon: BriefcaseIcon,
+            color: "border-cyan-500/10 hover:border-cyan-500/30 hover:shadow-cyan-950/10",
+            iconColor: "text-cyan-400",
+            bgGlow: "group-hover:bg-cyan-500/5",
+            href: "/os/projects"
+          },
+          {
+            label: "Bugs Críticos",
+            value: metrics?.bugsCriticos ?? 0,
+            icon: BugIcon,
+            color: "border-rose-500/10 hover:border-rose-500/30 hover:shadow-rose-950/10",
+            iconColor: "text-rose-400",
+            bgGlow: "group-hover:bg-rose-500/5",
+            href: "/os/tech/bugs"
+          },
+          {
+            label: "Tarefas Atrasadas",
+            value: metrics?.tarefasAtrasadas ?? 0,
+            icon: ClockIcon,
+            color: "border-purple-500/10 hover:border-purple-500/30 hover:shadow-purple-950/10",
+            iconColor: "text-purple-400",
+            bgGlow: "group-hover:bg-purple-500/5",
+            href: "/os/tasks"
+          }
+        ].map((item, idx) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={idx}
+              href={item.href}
+              className={cn(
+                "group flex flex-col justify-between overflow-hidden rounded-xl border bg-[#09090b]/40 p-4 transition-all duration-300",
+                "hover:-translate-y-1 hover:shadow-lg backdrop-blur-sm",
+                item.color
+              )}
+            >
+              {/* Background radial gradient glow */}
+              <div className={cn(
+                "absolute -right-4 -bottom-4 size-16 rounded-full blur-xl transition-all duration-300 opacity-20 pointer-events-none",
+                item.bgGlow
+              )} />
+              
+              <div className="flex items-center justify-between gap-1.5">
+                <span className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+                  {item.label}
+                  {item.sub && <span className="block text-[9px] lowercase font-normal italic">{item.sub}</span>}
+                </span>
+                <Icon className={cn("size-4 transition-transform duration-300 group-hover:scale-110", item.iconColor)} />
+              </div>
+              
+              <div className="mt-3 flex items-baseline">
+                <span className="text-2xl font-bold font-mono tracking-tight text-white group-hover:text-purple-200 transition-colors">
+                  {item.value}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Tabs Selector for Areas */}

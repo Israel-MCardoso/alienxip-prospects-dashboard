@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Building2Icon, 
   CalendarIcon, 
@@ -221,33 +222,91 @@ export function ProspectWorkspace({
               <TabsTrigger value="proposals" className="rounded-lg text-xs font-mono py-1.5 px-3">Propostas</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview" className="mt-4">
-              <OverviewTab prospect={prospect} resolvedClientLabel={resolvedClientLabel} notesCount={notes.length} tasksCount={tasks.length} filesCount={files.length} proposalsCount={proposals.length} />
-            </TabsContent>
-            
-            <TabsContent value="diagnostic" className="mt-4">
-              <DiagnosticTab prospectId={prospect.id} diagnostic={diagnostic} aiStep={aiStep} onGenerate={handleGenerateDiagnostic} />
-            </TabsContent>
-            
-            <TabsContent value="timeline" className="mt-4">
-              <TimelineTab activities={activities} />
-            </TabsContent>
-            
-            <TabsContent value="notes" className="mt-4">
-              <NotesTab prospectId={prospect.id} notes={notes} profiles={profiles} />
-            </TabsContent>
-            
-            <TabsContent value="tasks" className="mt-4">
-              <TasksTab prospect={prospect} tasks={tasks} />
-            </TabsContent>
-            
-            <TabsContent value="files" className="mt-4">
-              <FileList files={files} entityLabel="este prospect" entityType="prospect" entityId={prospect.id} />
-            </TabsContent>
+            <AnimatePresence mode="wait">
+              <TabsContent value="overview" className="mt-4 focus-visible:outline-none">
+                <motion.div
+                  key="overview"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <OverviewTab prospect={prospect} resolvedClientLabel={resolvedClientLabel} notesCount={notes.length} tasksCount={tasks.length} filesCount={files.length} proposalsCount={proposals.length} />
+                </motion.div>
+              </TabsContent>
+              
+              <TabsContent value="diagnostic" className="mt-4 focus-visible:outline-none">
+                <motion.div
+                  key="diagnostic"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <DiagnosticTab prospectId={prospect.id} diagnostic={diagnostic} aiStep={aiStep} onGenerate={handleGenerateDiagnostic} />
+                </motion.div>
+              </TabsContent>
+              
+              <TabsContent value="timeline" className="mt-4 focus-visible:outline-none">
+                <motion.div
+                  key="timeline"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <TimelineTab activities={activities} />
+                </motion.div>
+              </TabsContent>
+              
+              <TabsContent value="notes" className="mt-4 focus-visible:outline-none">
+                <motion.div
+                  key="notes"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <NotesTab prospectId={prospect.id} notes={notes} profiles={profiles} />
+                </motion.div>
+              </TabsContent>
+              
+              <TabsContent value="tasks" className="mt-4 focus-visible:outline-none">
+                <motion.div
+                  key="tasks"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <TasksTab prospect={prospect} tasks={tasks} />
+                </motion.div>
+              </TabsContent>
+              
+              <TabsContent value="files" className="mt-4 focus-visible:outline-none">
+                <motion.div
+                  key="files"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <FileList files={files} entityLabel="este prospect" entityType="prospect" entityId={prospect.id} />
+                </motion.div>
+              </TabsContent>
 
-            <TabsContent value="proposals" className="mt-4">
-              <ProposalsTab prospectId={prospect.id} proposals={proposals} />
-            </TabsContent>
+              <TabsContent value="proposals" className="mt-4 focus-visible:outline-none">
+                <motion.div
+                  key="proposals"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <ProposalsTab prospectId={prospect.id} proposals={proposals} />
+                </motion.div>
+              </TabsContent>
+            </AnimatePresence>
           </Tabs>
         </div>
 
@@ -505,17 +564,28 @@ function TimelineTab({ activities }: { activities: ProspectActivityRow[] }) {
         <CardTitle className="text-sm font-semibold text-white font-mono uppercase tracking-wider">Histórico Operacional</CardTitle>
         <CardDescription className="text-xs text-muted-foreground">Linha do tempo cronológica com alterações do lead.</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="relative pl-6 pr-4 pb-6 flex flex-col gap-6 before:absolute before:left-3 before:top-4 before:bottom-4 before:w-[1px] before:bg-gradient-to-b before:from-purple-500/40 before:via-purple-500/15 before:to-transparent">
         {activities.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-4">Nenhuma atividade registrada.</p>
         ) : null}
         {activities.map((activity) => (
-          <div key={activity.id} className="relative pl-4 border-l border-purple-500/25 flex flex-col gap-0.5">
-            <div className="absolute -left-[4.5px] top-1.5 size-2 rounded-full bg-purple-500 shadow-sm" />
-            <div className="font-semibold text-xs text-white leading-normal">{activityLabel(activity.action_type)}</div>
-            <div className="text-[10px] text-zinc-500 font-mono">{formatActivityDate(activity.created_at)}</div>
+          <div key={activity.id} className="relative flex flex-col gap-1.5 group">
+            {/* Glowing dot indicator */}
+            <div className="absolute -left-[19.5px] top-1.5 size-2.5 rounded-full bg-purple-500 ring-4 ring-[#07070a] shadow-[0_0_8px_rgba(147,51,234,0.5)] transition-all duration-300 group-hover:bg-purple-400 group-hover:scale-110" />
+            
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold text-xs text-white group-hover:text-purple-300 transition-colors leading-none tracking-tight">
+                {activityLabel(activity.action_type)}
+              </span>
+              <span className="text-[9px] text-zinc-500 font-mono tracking-wider">
+                {formatActivityDate(activity.created_at)}
+              </span>
+            </div>
+            
             {activity.description ? (
-              <p className="mt-1 text-xs text-muted-foreground bg-[#0a0a0c]/40 rounded p-2 border border-white/5">{activity.description}</p>
+              <p className="text-xs text-muted-foreground bg-[#0a0a0c]/45 rounded-xl p-3 border border-white/5 group-hover:border-purple-500/10 transition-colors leading-relaxed shadow-sm">
+                {activity.description}
+              </p>
             ) : null}
           </div>
         ))}

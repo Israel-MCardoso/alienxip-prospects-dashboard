@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -80,37 +81,84 @@ function TaskTable({
           {tasks.map((task) => (
             <TableRow key={task.id}>
               <TableCell>
-                <div className="font-medium">{task.title}</div>
-                {task.description ? <div className="text-xs text-muted-foreground">{task.description}</div> : null}
+                <div className="font-medium text-white">{task.title}</div>
+                {task.description ? <div className="text-xs text-muted-foreground mt-0.5">{task.description}</div> : null}
               </TableCell>
-              <TableCell><Badge variant="outline">{statusLabel(task.status)}</Badge></TableCell>
-              <TableCell>{priorityLabel(task.priority)}</TableCell>
-              <TableCell>{profileName(profiles, task.assigned_to)}</TableCell>
+              <TableCell>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[10px] font-mono uppercase",
+                    task.status === "completed"
+                      ? "bg-emerald-950/20 text-emerald-400 border-emerald-500/20"
+                      : task.status === "in_progress"
+                      ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                      : task.status === "canceled"
+                      ? "bg-zinc-950/20 text-zinc-500 border-zinc-800/25"
+                      : "bg-[#0b0b0e] text-zinc-400 border-white/5"
+                  )}
+                >
+                  {statusLabel(task.status)}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <span
+                  className={cn(
+                    "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium font-mono uppercase tracking-wider border",
+                    task.priority === "urgent"
+                      ? "bg-rose-950/30 text-rose-400 border-rose-500/20 shadow-sm shadow-rose-950/10"
+                      : task.priority === "high"
+                      ? "bg-amber-950/30 text-amber-400 border-amber-500/20 shadow-sm shadow-amber-950/10"
+                      : task.priority === "medium"
+                      ? "bg-blue-950/30 text-blue-400 border-blue-500/20 shadow-sm shadow-blue-950/10"
+                      : "bg-zinc-900/40 text-zinc-400 border-zinc-800/20"
+                  )}
+                >
+                  {priorityLabel(task.priority)}
+                </span>
+              </TableCell>
+              <TableCell className="text-zinc-300">{profileName(profiles, task.assigned_to)}</TableCell>
               <TableCell>
                 {task.project_id ? (
                   <div className="mb-1">
-                    <Link className="text-primary hover:underline font-semibold" href={`/os/projects/${task.project_id}`}>
+                    <Link className="text-purple-400 hover:text-purple-300 hover:underline font-semibold" href={`/os/projects/${task.project_id}`}>
                       Proj: {projectName(projects, task.project_id)}
                     </Link>
                   </div>
                 ) : null}
                 {task.client_id ? (
                   <div className="mb-1">
-                    <Link className="text-xs text-primary hover:underline font-semibold" href={`/os/clients/${task.client_id}`}>
+                    <Link className="text-xs text-purple-400 hover:text-purple-300 hover:underline font-semibold" href={`/os/clients/${task.client_id}`}>
                       Cli: {clientName(clients, companies, task.client_id)}
                     </Link>
                   </div>
                 ) : null}
                 {task.company_id ? (
                   <div>
-                    <Link className="text-xs text-primary hover:underline font-semibold" href={`/os/companies/${task.company_id}`}>
+                    <Link className="text-xs text-purple-400 hover:text-purple-300 hover:underline font-semibold" href={`/os/companies/${task.company_id}`}>
                       Emp: {companyName(companies, task.company_id)}
                     </Link>
                   </div>
                 ) : null}
                 {!task.project_id && !task.client_id && !task.company_id ? "-" : null}
               </TableCell>
-              <TableCell>{formatDate(task.due_date)}</TableCell>
+              <TableCell>
+                {task.due_date ? (() => {
+                  const isOverdue = new Date(task.due_date) < new Date() && task.status !== "completed" && task.status !== "canceled";
+                  return (
+                    <span
+                      className={cn(
+                        "font-mono text-xs font-semibold px-2 py-0.5 rounded border",
+                        isOverdue
+                          ? "text-red-400 bg-red-950/25 border-red-500/20 shadow-sm shadow-red-950/10"
+                          : "text-zinc-400 bg-zinc-950/10 border-white/5"
+                      )}
+                    >
+                      {formatDate(task.due_date)}
+                    </span>
+                  );
+                })() : "-"}
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-2">
                   {task.status !== "completed" ? (

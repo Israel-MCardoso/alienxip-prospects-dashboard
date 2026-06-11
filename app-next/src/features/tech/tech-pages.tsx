@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   createBacklogItemAction,
   createBugAction,
@@ -161,23 +162,64 @@ export function BugsPageView({
                     <TableRow key={bug.id}>
                       <TableCell>
                         <div className="font-semibold text-white">{bug.title}</div>
-                        {bug.description ? <div className="text-xs text-muted-foreground">{bug.description}</div> : null}
+                        {bug.description ? <div className="text-xs text-muted-foreground mt-0.5">{bug.description}</div> : null}
                       </TableCell>
-                      <TableCell><Badge variant="outline">{bug.status}</Badge></TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className={bug.severity === "critical" ? "border-red-500 text-red-400 bg-red-950/10" : bug.severity === "high" ? "border-amber-500 text-amber-400" : ""}
+                          className={cn(
+                            "text-[10px] font-mono uppercase tracking-wider",
+                            bug.status === "open"
+                              ? "bg-zinc-900 text-zinc-400 border-zinc-850"
+                              : bug.status === "in_progress"
+                              ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                              : bug.status === "fixed"
+                              ? "bg-emerald-950/20 text-emerald-400 border-emerald-500/20"
+                              : "bg-purple-950/20 text-purple-400 border-purple-500/20"
+                          )}
+                        >
+                          {bug.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px] font-mono uppercase tracking-wider",
+                            bug.severity === "critical"
+                              ? "bg-rose-950/30 text-rose-400 border-rose-500/30 shadow-[0_0_8px_rgba(239,68,68,0.2)]"
+                              : bug.severity === "high"
+                              ? "bg-amber-950/30 text-amber-400 border-amber-500/30"
+                              : bug.severity === "medium"
+                              ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                              : "bg-zinc-900/40 text-zinc-400 border-zinc-800/20"
+                          )}
                         >
                           {bug.severity}
                         </Badge>
                       </TableCell>
-                      <TableCell>{bug.priority}</TableCell>
                       <TableCell>
-                        {bug.project_id ? <div>Proj: <Link href={`/os/projects/${bug.project_id}`} className="text-primary hover:underline">{projectName(projects, bug.project_id)}</Link></div> : null}
-                        {bug.client_id ? <div>Cli: <Link href={`/os/clients/${bug.client_id}`} className="text-primary hover:underline">{clientName(clients, companies, bug.client_id)}</Link></div> : null}
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px] font-mono uppercase tracking-wider",
+                            bug.priority === "urgent"
+                              ? "bg-rose-950/30 text-rose-400 border-rose-500/20"
+                              : bug.priority === "high"
+                              ? "bg-amber-950/20 text-amber-400 border-amber-500/20"
+                              : bug.priority === "medium"
+                              ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                              : "bg-zinc-900/40 text-zinc-400 border-zinc-80"
+                          )}
+                        >
+                          {bug.priority}
+                        </Badge>
                       </TableCell>
-                      <TableCell>{profileName(profiles, bug.assigned_to)}</TableCell>
+                      <TableCell>
+                        {bug.project_id ? <div className="mb-0.5"><span className="text-[10px] text-zinc-500 font-mono">PROJ: </span><Link href={`/os/projects/${bug.project_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{projectName(projects, bug.project_id)}</Link></div> : null}
+                        {bug.client_id ? <div><span className="text-[10px] text-zinc-500 font-mono">CLI: </span><Link href={`/os/clients/${bug.client_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{clientName(clients, companies, bug.client_id)}</Link></div> : null}
+                      </TableCell>
+                      <TableCell className="text-zinc-300">{profileName(profiles, bug.assigned_to)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button size="sm" variant="outline" onClick={() => setEditingBug(bug)}>Editar</Button>
@@ -364,23 +406,46 @@ export function IncidentsPageView({
                     <TableRow key={inc.id}>
                       <TableCell>
                         <div className="font-semibold text-white">{inc.title}</div>
-                        {inc.description ? <div className="text-xs text-muted-foreground">{inc.description}</div> : null}
+                        {inc.description ? <div className="text-xs text-muted-foreground mt-0.5">{inc.description}</div> : null}
                       </TableCell>
-                      <TableCell><Badge variant="outline">{inc.status}</Badge></TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className={inc.severity === "critical" ? "border-red-500 text-red-400 bg-red-950/10" : inc.severity === "high" ? "border-amber-500 text-amber-400" : ""}
+                          className={cn(
+                            "text-[10px] font-mono uppercase tracking-wider",
+                            (inc.status === "investigating" || inc.status === "identified")
+                              ? "bg-rose-950/30 text-rose-400 border-rose-500/30 shadow-[0_0_8px_rgba(239,68,68,0.25)] animate-pulse"
+                              : inc.status === "monitoring"
+                              ? "bg-amber-950/20 text-amber-400 border-amber-500/20"
+                              : "bg-emerald-950/20 text-emerald-400 border-emerald-500/20"
+                          )}
+                        >
+                          {inc.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px] font-mono uppercase tracking-wider",
+                            inc.severity === "critical"
+                              ? "bg-rose-950/30 text-rose-400 border-rose-500/30 shadow-[0_0_8px_rgba(239,68,68,0.2)]"
+                              : inc.severity === "high"
+                              ? "bg-amber-950/30 text-amber-400 border-amber-500/30"
+                              : inc.severity === "medium"
+                              ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                              : "bg-zinc-900/40 text-zinc-400 border-zinc-800/20"
+                          )}
                         >
                           {inc.severity}
                         </Badge>
                       </TableCell>
-                      <TableCell>{inc.started_at ? String(inc.started_at).slice(0, 10) : "-"}</TableCell>
+                      <TableCell className="font-mono text-xs text-zinc-400">{inc.started_at ? String(inc.started_at).slice(0, 10) : "-"}</TableCell>
                       <TableCell>
-                        {inc.project_id ? <div>Proj: <Link href={`/os/projects/${inc.project_id}`} className="text-primary hover:underline">{projectName(projects, inc.project_id)}</Link></div> : null}
-                        {inc.client_id ? <div>Cli: <Link href={`/os/clients/${inc.client_id}`} className="text-primary hover:underline">{clientName(clients, companies, inc.client_id)}</Link></div> : null}
+                        {inc.project_id ? <div className="mb-0.5"><span className="text-[10px] text-zinc-500 font-mono">PROJ: </span><Link href={`/os/projects/${inc.project_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{projectName(projects, inc.project_id)}</Link></div> : null}
+                        {inc.client_id ? <div><span className="text-[10px] text-zinc-500 font-mono">CLI: </span><Link href={`/os/clients/${inc.client_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{clientName(clients, companies, inc.client_id)}</Link></div> : null}
                       </TableCell>
-                      <TableCell>{profileName(profiles, inc.owner_id)}</TableCell>
+                      <TableCell className="text-zinc-300">{profileName(profiles, inc.owner_id)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button size="sm" variant="outline" onClick={() => setEditingIncident(inc)}>Editar</Button>
@@ -721,19 +786,51 @@ export function RoadmapPageView({
                     <TableRow key={item.id}>
                       <TableCell>
                         <div className="font-semibold text-white">{item.title}</div>
-                        {item.description ? <div className="text-xs text-muted-foreground">{item.description}</div> : null}
+                        {item.description ? <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div> : null}
                       </TableCell>
-                      <TableCell><Badge variant="outline">{item.status}</Badge></TableCell>
-                      <TableCell>{item.priority}</TableCell>
-                      <TableCell>{item.target_date ? String(item.target_date).slice(0, 10) : "-"}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px] font-mono uppercase tracking-wider",
+                            item.status === "shipped"
+                              ? "bg-emerald-950/20 text-emerald-400 border-emerald-500/20"
+                              : item.status === "in_progress"
+                              ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                              : item.status === "canceled"
+                              ? "bg-zinc-950/20 text-zinc-500 border-zinc-800/25"
+                              : "bg-[#0b0b0e] text-zinc-400 border-white/5"
+                          )}
+                        >
+                          {item.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px] font-mono uppercase tracking-wider",
+                            item.priority === "urgent"
+                              ? "bg-rose-950/30 text-rose-400 border-rose-500/20"
+                              : item.priority === "high"
+                              ? "bg-amber-950/20 text-amber-400 border-amber-500/20"
+                              : item.priority === "medium"
+                              ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                              : "bg-zinc-900/40 text-zinc-400 border-zinc-80"
+                          )}
+                        >
+                          {item.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-zinc-400">{item.target_date ? String(item.target_date).slice(0, 10) : "-"}</TableCell>
                       <TableCell>
                         {item.project_id ? (
-                          <Link href={`/os/projects/${item.project_id}`} className="text-primary hover:underline">
+                          <Link href={`/os/projects/${item.project_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">
                             {projectName(projects, item.project_id)}
                           </Link>
                         ) : "-"}
                       </TableCell>
-                      <TableCell>{profileName(profiles, item.owner_id)}</TableCell>
+                      <TableCell className="text-zinc-300">{profileName(profiles, item.owner_id)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button size="sm" variant="outline" onClick={() => setEditingItem(item)}>Editar</Button>

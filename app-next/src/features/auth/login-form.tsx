@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 export function LoginForm({ isConfigured, initialMessage }: { isConfigured: boolean; initialMessage?: string }) {
   const router = useRouter();
@@ -99,28 +100,58 @@ export function LoginForm({ isConfigured, initialMessage }: { isConfigured: bool
   }
 
   return (
-    <div className="relative w-full max-w-md rounded-2xl border border-purple-500/10 bg-black/60 p-8 shadow-2xl shadow-purple-950/20 backdrop-blur-md animate-in fade-in zoom-in-95 duration-500">
+    <motion.div
+      initial={{ opacity: 0, y: 25 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 90, damping: 15, mass: 1 }}
+      className="relative w-full max-w-md rounded-2xl border border-purple-500/10 bg-black/60 p-8 shadow-2xl shadow-purple-950/20 backdrop-blur-md"
+    >
       {/* Subtle purple radial glow */}
       <div className="absolute -top-10 -left-10 size-40 rounded-full bg-purple-600/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-10 -right-10 size-40 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none" />
 
       <div className="flex flex-col items-center text-center">
-        <Image
-          src="/brand/motherxip-logo.png"
-          alt="MOTHERXIP Logo"
-          width={64}
-          height={64}
-          className="object-contain mb-4"
-        />
-        <h1 className="text-2xl font-extrabold tracking-wider text-white font-mono uppercase">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 120 }}
+          className="relative size-16 mb-4 flex items-center justify-center rounded-xl bg-purple-950/30 border border-purple-500/20 shadow-inner"
+        >
+          <Image
+            src="/brand/motherxip-logo.png"
+            alt="MOTHERXIP Logo"
+            width={48}
+            height={48}
+            className="object-contain"
+          />
+        </motion.div>
+        
+        <motion.h1
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-2xl font-extrabold tracking-wider text-white font-mono uppercase bg-gradient-to-r from-white via-purple-100 to-purple-400 bg-clip-text text-transparent"
+        >
           MOTHERXIP
-        </h1>
-        <p className="mt-1 text-xs font-semibold text-purple-300 font-mono tracking-tight uppercase">
+        </motion.h1>
+        
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="mt-1 text-xs font-semibold text-purple-300 font-mono tracking-tight uppercase"
+        >
           Centro operacional da ALIENXIP
-        </p>
-        <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed max-w-sm">
+        </motion.p>
+        
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mt-2 text-[11px] text-muted-foreground leading-relaxed max-w-sm"
+        >
           Acesse prospects, projetos, tarefas, conhecimento e operação em um único ambiente.
-        </p>
+        </motion.p>
       </div>
 
       {!isConfigured ? (
@@ -132,31 +163,41 @@ export function LoginForm({ isConfigured, initialMessage }: { isConfigured: bool
       ) : null}
 
       <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit}>
-        <div className="relative">
-          <MailIcon className="absolute top-3 left-3 size-4 text-muted-foreground" />
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.35 }}
+          className="relative"
+        >
+          <MailIcon className="absolute top-3 left-3 size-4 text-muted-foreground transition-colors group-focus-within:text-purple-400" />
           <Input
             type="email"
             placeholder="email@alienxip.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="pl-9 bg-black/40 border-white/10 text-white placeholder:text-muted-foreground focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 text-xs h-10"
+            className="pl-9 bg-black/40 border-white/10 text-white placeholder:text-muted-foreground focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-xs h-10 transition-all duration-300"
             required
             disabled={!isConfigured || isPending}
           />
-        </div>
+        </motion.div>
 
-        <div className="relative">
-          <LockIcon className="absolute top-3 left-3 size-4 text-muted-foreground" />
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+          className="relative"
+        >
+          <LockIcon className="absolute top-3 left-3 size-4 text-muted-foreground transition-colors group-focus-within:text-purple-400" />
           <Input
             type="password"
             placeholder="Senha"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="pl-9 bg-black/40 border-white/10 text-white placeholder:text-muted-foreground focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 text-xs h-10"
+            className="pl-9 bg-black/40 border-white/10 text-white placeholder:text-muted-foreground focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-xs h-10 transition-all duration-300"
             required
             disabled={!isConfigured || isPending}
           />
-        </div>
+        </motion.div>
 
         <div className="flex justify-end">
           <button
@@ -187,13 +228,19 @@ export function LoginForm({ isConfigured, initialMessage }: { isConfigured: bool
           </p>
         ) : null}
 
-        <Button
-          type="submit"
-          className="w-full mt-1 bg-purple-600 hover:bg-purple-500 text-white font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 text-xs h-10"
-          disabled={!isConfigured || isPending}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
         >
-          {isPending ? "Entrando..." : "Entrar"}
-        </Button>
+          <Button
+            type="submit"
+            className="w-full mt-1 bg-purple-600 hover:bg-purple-500 text-white font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 text-xs h-10 cursor-pointer"
+            disabled={!isConfigured || isPending}
+          >
+            {isPending ? "Entrando..." : "Entrar"}
+          </Button>
+        </motion.div>
       </form>
 
       <div className="mt-6 text-center">
@@ -201,6 +248,6 @@ export function LoginForm({ isConfigured, initialMessage }: { isConfigured: bool
           Security Protocol Enabled
         </span>
       </div>
-    </div>
+    </motion.div>
   );
 }

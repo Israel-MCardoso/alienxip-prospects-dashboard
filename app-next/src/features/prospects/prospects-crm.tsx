@@ -28,10 +28,16 @@ export function ProspectsCrm({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <Badge variant="secondary">Supabase CRM v1</Badge>
-        <h1 className="text-2xl font-semibold tracking-tight">Prospects</h1>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="bg-purple-950/40 text-purple-300 border-purple-800/40 font-mono">
+            Supabase CRM v1.2
+          </Badge>
+        </div>
+        <h1 className="text-3xl font-extrabold tracking-tight text-white font-mono uppercase bg-gradient-to-r from-white via-purple-100 to-purple-400 bg-clip-text text-transparent">
+          PROSPECTS PIPELINE
+        </h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Primeira versao conectada ao Supabase em ambiente de desenvolvimento, com criacao e edicao basica.
+          Gestão e prospecção ativa de leads e inteligência comercial integrados no Supabase.
         </p>
       </div>
 
@@ -80,14 +86,14 @@ export function ProspectsCrm({
               {prospects.map((prospect) => (
                 <div
                   key={prospect.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-white/5 bg-zinc-950/40 hover:bg-zinc-900/40 transition-all duration-300"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-white/5 bg-gradient-to-r from-zinc-950/40 to-zinc-900/20 hover:from-purple-950/10 hover:to-zinc-900/40 hover:border-purple-500/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-950/5 transition-all duration-300"
                 >
                   {/* Informações Principais */}
                   <div className="flex flex-col gap-2 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
                         href={`/os/prospects/${prospect.id}`}
-                        className="text-sm font-semibold text-white hover:underline truncate"
+                        className="text-sm font-semibold text-white hover:text-purple-300 transition-colors truncate"
                       >
                         {prospect.name}
                       </Link>
@@ -139,6 +145,7 @@ export function ProspectsCrm({
                       variant="outline"
                       size="sm"
                       render={<Link href={`/os/prospects/${prospect.id}`} />}
+                      className="cursor-pointer transition-all hover:bg-purple-950/30"
                     >
                       Abrir
                     </Button>
@@ -146,6 +153,7 @@ export function ProspectsCrm({
                       variant="outline"
                       size="sm"
                       render={<Link href={`/os/prospects/${prospect.id}/edit`} />}
+                      className="cursor-pointer transition-all"
                     >
                       Editar
                     </Button>
