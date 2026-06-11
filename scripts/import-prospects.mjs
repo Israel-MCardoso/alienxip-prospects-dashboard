@@ -1,12 +1,15 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   buildProspectImportRows,
   parseCsv
 } from "../src/features/prospects/prospect-normalization.mjs";
 
-const root = resolve(process.cwd());
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const root = resolve(__dirname, "..");
 
 loadLocalEnv(".env.local");
 loadLocalEnv(".env");
@@ -15,8 +18,15 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const sheetUrl = process.env.GOOGLE_SHEET_CSV_URL;
 
+console.log(`GOOGLE_SHEET_CSV_URL carregada: ${sheetUrl ? "sim" : "não"}`);
+console.log(`Supabase URL carregada: ${supabaseUrl ? "sim" : "não"}`);
+
 if (!supabaseUrl || supabaseUrl.includes("YOUR_PROJECT_REF")) {
   fail("NEXT_PUBLIC_SUPABASE_URL is required.");
+}
+
+if (supabaseUrl.includes("/rest/v1/")) {
+  fail("NEXT_PUBLIC_SUPABASE_URL must not contain '/rest/v1/'.");
 }
 
 if (!serviceRoleKey || serviceRoleKey.includes("YOUR_")) {
@@ -32,6 +42,8 @@ const sheetResponse = await fetch(sheetUrl, {
     "user-agent": "Alienxip prospects importer"
   }
 });
+
+console.log(`HTTP status da Google Sheet: ${sheetResponse.status}`);
 
 if (!sheetResponse.ok) {
   fail(`Could not fetch Google Sheet: ${sheetResponse.status} ${sheetResponse.statusText}`);

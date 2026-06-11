@@ -112,7 +112,7 @@ as $$
     where f.removed_at is null and q.query @@ to_tsvector('portuguese', coalesce(f.file_name, '') || ' ' || coalesce(f.file_type, ''))
   )
   select * from results
-  order by rank desc, created_at desc
+  order by 6 desc, 7 desc
   limit least(result_limit, 50);
 $$;
 
