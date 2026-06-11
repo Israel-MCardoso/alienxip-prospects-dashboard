@@ -1,9 +1,11 @@
 import { z } from "zod";
 
 export const pipelineStatuses = [
-  "frio",
-  "contato_inicial",
+  "new",
+  "qualified",
   "diagnostico",
+  "contato_inicial",
+  "meeting_scheduled",
   "proposta",
   "negociacao",
   "fechado",
@@ -39,11 +41,33 @@ export const conversionSchema = z.object({
   contract_status: z.enum(["draft", "active", "paused", "cancelled"]).default("draft")
 });
 
+export function getProspectPotentialValue(prospect) {
+  let base = 1500;
+  const segment = (prospect?.segment || "").toLowerCase();
+  if (segment.includes("dentista") || segment.includes("odont")) {
+    base = 2500;
+  } else if (segment.includes("pet") || segment.includes("veteri")) {
+    base = 2000;
+  } else if (segment.includes("estetica") || segment.includes("beleza") || segment.includes("clinica")) {
+    base = 1800;
+  } else if (segment.includes("advogado") || segment.includes("jurid")) {
+    base = 3000;
+  } else if (segment.includes("restaurante") || segment.includes("alimen") || segment.includes("pizza") || segment.includes("burg")) {
+    base = 1600;
+  } else if (segment.includes("construtora") || segment.includes("engenha") || segment.includes("reform")) {
+    base = 3500;
+  }
+  
+  const score = prospect?.priority_score ?? 0;
+  const multiplier = score ? (score / 100) + 0.5 : 1;
+  return Math.round((base * multiplier) / 100) * 100;
+}
+
 export function groupProspectsByPipelineStatus(prospects) {
   const grouped = Object.fromEntries(pipelineStatuses.map((status) => [status, []]));
 
   for (const prospect of prospects) {
-    const status = pipelineStatuses.includes(prospect.status) ? prospect.status : "frio";
+    const status = pipelineStatuses.includes(prospect.status) ? prospect.status : "new";
     grouped[status].push(prospect);
   }
 

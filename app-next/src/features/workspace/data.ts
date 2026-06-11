@@ -96,7 +96,7 @@ export async function getDashboardOverview() {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id || null;
   const [prospects, clients, projects, tasks, activities, bugs, incidents, files, playbooks, profiles] = await Promise.all([
-    supabase.from("prospects").select("id, name, status, temperature, owner_id, responsible_user_id, segment, converted_at"),
+    supabase.from("prospects").select("id, name, status, temperature, owner_id, responsible_user_id, segment, converted_at, priority_score"),
     supabase.from("clients").select("id, company_id, status, contract_status, main_contact_name, main_contact_email"),
     supabase.from("projects").select("id, name, status, priority, owner_id, created_by, completed_at"),
     supabase.from("commercial_tasks").select("id, prospect_id, client_id, project_id, owner_id, assigned_to, title, description, status, priority, due_date"),

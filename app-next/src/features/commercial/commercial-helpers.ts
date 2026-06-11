@@ -3,6 +3,7 @@ export {
   canConvertProspect,
   conversionSchema,
   groupProspectsByPipelineStatus,
+  getProspectPotentialValue,
   pipelineStatuses,
   taskPriorities,
   taskSchema,

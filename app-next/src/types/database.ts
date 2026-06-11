@@ -209,6 +209,34 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["prospect_notes"]["Insert"]>;
         Relationships: [];
       };
+      prospect_proposals: {
+        Row: {
+          id: string;
+          prospect_id: string;
+          title: string;
+          value: number;
+          status: string;
+          valid_until: string | null;
+          content: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          prospect_id: string;
+          title: string;
+          value?: number;
+          status?: string;
+          valid_until?: string | null;
+          content?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["prospect_proposals"]["Insert"]>;
+        Relationships: [];
+      };
       companies: {
         Row: {
           id: string;

@@ -8,14 +8,7 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProspectForm } from "./prospect-form";
@@ -83,45 +76,83 @@ export function ProspectsCrm({
               Nenhum prospect encontrado. Configure Supabase e crie ou importe registros para iniciar o CRM.
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Temperatura</TableHead>
-                  <TableHead>Cidade</TableHead>
-                  <TableHead>Origem</TableHead>
-                  <TableHead>Acoes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {prospects.map((prospect) => (
-                  <TableRow key={prospect.id}>
-                    <TableCell className="font-medium">
-                      <Link href={`/os/prospects/${prospect.id}`} className="hover:underline">
+            <div className="flex flex-col gap-3">
+              {prospects.map((prospect) => (
+                <div
+                  key={prospect.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-white/5 bg-zinc-950/40 hover:bg-zinc-900/40 transition-all duration-300"
+                >
+                  {/* Informações Principais */}
+                  <div className="flex flex-col gap-2 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/os/prospects/${prospect.id}`}
+                        className="text-sm font-semibold text-white hover:underline truncate"
+                      >
                         {prospect.name}
                       </Link>
-                    </TableCell>
-                    <TableCell>{statusLabel(prospect.status)}</TableCell>
-                    <TableCell>
-                      <Badge variant={prospect.temperature === "hot" ? "destructive" : "outline"}>
-                        {temperatureLabel(prospect.temperature)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{[prospect.city, prospect.state].filter(Boolean).join(" / ") || "-"}</TableCell>
-                    <TableCell>{prospect.source}</TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm" render={<Link href={`/os/prospects/${prospect.id}`} />}>
-                        Abrir
-                      </Button>
-                      <Button variant="outline" size="sm" render={<Link href={`/os/prospects/${prospect.id}/edit`} />}>
-                        Editar
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant="outline" className="text-[10px] uppercase font-mono bg-purple-950/20 text-purple-300 border-purple-500/20 py-0 px-1.5 h-5">
+                          {statusLabel(prospect.status)}
+                        </Badge>
+
+                        <Badge
+                          variant={prospect.temperature === "hot" ? "destructive" : "outline"}
+                          className={`text-[10px] uppercase font-mono py-0 px-1.5 h-5 ${
+                            prospect.temperature === "hot"
+                              ? "bg-rose-950/30 text-rose-300 border-rose-500/20"
+                              : prospect.temperature === "warm"
+                              ? "bg-amber-950/20 text-amber-300 border-amber-500/20"
+                              : "bg-blue-950/20 text-blue-300 border-blue-500/20"
+                          }`}
+                        >
+                          {temperatureLabel(prospect.temperature)}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground">
+                      {prospect.segment ? (
+                        <span className="font-medium text-purple-200/60">{prospect.segment}</span>
+                      ) : null}
+                      {prospect.segment && (prospect.city || prospect.state) ? (
+                        <span className="text-muted-foreground/30">•</span>
+                      ) : null}
+                      {prospect.city || prospect.state ? (
+                        <span>{[prospect.city, prospect.state].filter(Boolean).join(" / ")}</span>
+                      ) : null}
+                      {(prospect.segment || prospect.city || prospect.state) && prospect.source ? (
+                        <span className="text-muted-foreground/30">•</span>
+                      ) : null}
+                      {prospect.source ? (
+                        <span className="bg-white/5 px-1.5 py-0.5 rounded text-[10px] uppercase font-mono tracking-wider">
+                          {prospect.source}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Ações */}
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      render={<Link href={`/os/prospects/${prospect.id}`} />}
+                    >
+                      Abrir
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      render={<Link href={`/os/prospects/${prospect.id}/edit`} />}
+                    >
+                      Editar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

@@ -17,9 +17,8 @@ export function statusLabel(status: string | null | undefined): string {
     planning: "Planejamento",
     former: "Antigo",
     
-    // CRM / Prospect Status
-    new: "Novo",
-    qualified: "Qualificado",
+    new: "Novo Lead",
+    qualified: "Qualificação",
     contacted: "Contatado",
     meeting_scheduled: "Reunião Agendada",
     proposal_sent: "Proposta Enviada",
@@ -27,12 +26,12 @@ export function statusLabel(status: string | null | undefined): string {
     lost: "Perdido",
     archived: "Arquivado",
     frio: "Frio",
-    contato_inicial: "Contato Inicial",
+    contato_inicial: "Primeiro Contato",
     diagnostico: "Diagnóstico",
-    proposta: "Proposta",
+    proposta: "Proposta Enviada",
     negociacao: "Negociação",
-    fechado: "Fechado",
-    perdido: "Perdido",
+    fechado: "Fechado Ganho",
+    perdido: "Fechado Perdido",
     
     // Knowledge / Review Status
     draft: "Rascunho",

@@ -9,6 +9,18 @@ export type ProspectNoteRow = Database["public"]["Tables"]["prospect_notes"]["Ro
 export type ProspectActivityRow = Database["public"]["Tables"]["prospect_activities"]["Row"];
 export type CommercialTaskRow = Database["public"]["Tables"]["commercial_tasks"]["Row"];
 export type FileRow = Database["public"]["Tables"]["files"]["Row"];
+export type ProspectProposalRow = {
+  id: string;
+  prospect_id: string;
+  title: string;
+  value: number;
+  status: string;
+  valid_until: string | null;
+  content: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 export async function getProspects(filters?: {
   q?: string;
@@ -106,6 +118,20 @@ export async function getProspectWorkspace(id: string) {
     supabase.auth.getUser()
   ]);
 
+  let proposals: ProspectProposalRow[] = [];
+  try {
+    const { data: propData, error: propError } = await supabase
+      .from("prospect_proposals")
+      .select("*")
+      .eq("prospect_id", id)
+      .order("created_at", { ascending: false });
+    if (!propError && propData) {
+      proposals = propData as unknown as ProspectProposalRow[];
+    }
+  } catch (e) {
+    console.error("Failed to fetch proposals, table might not exist yet:", e);
+  }
+
   const userId = userResult.data.user?.id;
   const profileResult = userId
     ? await supabase.from("profiles").select("*").eq("id", userId).maybeSingle()
@@ -118,6 +144,7 @@ export async function getProspectWorkspace(id: string) {
     activities: activitiesResult.data || [],
     tasks: tasksResult.data || [],
     files: filesResult.data || [],
+    proposals,
     profile: profileResult.data,
     error: prospectResult.error?.message || diagnosticResult.error?.message || notesResult.error?.message || activitiesResult.error?.message || tasksResult.error?.message || filesResult.error || null,
     isConfigured: true

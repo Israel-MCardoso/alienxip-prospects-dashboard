@@ -25,11 +25,12 @@ test("taskSchema validates follow-up task input", () => {
 
 test("groupProspectsByPipelineStatus creates empty columns and groups prospects", () => {
   const grouped = groupProspectsByPipelineStatus([
-    { id: "1", name: "A", status: "frio", temperature: "cold" },
-    { id: "2", name: "B", status: "proposta", temperature: "hot" }
+    { id: "1", name: "A", status: "new", temperature: "cold" },
+    { id: "2", name: "B", status: "proposta", temperature: "hot" },
+    { id: "3", name: "C", status: "frio", temperature: "cold" } // unknown fallback to 'new'
   ]);
 
-  assert.equal(grouped.frio.length, 1);
+  assert.equal(grouped.new.length, 2);
   assert.equal(grouped.proposta.length, 1);
   assert.deepEqual(grouped.negociacao, []);
 });
