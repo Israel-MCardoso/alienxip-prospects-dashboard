@@ -2,22 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LockIcon, MailIcon, ShieldCheckIcon } from "lucide-react";
+import { LockIcon, MailIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import Image from "next/image";
 
 export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [forgotPasswordMsg, setForgotPasswordMsg] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setForgotPasswordMsg(null);
     setIsPending(true);
 
     try {
@@ -41,6 +44,10 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
     }
   }
 
+  function handleForgotPassword() {
+    setForgotPasswordMsg("A recuperação de senha será configurada em breve. Contate o administrador.");
+  }
+
   return (
     <div className="relative w-full max-w-md rounded-2xl border border-purple-500/10 bg-black/60 p-8 shadow-2xl shadow-purple-950/20 backdrop-blur-md animate-in fade-in zoom-in-95 duration-500">
       {/* Subtle purple radial glow */}
@@ -48,16 +55,20 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
       <div className="absolute -bottom-10 -right-10 size-40 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none" />
 
       <div className="flex flex-col items-center text-center">
-        <div className="flex size-12 items-center justify-center rounded-xl bg-purple-950/50 border border-purple-500/20 text-purple-400 mb-4">
-          <ShieldCheckIcon className="size-6 animate-pulse" />
-        </div>
-        <h1 className="text-3xl font-extrabold tracking-wider text-white font-mono uppercase">
+        <Image
+          src="/brand/motherxip-logo.png"
+          alt="MOTHERXIP Logo"
+          width={64}
+          height={64}
+          className="object-contain mb-4"
+        />
+        <h1 className="text-2xl font-extrabold tracking-wider text-white font-mono uppercase">
           MOTHERXIP
         </h1>
-        <p className="mt-1.5 text-sm font-semibold text-purple-300 font-mono tracking-tight">
+        <p className="mt-1 text-xs font-semibold text-purple-300 font-mono tracking-tight uppercase">
           Centro operacional da ALIENXIP
         </p>
-        <p className="mt-2.5 text-xs text-muted-foreground leading-relaxed max-w-sm">
+        <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed max-w-sm">
           Acesse prospects, projetos, tarefas, conhecimento e operação em um único ambiente.
         </p>
       </div>
@@ -78,7 +89,7 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
             placeholder="email@alienxip.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="pl-9 bg-black/40 border-white/10 text-white placeholder:text-muted-foreground focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30"
+            className="pl-9 bg-black/40 border-white/10 text-white placeholder:text-muted-foreground focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 text-xs h-10"
             required
             disabled={!isConfigured || isPending}
           />
@@ -91,11 +102,27 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
             placeholder="Senha"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="pl-9 bg-black/40 border-white/10 text-white placeholder:text-muted-foreground focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30"
+            className="pl-9 bg-black/40 border-white/10 text-white placeholder:text-muted-foreground focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 text-xs h-10"
             required
             disabled={!isConfigured || isPending}
           />
         </div>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            className="text-[10px] text-purple-400 hover:text-purple-300 transition-colors font-mono cursor-pointer uppercase tracking-wider"
+          >
+            Esqueci minha senha
+          </button>
+        </div>
+
+        {forgotPasswordMsg ? (
+          <p className="text-[10px] text-amber-400 bg-amber-500/5 border border-yellow-500/10 rounded-lg p-2.5 leading-normal">
+            {forgotPasswordMsg}
+          </p>
+        ) : null}
 
         {error ? (
           <p className="text-xs text-rose-500 font-medium bg-rose-500/5 border border-rose-500/10 rounded-lg p-2.5 leading-normal">
@@ -105,7 +132,7 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
 
         <Button
           type="submit"
-          className="w-full mt-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20"
+          className="w-full mt-1 bg-purple-600 hover:bg-purple-500 text-white font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 text-xs h-10"
           disabled={!isConfigured || isPending}
         >
           {isPending ? "Entrando..." : "Entrar"}
@@ -113,7 +140,7 @@ export function LoginForm({ isConfigured }: { isConfigured: boolean }) {
       </form>
 
       <div className="mt-6 text-center">
-        <span className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-mono">
+        <span className="text-[9px] text-muted-foreground/60 uppercase tracking-widest font-mono">
           Security Protocol Enabled
         </span>
       </div>

@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MOTHERXIP",
   description: "Centro operacional da ALIENXIP.",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

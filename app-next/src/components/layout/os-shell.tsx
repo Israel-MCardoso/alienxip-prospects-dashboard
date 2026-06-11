@@ -21,8 +21,7 @@ import {
   XIcon,
   FileTextIcon,
   ChevronLeftIcon,
-  ChevronRightIcon,
-  ShieldCheckIcon
+  ChevronRightIcon
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +29,7 @@ import { GlobalSearch, type GlobalSearchData } from "@/components/layout/global-
 import { logoutAction } from "@/features/auth/actions";
 import { cn } from "@/lib/utils";
 import { roleLabel } from "@/lib/display-helpers";
+import Image from "next/image";
 
 const navigation = [
   { href: "/os", label: "Início", icon: HomeIcon },
@@ -98,9 +98,13 @@ export function OsShell({
           <aside className="relative flex w-64 flex-col bg-sidebar border-r border-purple-500/10 px-3 py-4 text-sidebar-foreground animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between px-2">
               <Link href="/os" className="flex items-center gap-2 py-2" onClick={() => setMobileMenuOpen(false)}>
-                <span className="flex size-8 items-center justify-center rounded-lg bg-purple-900/40 text-purple-300 border border-purple-800/40">
-                  <ShieldCheckIcon className="size-4" />
-                </span>
+                <Image
+                  src="/brand/motherxip-logo.png"
+                  alt="MOTHERXIP logo"
+                  width={32}
+                  height={32}
+                  className="object-contain shrink-0 rounded-lg"
+                />
                 <span className="flex flex-col text-left">
                   <span className="text-sm font-semibold leading-tight text-white font-mono tracking-wider">MOTHERXIP</span>
                   <span className="text-[10px] text-muted-foreground">Centro Operacional</span>
@@ -154,9 +158,13 @@ export function OsShell({
       >
         <div className="flex items-center justify-between px-1">
           <Link href="/os" className="flex items-center gap-2 py-2 overflow-hidden">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-purple-900/40 text-purple-300 border border-purple-800/40 shrink-0">
-              <ShieldCheckIcon className="size-4" />
-            </span>
+            <Image
+              src="/brand/motherxip-logo.png"
+              alt="MOTHERXIP logo"
+              width={32}
+              height={32}
+              className="object-contain shrink-0 rounded-lg"
+            />
             <span className={cn("flex flex-col text-left transition-opacity duration-300", collapsed ? "opacity-0 w-0" : "opacity-100 w-auto")}>
               <span className="text-sm font-semibold leading-tight text-white font-mono tracking-wider whitespace-nowrap">MOTHERXIP</span>
               <span className="text-[10px] text-muted-foreground whitespace-nowrap">Centro Operacional</span>
