@@ -105,7 +105,7 @@ test("buildProspectImportRows creates stable external ids and deduplicates rows"
   ]);
 
   assert.equal(rows.length, 1);
-  assert.equal(rows[0].external_source_id, "vale-odontologia-jacarei-12-99999-9999");
+  assert.equal(rows[0].external_source_id, "r-santo-ivo-371-cidade-salvador-jacarei-sp");
   assert.equal(rows[0].status, "new");
   assert.equal(rows[0].temperature, "hot");
   assert.equal(rows[0].source, "google_sheet");

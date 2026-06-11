@@ -150,15 +150,33 @@ export function temperatureFromPriority(priority) {
   return "cold";
 }
 
-export function buildProspectExternalId(row) {
-  const city = cityFromAddress(row.address);
-  const parts = [
-    stablePart(row.title),
-    stablePart(city),
-    phonePart(row.phoneNumber)
-  ].filter(Boolean);
+export function extractPhoneFromUrl(url) {
+  if (!url) return "";
+  const phoneParamMatch = url.match(/(?:\?|&)phone=([+0-9]+)/);
+  if (phoneParamMatch) {
+    const clean = phoneParamMatch[1].replace(/\D/g, "");
+    if (clean.length >= 8 && clean.length <= 15) return clean;
+  }
+  const wameMatch = url.match(/wa\.me\/([+0-9]+)/);
+  if (wameMatch) {
+    const clean = wameMatch[1].replace(/\D/g, "");
+    if (clean.length >= 8 && clean.length <= 15) return clean;
+  }
+  const generalWhatsappMatch = url.match(/whatsapp\.com\/send\?phone=([+0-9]+)/);
+  if (generalWhatsappMatch) {
+    const clean = generalWhatsappMatch[1].replace(/\D/g, "");
+    if (clean.length >= 8 && clean.length <= 15) return clean;
+  }
+  return "";
+}
 
-  if (parts.length) return parts.join("-");
+export function buildProspectExternalId(row) {
+  if (row.placeId && row.placeId.trim()) {
+    return row.placeId.trim();
+  }
+  if (row.address && row.address.trim()) {
+    return stablePart(row.address.trim());
+  }
   return stablePart(JSON.stringify(row));
 }
 
@@ -172,6 +190,48 @@ export function buildProspectImportRows(rows) {
 
     if (!externalId || byExternalId.has(externalId)) continue;
 
+    let enriched = false;
+    let finalPhone = null;
+    let finalWhatsapp = null;
+
+    const rawWhatsappLink = legacy.whatsapp || "";
+    const directPhone = extractPhoneFromUrl(rawWhatsappLink);
+    if (directPhone) {
+      finalPhone = directPhone;
+      finalWhatsapp = `https://wa.me/${directPhone}`;
+    }
+
+    if (row.phoneNumber && row.phoneNumber !== "#ERROR!") {
+      const cleanRawPhone = row.phoneNumber.replace(/\D/g, "");
+      if (cleanRawPhone.length >= 8 && cleanRawPhone.length <= 15) {
+        finalPhone = cleanRawPhone;
+        finalWhatsapp = `https://wa.me/${cleanRawPhone}`;
+      }
+    }
+
+    if (!finalPhone) {
+      let parsedLinks = [];
+      try {
+        parsedLinks = JSON.parse(row.bookingLinks || "[]");
+      } catch (e) {
+        const match = String(row.bookingLinks || "").match(/https?:\/\/[^"',\]\s]+/);
+        if (match) parsedLinks = [match[0]];
+      }
+      if (!Array.isArray(parsedLinks)) {
+        parsedLinks = [parsedLinks];
+      }
+
+      for (const link of parsedLinks) {
+        const extracted = extractPhoneFromUrl(link);
+        if (extracted) {
+          finalPhone = extracted;
+          finalWhatsapp = `https://wa.me/${extracted}`;
+          enriched = true;
+          break;
+        }
+      }
+    }
+
     byExternalId.set(externalId, {
       name: legacy.empresa || "",
       segment: legacy.segmento || null,
@@ -182,7 +242,7 @@ export function buildProspectImportRows(rows) {
       state: legacy.cidade ? "SP" : null,
       instagram_url: legacy.social || null,
       website_url: legacy.site || null,
-      whatsapp: legacy.whatsapp || null,
+      whatsapp: finalWhatsapp || null,
       responsible_user_id: null,
       partner_name: null,
       partner_url: null,
@@ -190,7 +250,12 @@ export function buildProspectImportRows(rows) {
       suggested_offer: legacy.oferta,
       notes: legacy.proximo,
       imported_from: "google_sheet",
-      external_source_id: externalId
+      external_source_id: externalId,
+      metadata: {
+        phone_enriched: enriched,
+        original_phone: row.phoneNumber || null,
+        clean_phone: finalPhone || null
+      }
     });
   }
 
