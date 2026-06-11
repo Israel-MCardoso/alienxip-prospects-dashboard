@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ALIENXIP OS",
-  description: "Internal operating system foundation for ALIENXIP.",
+  title: "MOTHERXIP",
+  description: "Centro operacional da ALIENXIP.",
 };
 
 export default function RootLayout({

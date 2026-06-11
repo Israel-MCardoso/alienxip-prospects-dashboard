@@ -11,6 +11,7 @@ import Link from "next/link";
 import type { ProspectRow } from "./data";
 import { createProspectAction, updateProspectAction } from "./actions";
 import { prospectStatuses, prospectTemperatures } from "./prospect-schema";
+import { statusLabel, temperatureLabel } from "@/lib/display-helpers";
 
 export function ProspectForm({
   prospect,
@@ -37,12 +38,12 @@ export function ProspectForm({
           <Input name="segment" placeholder="Segmento" defaultValue={prospect?.segment || ""} disabled={!isConfigured} />
           <select name="status" defaultValue={prospect?.status || "new"} disabled={!isConfigured} className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
             {prospectStatuses.map((status) => (
-              <option key={status} value={status}>{status}</option>
+              <option key={status} value={status}>{statusLabel(status)}</option>
             ))}
           </select>
           <select name="temperature" defaultValue={prospect?.temperature || "warm"} disabled={!isConfigured} className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
             {prospectTemperatures.map((temperature) => (
-              <option key={temperature} value={temperature}>{temperature}</option>
+              <option key={temperature} value={temperature}>{temperatureLabel(temperature)}</option>
             ))}
           </select>
           <Input name="city" placeholder="Cidade" defaultValue={prospect?.city || ""} disabled={!isConfigured} />

@@ -55,7 +55,7 @@ export function ProspectsFoundation() {
         <Badge variant="secondary">Prospects v0</Badge>
         <h1 className="text-2xl font-semibold tracking-tight">Prospects</h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Primeira tela da nova ALIENXIP OS para preservar a intencao do dashboard atual antes da migracao completa de dados, filtros e acoes de CRM.
+          Primeira tela do novo MOTHERXIP para preservar a intencao do dashboard atual antes da migracao completa de dados, filtros e acoes de CRM.
         </p>
       </div>
 

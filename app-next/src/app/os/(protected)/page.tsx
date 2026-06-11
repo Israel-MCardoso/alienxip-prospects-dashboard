@@ -1,56 +1,51 @@
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { WorkspaceHome } from "@/features/workspace/workspace-home";
 
-const foundations = [
-  ["Fallback preservado", "Dashboard estatico e /api/prospects continuam como base segura."],
-  ["Supabase dev", "Auth, migrations e prospects editaveis entram sem trocar producao."],
-  ["RLS primeiro", "Tabelas novas nascem protegidas contra acesso anonimo."],
-  ["Prospects editavel", "CRM inicial com criacao, edicao e importacao idempotente."]
-];
+type AreaKey = "comercial" | "operacao" | "tech" | "design" | "conhecimento" | "gestao";
 
-export default function OsHomePage() {
+function getPreferredArea(role: string | null, email?: string | null): AreaKey {
+  const r = role || "member";
+  const e = (email || "").toLowerCase();
+
+  if (r === "owner" || r === "admin" || r === "manager") return "gestao";
+  if (r === "operator") return "tech";
+  if (e.includes("design") || e.includes("art")) return "design";
+  if (r === "member") return "tech"; // default to tech for members/developers
+  return "comercial"; // default fallback
+}
+
+export default async function OsHomePage() {
+  const supabase = await createSupabaseServerClient();
+  let userEmail: string | null = null;
+  let userRole: string | null = null;
+
+  if (supabase) {
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      userEmail = user.email || null;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role,email")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profile) {
+        userRole = profile.role;
+        userEmail = profile.email || user.email || null;
+      }
+    }
+  }
+
+  const preferredArea = getPreferredArea(userRole, userEmail);
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2">
-        <div className="flex">
-          <Badge variant="secondary" className="bg-purple-900/40 text-purple-300 border-purple-800/50 hover:bg-purple-900/60">
-            Sprint 10 (Hardening)
-          </Badge>
-        </div>
-        <h1 className="text-3xl font-semibold tracking-tight">ALIENXIP OS</h1>
-        <p className="max-w-3xl text-sm text-muted-foreground">
-          Plataforma operacional consolidada com Supabase, autenticação integrada, gestão de prospects, clientes, projetos, arquivos, tarefas, playbooks e atividades, preservando o dashboard legado.
-        </p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {foundations.map(([title, description]) => (
-          <Card key={title}>
-            <CardHeader>
-              <CardTitle>{title}</CardTitle>
-              <CardDescription>{description}</CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
-
-      <Card className="border-purple-500/20 bg-[#080808]">
-        <CardHeader>
-          <CardTitle className="text-purple-400">Estado da Plataforma</CardTitle>
-          <CardDescription>
-            Sistema operacional totalmente consolidado após a Sprint 10 (Hardening), com foco em estabilidade, performance e UX premium.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          As integrações e banco de dados estão otimizados. Para novas demandas, siga o fluxo de governança e migrations.
-        </CardContent>
-      </Card>
-    </div>
+    <WorkspaceHome
+      userEmail={userEmail}
+      userRole={userRole}
+      preferredArea={preferredArea}
+    />
   );
 }

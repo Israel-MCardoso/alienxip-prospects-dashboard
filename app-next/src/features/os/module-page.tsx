@@ -27,7 +27,7 @@ export function ModulePage({ title, description, status = "Sprint 1", items }: M
         <CardHeader>
           <CardTitle>Escopo inicial</CardTitle>
           <CardDescription>
-            Area reservada para a evolucao modular da ALIENXIP OS.
+            Area reservada para a evolucao modular do MOTHERXIP.
           </CardDescription>
         </CardHeader>
         <CardContent>

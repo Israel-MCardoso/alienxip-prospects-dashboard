@@ -35,6 +35,7 @@ import { activityLabel, formatActivityDate } from "./workspace-helpers";
 import { completeTaskAction, convertProspectAction, createTaskAction } from "@/features/commercial/actions";
 import { taskPriorities, taskStatuses } from "@/features/commercial/commercial-helpers";
 import { FileList } from "@/features/tech/file-list";
+import { statusLabel, priorityLabel, temperatureLabel } from "@/lib/display-helpers";
 
 export function ProspectWorkspace({
   prospect,
@@ -68,9 +69,9 @@ export function ProspectWorkspace({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{prospect.status}</Badge>
+            <Badge variant="secondary">{statusLabel(prospect.status)}</Badge>
             <Badge variant={prospect.temperature === "hot" ? "destructive" : "outline"}>
-              {prospect.temperature}
+              {temperatureLabel(prospect.temperature)}
             </Badge>
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">{prospect.name}</h1>
@@ -155,10 +156,10 @@ function TasksTab({ prospect, tasks }: { prospect: ProspectRow; tasks: Commercia
               <Input name="title" required placeholder="Titulo da tarefa" />
               <Input name="description" placeholder="Descricao" />
               <select name="status" defaultValue="pending" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
-                {taskStatuses.map((status: string) => <option key={status} value={status}>{status}</option>)}
+                {taskStatuses.map((status: string) => <option key={status} value={status}>{statusLabel(status)}</option>)}
               </select>
               <select name="priority" defaultValue="medium" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
-                {taskPriorities.map((priority: string) => <option key={priority} value={priority}>{priority}</option>)}
+                {taskPriorities.map((priority: string) => <option key={priority} value={priority}>{priorityLabel(priority)}</option>)}
               </select>
               <Input name="due_date" type="date" />
               <Button type="submit">Criar tarefa</Button>
@@ -180,10 +181,10 @@ function TasksTab({ prospect, tasks }: { prospect: ProspectRow; tasks: Commercia
               <Input name="main_contact_phone" placeholder="Telefone do contato" disabled={alreadyConverted} />
               <Input name="monthly_value" placeholder="Valor mensal futuro" disabled={alreadyConverted} />
               <select name="contract_status" defaultValue="draft" disabled={alreadyConverted} className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
-                <option value="draft">draft</option>
-                <option value="active">active</option>
-                <option value="paused">paused</option>
-                <option value="cancelled">cancelled</option>
+                <option value="draft">Rascunho</option>
+                <option value="active">Ativo</option>
+                <option value="paused">Pausado</option>
+                <option value="cancelled">Cancelado</option>
               </select>
               <Button type="submit" disabled={alreadyConverted}>{alreadyConverted ? "Convertido" : "Converter em Cliente"}</Button>
             </form>
@@ -202,8 +203,8 @@ function TasksTab({ prospect, tasks }: { prospect: ProspectRow; tasks: Commercia
             <div key={task.id} className="rounded-lg border bg-background p-3">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="font-medium">{task.title}</div>
-                <Badge variant="outline">{task.status}</Badge>
-                <Badge variant={task.priority === "urgent" || task.priority === "high" ? "destructive" : "secondary"}>{task.priority}</Badge>
+                <Badge variant="outline">{statusLabel(task.status)}</Badge>
+                <Badge variant={task.priority === "urgent" || task.priority === "high" ? "destructive" : "secondary"}>{priorityLabel(task.priority)}</Badge>
               </div>
               {task.description ? <p className="mt-1 text-sm text-muted-foreground">{task.description}</p> : null}
               <div className="mt-2 text-xs text-muted-foreground">Prazo: {task.due_date || "sem prazo"}</div>
@@ -313,11 +314,11 @@ function NotesTab({
         <CardContent>
           <form action={action} className="flex flex-col gap-3">
             <select name="type" defaultValue="observacao" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
-              <option value="observacao">observacao</option>
-              <option value="follow_up">follow-up</option>
-              <option value="reuniao">reuniao</option>
-              <option value="decisao">decisao</option>
-              <option value="risco">risco</option>
+              <option value="observacao">Observação</option>
+              <option value="follow_up">Follow-up</option>
+              <option value="reuniao">Reunião</option>
+              <option value="decisao">Decisão</option>
+              <option value="risco">Risco</option>
             </select>
             <textarea name="content" required placeholder="Escreva uma nota interna" className="min-h-28 rounded-lg border border-input bg-background px-3 py-2 text-sm" />
             <Button type="submit">Criar nota</Button>
@@ -341,7 +342,13 @@ function NotesTab({
               <div key={note.id} className="rounded-lg border bg-background p-3">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant="outline">{note.type}</Badge>
+                    <Badge variant="outline">
+                      {note.type === "observacao" ? "Observação" :
+                       note.type === "follow_up" ? "Follow-up" :
+                       note.type === "reuniao" ? "Reunião" :
+                       note.type === "decisao" ? "Decisão" :
+                       note.type === "risco" ? "Risco" : note.type}
+                    </Badge>
                     <span>{formatActivityDate(note.created_at)}</span>
                     <span className="font-medium text-white">autor: {authorName}</span>
                   </div>
@@ -355,11 +362,11 @@ function NotesTab({
                 {isEditing ? (
                   <form action={handleSaveNote.bind(null, note.id)} className="mt-2 flex flex-col gap-2">
                     <select name="type" defaultValue={note.type} className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
-                      <option value="observacao">observacao</option>
-                      <option value="follow_up">follow-up</option>
-                      <option value="reuniao">reuniao</option>
-                      <option value="decisao">decisao</option>
-                      <option value="risco">risco</option>
+                      <option value="observacao">Observação</option>
+                      <option value="follow_up">Follow-up</option>
+                      <option value="reuniao">Reunião</option>
+                      <option value="decisao">Decisão</option>
+                      <option value="risco">Risco</option>
                     </select>
                     <textarea name="content" defaultValue={note.content} className="min-h-20 rounded-lg border border-input bg-background px-3 py-2 text-sm" required />
                     <div className="flex gap-2">

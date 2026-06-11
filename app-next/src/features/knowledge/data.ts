@@ -11,7 +11,24 @@ export async function getWikiPages(filters?: { q?: string; category?: string; st
   if (!supabase) return { data: [] as WikiPageRow[], error: "Supabase nao configurado.", isConfigured: false };
   let query = supabase.from("wiki_pages").select("*");
   if (filters?.q) query = query.or(`title.ilike.%${filters.q}%,content.ilike.%${filters.q}%`);
-  if (filters?.category) query = query.eq("category", filters.category as WikiPageRow["category"]);
+  
+  if (filters?.category) {
+    const cat = filters.category.toLowerCase();
+    if (cat === "comercial") {
+      query = query.in("category", ["vendas", "prospeccao"]);
+    } else if (cat === "tech") {
+      query = query.in("category", ["desenvolvimento"]);
+    } else if (cat === "design") {
+      query = query.in("category", ["design"]);
+    } else if (cat === "operacao") {
+      query = query.in("category", ["operacao"]);
+    } else if (cat === "gestao") {
+      query = query.in("category", ["geral", "suporte", "financeiro"]);
+    } else {
+      query = query.eq("category", filters.category as WikiPageRow["category"]);
+    }
+  }
+  
   if (filters?.status) query = query.eq("status", filters.status as WikiPageRow["status"]);
   if (filters?.review_status) query = query.eq("review_status", filters.review_status as WikiPageRow["review_status"]);
   const { data, error } = await query.order("updated_at", { ascending: false });
@@ -30,7 +47,24 @@ export async function getPlaybooks(filters?: { q?: string; category?: string; st
   if (!supabase) return { data: [] as PlaybookRow[], error: "Supabase nao configurado.", isConfigured: false };
   let query = supabase.from("playbooks").select("*");
   if (filters?.q) query = query.or(`title.ilike.%${filters.q}%,content.ilike.%${filters.q}%`);
-  if (filters?.category) query = query.eq("category", filters.category as PlaybookRow["category"]);
+  
+  if (filters?.category) {
+    const cat = filters.category.toLowerCase();
+    if (cat === "comercial") {
+      query = query.in("category", ["vendas", "prospeccao"]);
+    } else if (cat === "tech") {
+      query = query.in("category", ["desenvolvimento"]);
+    } else if (cat === "design") {
+      query = query.in("category", ["design"]);
+    } else if (cat === "operacao") {
+      query = query.in("category", ["operacao"]);
+    } else if (cat === "gestao") {
+      query = query.in("category", ["geral", "suporte", "financeiro"]);
+    } else {
+      query = query.eq("category", filters.category as PlaybookRow["category"]);
+    }
+  }
+  
   if (filters?.status) query = query.eq("status", filters.status as PlaybookRow["status"]);
   if (filters?.review_status) query = query.eq("review_status", filters.review_status as PlaybookRow["review_status"]);
   const { data, error } = await query.order("updated_at", { ascending: false });

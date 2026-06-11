@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import {
   BriefcaseBusinessIcon,
@@ -19,13 +19,17 @@ import {
   WrenchIcon,
   MenuIcon,
   XIcon,
-  FileTextIcon
+  FileTextIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ShieldCheckIcon
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { GlobalSearch, type GlobalSearchData } from "@/components/layout/global-search";
 import { logoutAction } from "@/features/auth/actions";
 import { cn } from "@/lib/utils";
+import { roleLabel } from "@/lib/display-helpers";
 
 const navigation = [
   { href: "/os", label: "Início", icon: HomeIcon },
@@ -60,9 +64,27 @@ export function OsShell({
 }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Load sidebar state from localStorage safely after hydration
+  useEffect(() => {
+    const val = localStorage.getItem("sidebar-collapsed");
+    if (val === "true") {
+      const timer = setTimeout(() => {
+        setCollapsed(true);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const toggleCollapsed = () => {
+    const newVal = !collapsed;
+    setCollapsed(newVal);
+    localStorage.setItem("sidebar-collapsed", String(newVal));
+  };
 
   return (
-    <div className="min-h-screen bg-muted/30 text-foreground">
+    <div className="min-h-screen bg-[#050508] text-foreground transition-colors duration-300">
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
@@ -73,20 +95,20 @@ export function OsShell({
           />
 
           {/* Drawer container */}
-          <aside className="relative flex w-64 flex-col bg-sidebar border-r px-3 py-4 text-sidebar-foreground animate-in slide-in-from-left duration-200">
+          <aside className="relative flex w-64 flex-col bg-sidebar border-r border-purple-500/10 px-3 py-4 text-sidebar-foreground animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between px-2">
               <Link href="/os" className="flex items-center gap-2 py-2" onClick={() => setMobileMenuOpen(false)}>
-                <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  AX
+                <span className="flex size-8 items-center justify-center rounded-lg bg-purple-900/40 text-purple-300 border border-purple-800/40">
+                  <ShieldCheckIcon className="size-4" />
                 </span>
                 <span className="flex flex-col text-left">
-                  <span className="text-sm font-semibold leading-tight text-white font-mono">ALIENXIP OS</span>
-                  <span className="text-xs text-muted-foreground">Internal platform</span>
+                  <span className="text-sm font-semibold leading-tight text-white font-mono tracking-wider">MOTHERXIP</span>
+                  <span className="text-[10px] text-muted-foreground">Centro Operacional</span>
                 </span>
               </Link>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border bg-background/50 hover:bg-muted text-muted-foreground"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-purple-500/15 bg-background/50 hover:bg-muted text-muted-foreground"
                 aria-label="Fechar menu"
               >
                 <XIcon className="size-4" />
@@ -104,8 +126,8 @@ export function OsShell({
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      "flex h-9 items-center gap-2 rounded-lg px-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                      active && "bg-sidebar-accent text-sidebar-accent-foreground"
+                      "flex h-9 items-center gap-2 rounded-lg px-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-purple-950/20 hover:text-purple-300",
+                      active && "bg-purple-950/30 border border-purple-500/15 text-purple-300"
                     )}
                   >
                     <Icon data-icon="inline-start" className="size-4" />
@@ -115,74 +137,103 @@ export function OsShell({
               })}
             </nav>
 
-            <div className="mt-auto rounded-lg border bg-[#050505] p-3 text-xs text-muted-foreground">
-              <div className="font-medium text-foreground text-white">Sprint 10 (Hardening)</div>
-              <div>Plataforma consolidada e responsiva.</div>
+            <div className="mt-auto rounded-lg border border-purple-500/10 bg-[#08080c] p-3 text-xs text-muted-foreground">
+              <div className="font-medium text-white font-mono">MOTHERXIP v11</div>
+              <div>Evolução visual e controle de acesso.</div>
             </div>
           </aside>
         </div>
       )}
 
       {/* Desktop Sidebar Navigation */}
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r bg-sidebar px-3 py-4 text-sidebar-foreground lg:flex lg:flex-col">
-        <Link href="/os" className="flex items-center gap-2 px-2 py-2">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            AX
-          </span>
-          <span className="flex flex-col">
-            <span className="text-sm font-semibold leading-tight text-white font-mono">ALIENXIP OS</span>
-            <span className="text-xs text-muted-foreground">Internal platform</span>
-          </span>
-        </Link>
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 hidden border-r border-purple-500/10 bg-sidebar px-3 py-4 text-sidebar-foreground lg:flex lg:flex-col transition-all duration-300 z-30",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        <div className="flex items-center justify-between px-1">
+          <Link href="/os" className="flex items-center gap-2 py-2 overflow-hidden">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-purple-900/40 text-purple-300 border border-purple-800/40 shrink-0">
+              <ShieldCheckIcon className="size-4" />
+            </span>
+            <span className={cn("flex flex-col text-left transition-opacity duration-300", collapsed ? "opacity-0 w-0" : "opacity-100 w-auto")}>
+              <span className="text-sm font-semibold leading-tight text-white font-mono tracking-wider whitespace-nowrap">MOTHERXIP</span>
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">Centro Operacional</span>
+            </span>
+          </Link>
 
-        <nav className="mt-6 flex flex-1 flex-col gap-1">
+          {/* Toggle sidebar button inside sidebar */}
+          <button
+            onClick={toggleCollapsed}
+            className={cn(
+              "hidden lg:flex h-6 w-6 items-center justify-center rounded-md border border-purple-500/15 bg-background/50 text-muted-foreground hover:text-white hover:bg-purple-950/20 transition-all",
+              collapsed ? "mx-auto" : ""
+            )}
+            aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
+          >
+            {collapsed ? <ChevronRightIcon className="size-3.5" /> : <ChevronLeftIcon className="size-3.5" />}
+          </button>
+        </div>
+
+        <nav className="mt-6 flex flex-1 flex-col gap-1.5">
           {navigation.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href;
 
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex h-9 items-center gap-2 rounded-lg px-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  active && "bg-sidebar-accent text-sidebar-accent-foreground"
+              <div key={item.href} className="relative group">
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex h-9 items-center rounded-lg text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-purple-950/20 hover:text-purple-300",
+                    collapsed ? "justify-center px-0 w-10 mx-auto" : "gap-2.5 px-3",
+                    active && "bg-purple-950/30 border border-purple-500/15 text-purple-300"
+                  )}
+                >
+                  <Icon data-icon="inline-start" className="size-4 shrink-0" />
+                  <span className={cn("transition-opacity duration-200", collapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto")}>
+                    {item.label}
+                  </span>
+                </Link>
+                {/* Tooltip on Hover when collapsed */}
+                {collapsed && (
+                  <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1.5 bg-zinc-950 border border-purple-500/20 text-purple-300 text-[10px] rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 shadow-lg font-mono uppercase tracking-wider whitespace-nowrap">
+                    {item.label}
+                  </span>
                 )}
-              >
-                <Icon data-icon="inline-start" />
-                {item.label}
-              </Link>
+              </div>
             );
           })}
         </nav>
 
-        <div className="rounded-lg border bg-background p-3 text-xs text-muted-foreground">
-          <div className="font-medium text-foreground text-white">Sprint 10 (Hardening)</div>
-          <div>Plataforma consolidada e responsiva.</div>
+        <div className={cn("mt-auto rounded-lg border border-purple-500/10 bg-[#08080c] p-3 text-xs text-muted-foreground transition-all duration-300", collapsed ? "opacity-0 h-0 p-0 overflow-hidden border-0" : "opacity-100")}>
+          <div className="font-medium text-white font-mono">MOTHERXIP v11</div>
+          <div>Evolução visual e controle de acesso.</div>
         </div>
       </aside>
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-background/95 px-4 backdrop-blur lg:px-6">
+      <div className={cn("transition-all duration-300", collapsed ? "lg:pl-16" : "lg:pl-64")}>
+        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-purple-500/10 bg-[#050508]/80 px-4 backdrop-blur-md lg:px-6">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border bg-background hover:bg-muted text-muted-foreground lg:hidden mr-1"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-purple-500/15 bg-background hover:bg-purple-950/20 text-muted-foreground lg:hidden mr-1"
               aria-label="Abrir menu"
             >
               <MenuIcon className="size-4" />
             </button>
-            <ClipboardListIcon className="text-muted-foreground" data-icon="inline-start" />
-            <span className="text-sm font-medium">Workspace interno</span>
+            <ClipboardListIcon className="text-purple-400" data-icon="inline-start" />
+            <span className="text-sm font-medium text-white font-mono">MOTHERXIP</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden text-right text-xs text-muted-foreground sm:block">
-              <div className="font-medium text-foreground">{userEmail || "sem sessao"}</div>
-              <div>{userRole || (isAuthConfigured ? "profile pendente" : "config pendente")}</div>
+              <div className="font-medium text-white">{userEmail || "sem sessao"}</div>
+              <div className="capitalize text-purple-400 font-mono text-[10px]">{userRole ? roleLabel(userRole) : "profile pendente"}</div>
             </div>
             {searchData ? <GlobalSearch data={searchData} /> : <Button variant="outline" size="sm">Search</Button>}
             <form action={logoutAction}>
-              <Button size="sm" variant="secondary" type="submit" disabled={!isAuthConfigured}>
+              <Button size="sm" variant="secondary" className="border border-purple-500/15 bg-background hover:bg-purple-950/20 text-white" type="submit" disabled={!isAuthConfigured}>
                 Sair
               </Button>
             </form>

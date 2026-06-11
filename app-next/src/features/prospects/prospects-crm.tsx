@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { ProspectForm } from "./prospect-form";
 import type { ProspectRow } from "./data";
 import { prospectStatuses, prospectTemperatures } from "./prospect-schema";
+import { statusLabel, temperatureLabel } from "@/lib/display-helpers";
 
 export function ProspectsCrm({
   prospects,
@@ -64,11 +65,11 @@ export function ProspectsCrm({
             <Input name="q" placeholder="Buscar por nome" />
             <select name="status" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
               <option value="">Todos status</option>
-              {prospectStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
+              {prospectStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
             </select>
             <select name="temperature" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
               <option value="">Todas temperaturas</option>
-              {prospectTemperatures.map((temperature) => <option key={temperature} value={temperature}>{temperature}</option>)}
+              {prospectTemperatures.map((temperature) => <option key={temperature} value={temperature}>{temperatureLabel(temperature)}</option>)}
             </select>
             <select name="mine" className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
               <option value="">Todos</option>
@@ -101,10 +102,10 @@ export function ProspectsCrm({
                         {prospect.name}
                       </Link>
                     </TableCell>
-                    <TableCell>{prospect.status}</TableCell>
+                    <TableCell>{statusLabel(prospect.status)}</TableCell>
                     <TableCell>
                       <Badge variant={prospect.temperature === "hot" ? "destructive" : "outline"}>
-                        {prospect.temperature}
+                        {temperatureLabel(prospect.temperature)}
                       </Badge>
                     </TableCell>
                     <TableCell>{[prospect.city, prospect.state].filter(Boolean).join(" / ") || "-"}</TableCell>

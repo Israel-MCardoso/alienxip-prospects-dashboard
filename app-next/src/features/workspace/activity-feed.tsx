@@ -57,8 +57,8 @@ export function ActivityFeed({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Activity Feed</h1>
-        <p className="text-sm text-muted-foreground">Linha do tempo operacional unificada da ALIENXIP OS.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Atividades</h1>
+        <p className="text-sm text-muted-foreground">Linha do tempo operacional unificada do MOTHERXIP.</p>
       </div>
 
       {error ? <Card><CardHeader><CardTitle>Erro ao carregar atividades</CardTitle><CardDescription>{error}</CardDescription></CardHeader></Card> : null}
