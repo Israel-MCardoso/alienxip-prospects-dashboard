@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LockIcon, MailIcon } from "lucide-react";
 
@@ -19,6 +19,15 @@ export function LoginForm({ isConfigured, initialMessage }: { isConfigured: bool
     initialMessage === "senha_alterada" ? "Senha redefinida com sucesso! Faça login com suas novas credenciais." : null
   );
   const [isPending, setIsPending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,6 +58,7 @@ export function LoginForm({ isConfigured, initialMessage }: { isConfigured: bool
   }
 
   async function handleForgotPassword() {
+    if (cooldown > 0) return;
     if (!email || !email.trim()) {
       setError("Preencha o campo de e-mail acima para solicitar a recuperação de senha.");
       setForgotPasswordMsg(null);
@@ -77,7 +87,8 @@ export function LoginForm({ isConfigured, initialMessage }: { isConfigured: bool
         }
         setError(errorMsg);
       } else {
-        setForgotPasswordMsg("E-mail de recuperação enviado com sucesso! Verifique sua caixa de entrada.");
+        setForgotPasswordMsg("Link enviado. Verifique Caixa de Entrada, Spam e Promoções.");
+        setCooldown(60);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro inesperado.";
@@ -151,9 +162,10 @@ export function LoginForm({ isConfigured, initialMessage }: { isConfigured: bool
           <button
             type="button"
             onClick={handleForgotPassword}
-            className="text-[10px] text-purple-400 hover:text-purple-300 transition-colors font-mono cursor-pointer uppercase tracking-wider"
+            disabled={!isConfigured || isPending || cooldown > 0}
+            className="text-[10px] text-purple-400 hover:text-purple-300 disabled:text-white/30 disabled:cursor-not-allowed transition-colors font-mono cursor-pointer uppercase tracking-wider"
           >
-            Esqueci minha senha
+            {cooldown > 0 ? `Aguarde ${cooldown}s` : "Esqueci minha senha"}
           </button>
         </div>
 
