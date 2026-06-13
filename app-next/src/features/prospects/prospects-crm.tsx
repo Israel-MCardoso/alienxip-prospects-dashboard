@@ -8,8 +8,7 @@ import {
   AlertTriangleIcon,
   TargetIcon,
   PlusIcon,
-  XIcon,
-  ChevronDownIcon
+  XIcon
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -424,50 +423,36 @@ export function ProspectsCrm({
                           
                           <div className="flex flex-wrap items-center gap-2">
                             {/* Inline status switcher - Optimistic UI */}
-                            <div className="relative group/status flex items-center">
-                              <select
+                            <div className="min-w-[112px]">
+                              <CustomSelect
                                 value={prospect.status}
-                                onChange={(e) => handleUpdateStatusInline(prospect.id, e.target.value)}
-                                className="text-[10px] uppercase font-mono bg-primary/10 dark:bg-purple-950/20 text-primary dark:text-purple-300 border border-primary/20 dark:border-purple-500/20 py-0 px-2.5 h-5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-primary/20 dark:hover:bg-purple-950/40 transition-colors cursor-pointer appearance-none pr-5.5 font-bold"
-                              >
-                                {prospectStatuses.map((st) => (
-                                  <option key={st} value={st} className="bg-popover text-popover-foreground">
-                                    {statusLabel(st)}
-                                  </option>
-                                ))}
-                              </select>
-                              <div className="pointer-events-none absolute right-1.5 flex items-center text-primary dark:text-purple-350 opacity-60">
-                                <ChevronDownIcon className="h-3 w-3" />
-                              </div>
+                                onChange={(val) => handleUpdateStatusInline(prospect.id, val)}
+                                options={prospectStatuses.map((st) => ({
+                                  value: st,
+                                  label: statusLabel(st)
+                                }))}
+                                triggerClassName="text-[10px] uppercase font-mono bg-primary/10 dark:bg-purple-950/20 text-primary dark:text-purple-300 border border-primary/20 dark:border-purple-500/20 py-0 px-2.5 h-5 rounded-md focus:ring-purple-500 hover:bg-primary/20 dark:hover:bg-purple-950/40 font-bold"
+                              />
                             </div>
 
                             {/* Inline temperature switcher - Optimistic UI */}
-                            <div className="relative group/temp flex items-center">
-                              <select
+                            <div className="min-w-[84px]">
+                              <CustomSelect
                                 value={prospect.temperature}
-                                onChange={(e) => handleUpdateTemperatureInline(prospect.id, e.target.value)}
-                                className={cn(
-                                  "text-[10px] uppercase font-mono py-0 px-2.5 h-5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-opacity-20 transition-colors cursor-pointer appearance-none pr-5.5 font-bold border",
+                                onChange={(val) => handleUpdateTemperatureInline(prospect.id, val)}
+                                options={prospectTemperatures.map((temp) => ({
+                                  value: temp,
+                                  label: temperatureLabel(temp)
+                                }))}
+                                triggerClassName={cn(
+                                  "text-[10px] uppercase font-mono py-0 px-2.5 h-5 rounded-md focus:ring-purple-500 hover:bg-opacity-20 font-bold border",
                                   prospect.temperature === "hot"
                                     ? "bg-rose-500/10 text-rose-600 dark:bg-rose-950/30 dark:text-rose-300 border-rose-500/20"
                                     : prospect.temperature === "warm"
                                     ? "bg-amber-500/10 text-amber-600 dark:bg-amber-950/20 dark:text-amber-300 border-amber-500/20"
                                     : "bg-blue-500/10 text-blue-600 dark:bg-blue-950/20 dark:text-blue-300 border-blue-500/20"
                                 )}
-                              >
-                                {prospectTemperatures.map((temp) => (
-                                  <option key={temp} value={temp} className="bg-popover text-popover-foreground">
-                                    {temperatureLabel(temp)}
-                                  </option>
-                                ))}
-                              </select>
-                              <div className="pointer-events-none absolute right-1.5 flex items-center opacity-65">
-                                <ChevronDownIcon className={cn("h-3 w-3", 
-                                  prospect.temperature === "hot" ? "text-rose-450 dark:text-rose-400" :
-                                  prospect.temperature === "warm" ? "text-amber-500 dark:text-amber-400" :
-                                  "text-blue-500 dark:text-blue-400"
-                                )} />
-                              </div>
+                              />
                             </div>
 
                             {o && (

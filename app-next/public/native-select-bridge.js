@@ -18,6 +18,28 @@
     });
   }
 
+  function notifyReactChange(select) {
+    var propsKey = Object.keys(select).find(function (key) {
+      return key.indexOf("__reactProps$") === 0;
+    });
+    var props = propsKey ? select[propsKey] : null;
+    if (props && typeof props.onChange === "function") {
+      props.onChange({
+        bubbles: true,
+        cancelable: false,
+        currentTarget: select,
+        defaultPrevented: false,
+        isDefaultPrevented: function () { return false; },
+        isPropagationStopped: function () { return false; },
+        nativeEvent: new Event("change", { bubbles: true }),
+        preventDefault: function () {},
+        stopPropagation: function () {},
+        target: select,
+        type: "change"
+      });
+    }
+  }
+
   function createDropdown(select, button) {
     closeDropdowns();
 
@@ -47,6 +69,7 @@
         }
         select.dispatchEvent(new Event("input", { bubbles: true }));
         select.dispatchEvent(new Event("change", { bubbles: true }));
+        notifyReactChange(select);
         syncButtonLabel(select, button);
         closeDropdowns();
         button.focus();
