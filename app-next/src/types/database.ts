@@ -1,5 +1,21 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
+export type OutreachStatus =
+  | "not_started"
+  | "queued"
+  | "sent"
+  | "delivered"
+  | "waiting_reply"
+  | "replied"
+  | "negotiating"
+  | "meeting_scheduled"
+  | "failed"
+  | "paused"
+  | "stopped"
+  | "disqualified";
+
+export type OutreachChannel = "whatsapp" | "instagram" | "email" | "manual";
+
 export type ProspectStatus =
   | "frio"
   | "contato_inicial"
@@ -235,6 +251,126 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["prospect_proposals"]["Insert"]>;
+        Relationships: [];
+      };
+      prospect_outreach: {
+        Row: {
+          id: string;
+          prospect_id: string;
+          status: OutreachStatus;
+          channel: OutreachChannel;
+          automation_source: string | null;
+          n8n_workflow_id: string | null;
+          n8n_execution_id: string | null;
+          last_message_at: string | null;
+          next_follow_up_at: string | null;
+          meeting_scheduled_at: string | null;
+          meeting_link: string | null;
+          paused_at: string | null;
+          stopped_at: string | null;
+          error_message: string | null;
+          metadata: Json;
+          last_message_preview: string | null;
+          meeting_title: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          prospect_id: string;
+          status?: OutreachStatus;
+          channel?: OutreachChannel;
+          automation_source?: string | null;
+          n8n_workflow_id?: string | null;
+          n8n_execution_id?: string | null;
+          last_message_at?: string | null;
+          next_follow_up_at?: string | null;
+          meeting_scheduled_at?: string | null;
+          meeting_link?: string | null;
+          paused_at?: string | null;
+          stopped_at?: string | null;
+          error_message?: string | null;
+          metadata?: Json;
+          last_message_preview?: string | null;
+          meeting_title?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["prospect_outreach"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "prospect_outreach_prospect_id_fkey";
+            columns: ["prospect_id"];
+            referencedRelation: "prospects";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      outreach_events: {
+        Row: {
+          id: string;
+          prospect_id: string;
+          outreach_id: string | null;
+          event_type: string;
+          status: OutreachStatus;
+          channel: OutreachChannel;
+          message: string | null;
+          n8n_execution_id: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          prospect_id: string;
+          outreach_id?: string | null;
+          event_type: string;
+          status: OutreachStatus;
+          channel?: OutreachChannel;
+          message?: string | null;
+          n8n_execution_id?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["outreach_events"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "outreach_events_prospect_id_fkey";
+            columns: ["prospect_id"];
+            referencedRelation: "prospects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "outreach_events_outreach_id_fkey";
+            columns: ["outreach_id"];
+            referencedRelation: "prospect_outreach";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      webhook_audit_logs: {
+        Row: {
+          id: string;
+          execution_id: string | null;
+          event_type: string | null;
+          status: string;
+          secret_validated: boolean;
+          duplicate_ignored: boolean;
+          payload: Json;
+          error_message: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          execution_id?: string | null;
+          event_type?: string | null;
+          status: string;
+          secret_validated?: boolean;
+          duplicate_ignored?: boolean;
+          payload?: Json;
+          error_message?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["webhook_audit_logs"]["Insert"]>;
         Relationships: [];
       };
       companies: {

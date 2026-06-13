@@ -1,9 +1,12 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database, ProspectStatus, ProspectTemperature } from "@/types/database";
 import { prospectStatuses, prospectTemperatures } from "./prospect-schema";
 import { getEntityFiles } from "@/features/tech/data";
+import type { ProspectOutreachRow, OutreachEventRow } from "@/types/outreach";
 
-export type ProspectRow = Database["public"]["Tables"]["prospects"]["Row"];
+export type ProspectRow = Database["public"]["Tables"]["prospects"]["Row"] & {
+  prospect_outreach?: ProspectOutreachRow[] | null;
+};
 export type ProspectDiagnosticRow = Database["public"]["Tables"]["prospect_diagnostics"]["Row"];
 export type ProspectNoteRow = Database["public"]["Tables"]["prospect_notes"]["Row"];
 export type ProspectActivityRow = Database["public"]["Tables"]["prospect_activities"]["Row"];
@@ -27,6 +30,7 @@ export async function getProspects(filters?: {
   status?: string;
   temperature?: string;
   mine?: string;
+  outreach?: string;
 }) {
   const supabase = await createSupabaseServerClient();
 
@@ -37,10 +41,11 @@ export async function getProspects(filters?: {
       isConfigured: false
     };
   }
+  const db = createSupabaseAdminClient();
 
-  let query = supabase
+  let query = db
     .from("prospects")
-    .select("*")
+    .select("*, prospect_outreach(*)")
     .order("updated_at", { ascending: false });
 
   if (filters?.q) {
@@ -62,10 +67,37 @@ export async function getProspects(filters?: {
     }
   }
 
-  const { data, error } = await query;
+  const { data: rawData, error } = await query;
+  let data = (rawData || []) as unknown as ProspectRow[];
+
+  if (filters?.outreach) {
+    data = data.filter((p) => {
+      const hasPhone = p.whatsapp && p.whatsapp.replace(/\D/g, "").length >= 8;
+      const outreach = p.prospect_outreach?.[0] || null;
+
+      if (filters.outreach === "ready") {
+        // Pronto para automação: WhatsApp/telefone com 8-15 dígitos e status inativo ou sem registro
+        const isInactive = !outreach || ["not_started", "stopped", "failed", "disqualified", "paused"].includes(outreach.status);
+        return hasPhone && isInactive;
+      }
+      if (filters.outreach === "active") {
+        // Em automação: status ativo
+        return outreach && ["queued", "sent", "delivered", "waiting_reply", "replied", "negotiating"].includes(outreach.status);
+      }
+      if (filters.outreach === "meeting") {
+        // Reunião marcada
+        return outreach && outreach.status === "meeting_scheduled";
+      }
+      if (filters.outreach === "failed") {
+        // Falhou
+        return outreach && outreach.status === "failed";
+      }
+      return true;
+    });
+  }
 
   return {
-    data: data || [],
+    data,
     error: error?.message || null,
     isConfigured: true
   };
@@ -77,10 +109,11 @@ export async function getProspect(id: string) {
   if (!supabase) {
     return { data: null, error: "Supabase nao configurado.", isConfigured: false };
   }
+  const db = createSupabaseAdminClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("prospects")
-    .select("*")
+    .select("*, prospect_outreach(*)")
     .eq("id", id)
     .single();
 
@@ -102,20 +135,36 @@ export async function getProspectWorkspace(id: string) {
       activities: [] as ProspectActivityRow[],
       tasks: [] as CommercialTaskRow[],
       files: [] as FileRow[],
+      proposals: [] as ProspectProposalRow[],
       profile: null,
+      outreach: null as ProspectOutreachRow | null,
+      outreachEvents: [] as OutreachEventRow[],
       error: "Supabase nao configurado.",
       isConfigured: false
     };
   }
+  const db = createSupabaseAdminClient();
 
-  const [prospectResult, diagnosticResult, notesResult, activitiesResult, tasksResult, filesResult, userResult] = await Promise.all([
+  const [
+    prospectResult,
+    diagnosticResult,
+    notesResult,
+    activitiesResult,
+    tasksResult,
+    filesResult,
+    userResult,
+    outreachResult,
+    outreachEventsResult
+  ] = await Promise.all([
     supabase.from("prospects").select("*").eq("id", id).single(),
     supabase.from("prospect_diagnostics").select("*").eq("prospect_id", id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("prospect_notes").select("*").eq("prospect_id", id).order("created_at", { ascending: false }),
     supabase.from("prospect_activities").select("*").eq("prospect_id", id).order("created_at", { ascending: false }),
     supabase.from("commercial_tasks").select("*").eq("prospect_id", id).order("due_date", { ascending: true }),
     getEntityFiles("prospect", id),
-    supabase.auth.getUser()
+    supabase.auth.getUser(),
+    db.from("prospect_outreach").select("*").eq("prospect_id", id).maybeSingle(),
+    db.from("outreach_events").select("*").eq("prospect_id", id).order("created_at", { ascending: false })
   ]);
 
   let proposals: ProspectProposalRow[] = [];
@@ -137,6 +186,16 @@ export async function getProspectWorkspace(id: string) {
     ? await supabase.from("profiles").select("*").eq("id", userId).maybeSingle()
     : { data: null };
 
+  const errorMsg = prospectResult.error?.message ||
+    diagnosticResult.error?.message ||
+    notesResult.error?.message ||
+    activitiesResult.error?.message ||
+    tasksResult.error?.message ||
+    filesResult.error ||
+    outreachResult.error?.message ||
+    outreachEventsResult.error?.message ||
+    null;
+
   return {
     prospect: prospectResult.data,
     diagnostic: diagnosticResult.data,
@@ -146,7 +205,9 @@ export async function getProspectWorkspace(id: string) {
     files: filesResult.data || [],
     proposals,
     profile: profileResult.data,
-    error: prospectResult.error?.message || diagnosticResult.error?.message || notesResult.error?.message || activitiesResult.error?.message || tasksResult.error?.message || filesResult.error || null,
+    outreach: (outreachResult.data || null) as unknown as ProspectOutreachRow | null,
+    outreachEvents: (outreachEventsResult.data || []) as unknown as OutreachEventRow[],
+    error: errorMsg,
     isConfigured: true
   };
 }

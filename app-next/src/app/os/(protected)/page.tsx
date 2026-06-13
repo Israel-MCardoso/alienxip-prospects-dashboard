@@ -90,7 +90,14 @@ export default async function OsHomePage() {
     fechamentosDoMes: overview.metrics.monthConversions || 0,
     projetosAtivos,
     bugsCriticos,
-    tarefasAtrasadas: overview.metrics.overdueTasks || 0
+    tarefasAtrasadas: overview.metrics.overdueTasks || 0,
+    leadsEmAutomacao: overview.metrics.leadsEmAutomacao || 0,
+    aguardandoResposta: overview.metrics.aguardandoResposta || 0,
+    responderam: overview.metrics.responderam || 0,
+    negociando: overview.metrics.negociando || 0,
+    reunioesMarcadas: overview.metrics.reunioesMarcadas || 0,
+    taxaResposta: overview.metrics.taxaResposta || 0,
+    taxaConversao: overview.metrics.taxaConversao || 0
   };
 
   return (

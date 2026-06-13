@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alienxip.local/schemas/ai/LeadQualification.schema.json",
+  "title": "LeadQualification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["prospect_id", "qualified", "temperature", "reason", "next_action", "needs_human_review"],
+  "properties": {
+    "prospect_id": { "type": "string" },
+    "qualified": { "type": "boolean" },
+    "temperature": { "type": "string", "enum": ["cold", "warm", "hot"] },
+    "reason": { "type": "string" },
+    "missing_information": { "type": "array", "items": { "type": "string" } },
+    "next_action": { "type": "string", "enum": ["diagnose", "follow_up", "schedule_meeting", "handoff_human", "disqualify"] },
+    "needs_human_review": { "type": "boolean" }
+  }
+}

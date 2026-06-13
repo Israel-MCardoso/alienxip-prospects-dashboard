@@ -1,3 +1,6 @@
+"use client";
+
+import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,14 +18,189 @@ import { statusLabel, temperatureLabel } from "@/lib/display-helpers";
 
 export function ProspectForm({
   prospect,
-  isConfigured
+  isConfigured,
+  onSuccess,
+  onCancel,
+  flat = false
 }: {
   prospect?: ProspectRow | null;
   isConfigured: boolean;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+  flat?: boolean;
 }) {
-  const action = prospect
+  const [isPending, startTransition] = useTransition();
+
+  const rawAction = prospect
     ? updateProspectAction.bind(null, prospect.id)
     : createProspectAction;
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    if (onSuccess) {
+      event.preventDefault();
+      const formData = new FormData(event.currentTarget);
+      startTransition(async () => {
+        try {
+          await rawAction(formData);
+          onSuccess();
+        } catch (err) {
+          const isRedirect = err instanceof Error && (
+            err.message.includes("NEXT_REDIRECT") || 
+            (err as Error & { digest?: string }).digest?.startsWith("NEXT_REDIRECT")
+          );
+          if (isRedirect) {
+            onSuccess();
+          } else {
+            alert("Erro ao salvar prospect: " + (err instanceof Error ? err.message : String(err)));
+          }
+        }
+      });
+    }
+  };
+
+  // Keyboard Esc listener inside the form container
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Escape" && onCancel) {
+      event.preventDefault();
+      onCancel();
+    }
+  };
+
+  const formContent = (
+    <form 
+      onSubmit={handleSubmit} 
+      action={onSuccess ? undefined : rawAction} 
+      onKeyDown={handleKeyDown}
+      className="grid gap-4 md:grid-cols-2"
+    >
+      <div className="flex flex-col gap-1.5 md:col-span-2">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Nome da empresa *</label>
+        <Input name="name" placeholder="Nome da empresa" defaultValue={prospect?.name || ""} required disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Segmento</label>
+        <Input name="segment" placeholder="Segmento" defaultValue={prospect?.segment || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">WhatsApp</label>
+        <Input name="whatsapp" placeholder="WhatsApp" defaultValue={prospect?.whatsapp || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Etapa comercial</label>
+        <select 
+          name="status" 
+          defaultValue={prospect?.status || "new"} 
+          disabled={!isConfigured || isPending} 
+          className="h-9 rounded-lg border border-input bg-background px-3 text-xs focus:ring-1 focus:ring-purple-500 outline-none"
+        >
+          {prospectStatuses.map((status) => (
+            <option key={status} value={status}>{statusLabel(status)}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Temperatura</label>
+        <select 
+          name="temperature" 
+          defaultValue={prospect?.temperature || "warm"} 
+          disabled={!isConfigured || isPending} 
+          className="h-9 rounded-lg border border-input bg-background px-3 text-xs focus:ring-1 focus:ring-purple-500 outline-none"
+        >
+          {prospectTemperatures.map((temperature) => (
+            <option key={temperature} value={temperature}>{temperatureLabel(temperature)}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Cidade</label>
+        <Input name="city" placeholder="Cidade" defaultValue={prospect?.city || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Estado</label>
+        <Input name="state" placeholder="Estado" defaultValue={prospect?.state || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Instagram URL</label>
+        <Input name="instagram_url" placeholder="Instagram URL" defaultValue={prospect?.instagram_url || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Site URL</label>
+        <Input name="website_url" placeholder="Site URL" defaultValue={prospect?.website_url || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Nome do Parceiro</label>
+        <Input name="partner_name" placeholder="Parceiro" defaultValue={prospect?.partner_name || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">URL do parceiro</label>
+        <Input name="partner_url" placeholder="URL do parceiro" defaultValue={prospect?.partner_url || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5 md:col-span-2">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Observações</label>
+        <textarea 
+          name="notes" 
+          placeholder="Observacoes" 
+          defaultValue={prospect?.notes || ""} 
+          disabled={!isConfigured || isPending}
+          className="min-h-[80px] rounded-lg border border-input bg-background p-3 text-xs focus:ring-1 focus:ring-purple-500 outline-none resize-none"
+        />
+      </div>
+
+      <div className="md:col-span-2 flex flex-wrap gap-2.5 pt-2 border-t border-border/40 mt-2">
+        <Button 
+          type="submit" 
+          disabled={!isConfigured || isPending} 
+          className="bg-[#7B2EFF] hover:bg-[#9D5CFF] text-white font-mono text-xs cursor-pointer"
+        >
+          {isPending ? "Salvando..." : prospect ? "Salvar alterações" : "Criar prospect"}
+        </Button>
+        {onCancel ? (
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            className="font-mono text-xs cursor-pointer"
+            disabled={isPending}
+          >
+            Cancelar
+          </Button>
+        ) : prospect ? (
+          <Button 
+            type="button" 
+            variant="outline" 
+            render={<Link href={`/os/prospects/${prospect.id}`} />}
+            className="font-mono text-xs cursor-pointer"
+          >
+            Cancelar
+          </Button>
+        ) : (
+          <Button 
+            type="button" 
+            variant="outline" 
+            render={<Link href="/os/prospects" />}
+            className="font-mono text-xs cursor-pointer"
+          >
+            Voltar
+          </Button>
+        )}
+      </div>
+    </form>
+  );
+
+  if (flat) {
+    return formContent;
+  }
 
   return (
     <Card>
@@ -33,42 +211,7 @@ export function ProspectForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={action} className="grid gap-3 md:grid-cols-2">
-          <Input name="name" placeholder="Nome da empresa" defaultValue={prospect?.name || ""} required disabled={!isConfigured} />
-          <Input name="segment" placeholder="Segmento" defaultValue={prospect?.segment || ""} disabled={!isConfigured} />
-          <select name="status" defaultValue={prospect?.status || "new"} disabled={!isConfigured} className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
-            {prospectStatuses.map((status) => (
-              <option key={status} value={status}>{statusLabel(status)}</option>
-            ))}
-          </select>
-          <select name="temperature" defaultValue={prospect?.temperature || "warm"} disabled={!isConfigured} className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm">
-            {prospectTemperatures.map((temperature) => (
-              <option key={temperature} value={temperature}>{temperatureLabel(temperature)}</option>
-            ))}
-          </select>
-          <Input name="city" placeholder="Cidade" defaultValue={prospect?.city || ""} disabled={!isConfigured} />
-          <Input name="state" placeholder="Estado" defaultValue={prospect?.state || ""} disabled={!isConfigured} />
-          <Input name="instagram_url" placeholder="Instagram URL" defaultValue={prospect?.instagram_url || ""} disabled={!isConfigured} />
-          <Input name="website_url" placeholder="Site URL" defaultValue={prospect?.website_url || ""} disabled={!isConfigured} />
-          <Input name="whatsapp" placeholder="WhatsApp" defaultValue={prospect?.whatsapp || ""} disabled={!isConfigured} />
-          <Input name="partner_name" placeholder="Parceiro" defaultValue={prospect?.partner_name || ""} disabled={!isConfigured} />
-          <Input name="partner_url" placeholder="URL do parceiro" defaultValue={prospect?.partner_url || ""} disabled={!isConfigured} />
-          <Input name="notes" placeholder="Observacoes" defaultValue={prospect?.notes || ""} disabled={!isConfigured} />
-          <div className="md:col-span-2 flex flex-wrap gap-2">
-            <Button type="submit" disabled={!isConfigured} className="bg-[#7B2EFF] hover:bg-[#9D5CFF] text-white">
-              {prospect ? "Salvar alterações" : "Criar prospect"}
-            </Button>
-            {prospect ? (
-              <Button type="button" variant="outline" render={<Link href={`/os/prospects/${prospect.id}`} />}>
-                Cancelar
-              </Button>
-            ) : (
-              <Button type="button" variant="outline" render={<Link href="/os/prospects" />}>
-                Voltar
-              </Button>
-            )}
-          </div>
-        </form>
+        {formContent}
       </CardContent>
     </Card>
   );

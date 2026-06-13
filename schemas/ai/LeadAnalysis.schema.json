@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alienxip.local/schemas/ai/LeadAnalysis.schema.json",
+  "title": "LeadAnalysis",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["prospect_id", "icp_fit", "digital_maturity", "opportunities", "risks", "recommended_stage", "needs_human_review"],
+  "properties": {
+    "prospect_id": { "type": "string" },
+    "icp_fit": { "type": "string", "enum": ["strong", "medium", "weak", "unknown"] },
+    "digital_maturity": { "type": "string", "enum": ["low", "medium", "high", "unknown"] },
+    "priority_score_suggestion": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "opportunities": { "type": "array", "items": { "type": "string" } },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "recommended_stage": { "type": "string" },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "needs_human_review": { "type": "boolean" }
+  }
+}

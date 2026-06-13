@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 import { getSupabasePublicConfig } from "./config";
@@ -27,6 +28,22 @@ export async function createSupabaseServerClient() {
           // Server Components cannot set cookies; auth flows set them through client navigation.
         }
       }
+    }
+  });
+}
+
+export function createSupabaseAdminClient() {
+  const config = getSupabasePublicConfig();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!config || !serviceRoleKey) {
+    throw new Error("Missing Supabase credentials for Admin Client");
+  }
+
+  return createClient<Database>(config.url, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false
     }
   });
 }

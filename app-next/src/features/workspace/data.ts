@@ -77,7 +77,16 @@ export async function getDashboardOverview() {
   if (!supabase) {
     const emptyData = { prospects: [], clients: [], projects: [], tasks: [] };
     return {
-      metrics: calculateDashboardMetrics(emptyData),
+      metrics: {
+        ...calculateDashboardMetrics(emptyData),
+        leadsEmAutomacao: 0,
+        aguardandoResposta: 0,
+        responderam: 0,
+        negociando: 0,
+        reunioesMarcadas: 0,
+        taxaResposta: 0,
+        taxaConversao: 0
+      },
       activities: [] as ActivityRow[],
       myPending: [] as TaskRow[],
       bugs: [] as TechBugRow[],
@@ -95,7 +104,7 @@ export async function getDashboardOverview() {
 
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id || null;
-  const [prospects, clients, projects, tasks, activities, bugs, incidents, files, playbooks, profiles] = await Promise.all([
+  const [prospects, clients, projects, tasks, activities, bugs, incidents, files, playbooks, profiles, outreach] = await Promise.all([
     supabase.from("prospects").select("id, name, status, temperature, owner_id, responsible_user_id, segment, converted_at, priority_score"),
     supabase.from("clients").select("id, company_id, status, contract_status, main_contact_name, main_contact_email"),
     supabase.from("projects").select("id, name, status, priority, owner_id, created_by, completed_at"),
@@ -105,7 +114,8 @@ export async function getDashboardOverview() {
     supabase.from("tech_incidents").select("id, title, description, status, severity, started_at, resolved_at, project_id, client_id, owner_id"),
     supabase.from("files").select("id, file_name, bucket, path, file_type, file_size, entity_type, entity_id, created_at").is("removed_at", null).order("created_at", { ascending: false }).limit(8),
     supabase.from("playbooks").select("id, title, description, category, status, created_at").eq("status", "published").order("created_at", { ascending: false }).limit(8),
-    supabase.from("profiles").select("id, full_name, email")
+    supabase.from("profiles").select("id, full_name, email"),
+    supabase.from("prospect_outreach").select("id, prospect_id, status")
   ]);
 
   const dashboardData = {
@@ -115,6 +125,18 @@ export async function getDashboardOverview() {
     tasks: (tasks.data || []) as unknown as TaskRow[]
   };
   const openTasks = dashboardData.tasks.filter((task) => task.status !== "completed" && task.status !== "canceled");
+
+  // Calculate Outreach KPIs
+  const outreachList = outreach.data || [];
+  const leadsEmAutomacao = outreachList.filter(o => ["queued", "sent", "delivered", "waiting_reply", "replied", "negotiating"].includes(o.status)).length;
+  const aguardandoResposta = outreachList.filter(o => o.status === "waiting_reply").length;
+  const responderam = outreachList.filter(o => o.status === "replied").length;
+  const negociando = outreachList.filter(o => o.status === "negotiating").length;
+  const reunioesMarcadas = outreachList.filter(o => o.status === "meeting_scheduled").length;
+
+  const totalContacted = outreachList.filter(o => !["not_started", "queued"].includes(o.status)).length;
+  const taxaResposta = totalContacted > 0 ? Math.round((responderam / totalContacted) * 100) : 0;
+  const taxaConversao = totalContacted > 0 ? Math.round((reunioesMarcadas / totalContacted) * 100) : 0;
 
   const errorMsg = prospects.error?.message ||
     clients.error?.message ||
@@ -126,10 +148,22 @@ export async function getDashboardOverview() {
     files.error?.message ||
     playbooks.error?.message ||
     profiles.error?.message ||
+    outreach.error?.message ||
     null;
 
+  const metrics = {
+    ...calculateDashboardMetrics(dashboardData, { userId }),
+    leadsEmAutomacao,
+    aguardandoResposta,
+    responderam,
+    negociando,
+    reunioesMarcadas,
+    taxaResposta,
+    taxaConversao
+  };
+
   return {
-    metrics: calculateDashboardMetrics(dashboardData, { userId }),
+    metrics,
     activities: (activities.data || []) as unknown as ActivityRow[],
     myPending: userId ? openTasks.filter((task) => task.owner_id === userId || task.assigned_to === userId).slice(0, 8) : openTasks.slice(0, 8),
     bugs: (bugs.data || []) as unknown as TechBugRow[],

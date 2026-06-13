@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alienxip.local/schemas/ai/ConversationState.schema.json",
+  "title": "ConversationState",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["conversation_id", "prospect_id", "stage", "last_intent", "status", "handoff_required"],
+  "properties": {
+    "conversation_id": { "type": "string" },
+    "prospect_id": { "type": "string" },
+    "stage": { "type": "string", "enum": ["queued", "sent", "delivered", "waiting_reply", "replied", "negotiating", "meeting_scheduled", "disqualified", "paused", "stopped", "failed"] },
+    "last_intent": { "type": "string" },
+    "status": { "type": "string" },
+    "summary": { "type": "string" },
+    "open_objections": { "type": "array", "items": { "type": "string" } },
+    "handoff_required": { "type": "boolean" }
+  }
+}

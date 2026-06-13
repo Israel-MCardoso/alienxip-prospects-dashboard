@@ -26,7 +26,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} h-full dark`}>
+    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var isAuthRoute = window.location.pathname.indexOf('/os/login') !== -1 || window.location.pathname.indexOf('/os/reset-password') !== -1;
+                  var theme = isAuthRoute ? 'dark' : (localStorage.getItem('theme') || 'dark');
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full antialiased">{children}</body>
     </html>
   );

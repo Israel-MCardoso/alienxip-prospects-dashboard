@@ -10,7 +10,7 @@ export default async function ProspectWorkspacePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [{ prospect, diagnostic, notes, activities, tasks, files, isConfigured, error }, refs] = await Promise.all([
+  const [{ prospect, diagnostic, notes, activities, tasks, files, isConfigured, error, outreach, outreachEvents }, refs] = await Promise.all([
     getProspectWorkspace(id),
     getTaskReferenceData()
   ]);
@@ -30,6 +30,8 @@ export default async function ProspectWorkspacePage({
       profiles={refs.profiles}
       clients={refs.clients}
       companies={refs.companies}
+      outreach={outreach}
+      outreachEvents={outreachEvents}
     />
   );
 }

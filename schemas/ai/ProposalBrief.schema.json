@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alienxip.local/schemas/ai/ProposalBrief.schema.json",
+  "title": "ProposalBrief",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["prospect_id", "title", "problem_summary", "recommended_scope", "evidence", "assumptions", "risks", "human_review_required"],
+  "properties": {
+    "prospect_id": { "type": "string" },
+    "title": { "type": "string" },
+    "problem_summary": { "type": "string" },
+    "recommended_scope": { "type": "array", "items": { "type": "string" } },
+    "pricing_reference": { "type": "string" },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "next_steps": { "type": "array", "items": { "type": "string" } },
+    "human_review_required": { "type": "boolean", "const": true }
+  }
+}

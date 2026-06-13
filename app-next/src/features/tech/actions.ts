@@ -448,3 +448,53 @@ export async function archiveTechnicalDecisionAction(decisionId: string) {
   revalidatePath("/os/tech/decisions");
   revalidatePath("/os/activity");
 }
+
+export async function updateBugStatusActionInline(id: string, status: string) {
+  const { supabase, userId } = await getClientAndUser();
+  const { error } = await supabase.from("tech_bugs").update({ status: status as TechBugStatus }).eq("id", id);
+  if (error) throw new Error(error.message);
+  await recordActivity(supabase, { entity_type: "task", entity_id: id, actor_id: userId, action: "bug_status_changed", title: "Status de bug atualizado", description: `Bug atualizado para ${status}.`, metadata: { status } });
+  revalidatePath("/os/tech");
+  revalidatePath("/os/tech/bugs");
+  revalidatePath("/os/activity");
+}
+
+export async function updateBugPriorityActionInline(id: string, priority: string) {
+  const { supabase, userId } = await getClientAndUser();
+  const { error } = await supabase.from("tech_bugs").update({ priority: priority as TechPriority }).eq("id", id);
+  if (error) throw new Error(error.message);
+  await recordActivity(supabase, { entity_type: "task", entity_id: id, actor_id: userId, action: "bug_priority_changed", title: "Prioridade de bug atualizada", description: `Prioridade atualizada para ${priority}.`, metadata: { priority } });
+  revalidatePath("/os/tech");
+  revalidatePath("/os/tech/bugs");
+  revalidatePath("/os/activity");
+}
+
+export async function updateBugSeverityActionInline(id: string, severity: string) {
+  const { supabase, userId } = await getClientAndUser();
+  const { error } = await supabase.from("tech_bugs").update({ severity: severity as TechSeverity }).eq("id", id);
+  if (error) throw new Error(error.message);
+  await recordActivity(supabase, { entity_type: "task", entity_id: id, actor_id: userId, action: "bug_severity_changed", title: "Severidade de bug atualizada", description: `Severidade atualizada para ${severity}.`, metadata: { severity } });
+  revalidatePath("/os/tech");
+  revalidatePath("/os/tech/bugs");
+  revalidatePath("/os/activity");
+}
+
+export async function updateIncidentStatusActionInline(id: string, status: string) {
+  const { supabase, userId } = await getClientAndUser();
+  const { error } = await supabase.from("tech_incidents").update({ status: status as TechIncidentStatus, resolved_at: status === "resolved" ? new Date().toISOString() : null }).eq("id", id);
+  if (error) throw new Error(error.message);
+  await recordActivity(supabase, { entity_type: "task", entity_id: id, actor_id: userId, action: "incident_status_changed", title: "Status de incidente atualizado", description: `Incidente atualizado para ${status}.`, metadata: { status } });
+  revalidatePath("/os/tech");
+  revalidatePath("/os/tech/incidents");
+  revalidatePath("/os/activity");
+}
+
+export async function updateIncidentSeverityActionInline(id: string, severity: string) {
+  const { supabase, userId } = await getClientAndUser();
+  const { error } = await supabase.from("tech_incidents").update({ severity: severity as TechSeverity }).eq("id", id);
+  if (error) throw new Error(error.message);
+  await recordActivity(supabase, { entity_type: "task", entity_id: id, actor_id: userId, action: "incident_severity_changed", title: "Severidade de incidente atualizada", description: `Severidade atualizada para ${severity}.`, metadata: { severity } });
+  revalidatePath("/os/tech");
+  revalidatePath("/os/tech/incidents");
+  revalidatePath("/os/activity");
+}

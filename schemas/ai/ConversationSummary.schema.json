@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alienxip.local/schemas/ai/ConversationSummary.schema.json",
+  "title": "ConversationSummary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["conversation_id", "prospect_id", "summary", "lead_intent", "next_action", "risks", "needs_human_review"],
+  "properties": {
+    "conversation_id": { "type": "string" },
+    "prospect_id": { "type": "string" },
+    "summary": { "type": "string" },
+    "lead_intent": { "type": "string" },
+    "next_action": { "type": "string" },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "important_facts": { "type": "array", "items": { "type": "string" } },
+    "needs_human_review": { "type": "boolean" }
+  }
+}

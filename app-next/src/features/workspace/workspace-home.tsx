@@ -27,7 +27,10 @@ import {
   UserPlusIcon,
   SendIcon,
   TrendingUpIcon,
-  ClockIcon
+  ClockIcon,
+  ZapIcon,
+  MessageSquareIcon,
+  PercentIcon
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +50,13 @@ interface WorkspaceHomeProps {
     projetosAtivos: number;
     bugsCriticos: number;
     tarefasAtrasadas: number;
+    leadsEmAutomacao: number;
+    aguardandoResposta: number;
+    responderam: number;
+    negociando: number;
+    reunioesMarcadas: number;
+    taxaResposta: number;
+    taxaConversao: number;
   };
 }
 
@@ -145,16 +155,16 @@ export function WorkspaceHome({ userEmail, userRole, preferredArea, metrics }: W
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-purple-950/40 text-purple-300 border-purple-800/40 font-mono">
+            <Badge variant="secondary" className="bg-purple-950/40 text-purple-300 dark:text-purple-300 border-purple-800/40 dark:border-purple-800/40 border-purple-200 font-mono">
               Sprint 12.5 (Mission Control)
             </Badge>
             <span className="text-xs text-muted-foreground">Sessão: {userEmail}</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white font-mono uppercase tracking-widest bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight text-white font-mono uppercase tracking-widest bg-gradient-to-r dark:from-white dark:via-purple-200 dark:to-purple-400 from-slate-900 via-purple-800 to-purple-600 bg-clip-text text-transparent">
             MOTHERXIP MISSION CONTROL
           </h1>
           <p className="text-sm text-muted-foreground">
-            Painel operacional e monitoramento unificado da <span className="text-purple-400 font-semibold">ALIENXIP</span>.
+            Painel operacional e monitoramento unificado da <span className="dark:text-purple-400 text-primary font-semibold">ALIENXIP</span>.
           </p>
         </div>
       </div>
@@ -234,34 +244,121 @@ export function WorkspaceHome({ userEmail, userRole, preferredArea, metrics }: W
             <Link
               key={idx}
               href={item.href}
-              className={cn(
-                "group flex flex-col justify-between overflow-hidden rounded-xl border bg-[#09090b]/40 p-4 transition-all duration-300",
-                "hover:-translate-y-1 hover:shadow-lg backdrop-blur-sm",
-                item.color
-              )}
+              className="group flex flex-col justify-between overflow-hidden rounded-lg border border-border bg-card p-4 transition-all duration-200 shadow-sm hover:bg-muted/30 hover:border-border/80"
             >
-              {/* Background radial gradient glow */}
-              <div className={cn(
-                "absolute -right-4 -bottom-4 size-16 rounded-full blur-xl transition-all duration-300 opacity-20 pointer-events-none",
-                item.bgGlow
-              )} />
-              
               <div className="flex items-center justify-between gap-1.5">
-                <span className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+                <span className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase font-mono">
                   {item.label}
-                  {item.sub && <span className="block text-[9px] lowercase font-normal italic">{item.sub}</span>}
+                  {item.sub && <span className="block text-[8px] lowercase font-normal italic tracking-normal">{item.sub}</span>}
                 </span>
-                <Icon className={cn("size-4 transition-transform duration-300 group-hover:scale-110", item.iconColor)} />
+                <Icon className={cn("size-3.5 transition-transform duration-200 group-hover:scale-105", item.iconColor)} />
               </div>
               
-              <div className="mt-3 flex items-baseline">
-                <span className="text-2xl font-bold font-mono tracking-tight text-white group-hover:text-purple-200 transition-colors">
+              <div className="mt-3.5 flex items-baseline">
+                <span className="text-2xl font-bold font-mono tracking-tight text-foreground">
                   {item.value}
                 </span>
               </div>
             </Link>
           );
         })}
+      </div>
+
+      {/* Outreach Automation Mission Control */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <ZapIcon className="size-4 text-primary" />
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest font-mono">Automação de Prospecção (n8n)</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          {[
+            {
+              label: "Em Automação",
+              value: metrics?.leadsEmAutomacao ?? 0,
+              icon: ZapIcon,
+              color: "border-purple-500/10 hover:border-purple-500/30",
+              iconColor: "text-purple-500",
+              bgGlow: "group-hover:bg-purple-500/5",
+              href: "/os/outreach"
+            },
+            {
+              label: "Aguardando Resposta",
+              value: metrics?.aguardandoResposta ?? 0,
+              icon: ClockIcon,
+              color: "border-amber-500/10 hover:border-amber-500/30",
+              iconColor: "text-amber-500",
+              bgGlow: "group-hover:bg-amber-500/5",
+              href: "/os/outreach"
+            },
+            {
+              label: "Responderam",
+              value: metrics?.responderam ?? 0,
+              icon: MessageSquareIcon,
+              color: "border-blue-500/10 hover:border-blue-500/30",
+              iconColor: "text-blue-500",
+              bgGlow: "group-hover:bg-blue-500/5",
+              href: "/os/outreach"
+            },
+            {
+              label: "Negociando",
+              value: metrics?.negociando ?? 0,
+              icon: BriefcaseIcon,
+              color: "border-indigo-500/10 hover:border-indigo-500/30",
+              iconColor: "text-indigo-500",
+              bgGlow: "group-hover:bg-indigo-500/5",
+              href: "/os/outreach"
+            },
+            {
+              label: "Reuniões Marcadas",
+              value: metrics?.reunioesMarcadas ?? 0,
+              icon: CalendarDaysIcon,
+              color: "border-emerald-500/10 hover:border-emerald-500/30",
+              iconColor: "text-emerald-500",
+              bgGlow: "group-hover:bg-emerald-500/5",
+              href: "/os/outreach"
+            },
+            {
+              label: "Taxa Resposta",
+              value: `${metrics?.taxaResposta ?? 0}%`,
+              icon: PercentIcon,
+              color: "border-pink-500/10 hover:border-pink-500/30",
+              iconColor: "text-pink-500",
+              bgGlow: "group-hover:bg-pink-500/5",
+              href: "/os/outreach"
+            },
+            {
+              label: "Taxa Conversão",
+              value: `${metrics?.taxaConversao ?? 0}%`,
+              icon: TrendingUpIcon,
+              color: "border-teal-500/10 hover:border-teal-500/30",
+              iconColor: "text-teal-500",
+              bgGlow: "group-hover:bg-teal-500/5",
+              href: "/os/outreach"
+            }
+          ].map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={idx}
+                href={item.href}
+                className="group flex flex-col justify-between overflow-hidden rounded-lg border border-border bg-card p-4 transition-all duration-200 shadow-sm hover:bg-muted/30 hover:border-border/80"
+              >
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase font-mono">
+                    {item.label}
+                  </span>
+                  <Icon className={cn("size-3.5 transition-transform duration-200 group-hover:scale-105", item.iconColor)} />
+                </div>
+                
+                <div className="mt-3.5 flex items-baseline">
+                  <span className="text-2xl font-bold font-mono tracking-tight text-foreground">
+                    {item.value}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* Tabs Selector for Areas */}
@@ -292,18 +389,18 @@ export function WorkspaceHome({ userEmail, userRole, preferredArea, metrics }: W
       </div>
 
       {/* Active Workspace Showcase (Featured) */}
-      <Card className="border-purple-500/20 bg-gradient-to-r from-[#0d0a15] to-[#08080a] relative overflow-hidden transition-all duration-300 hover:border-purple-500/35">
+      <Card className="border-purple-500/20 dark:border-purple-500/20 bg-gradient-to-r dark:from-[#0d0a15] dark:to-[#08080a] from-purple-50/50 to-white relative overflow-hidden transition-all duration-300 hover:border-purple-500/35 shadow-sm">
         <div className="absolute top-0 right-0 size-72 bg-purple-600/5 blur-3xl pointer-events-none rounded-full" />
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2.5">
-            <div className={cn("p-2 rounded-lg border", areas[activeArea].color.split(" ")[0], areas[activeArea].color.split(" ")[2])}>
+            <div className={cn("p-2 rounded-lg border shadow-sm", areas[activeArea].color.split(" ")[0], areas[activeArea].color.split(" ")[2])}>
               {(() => {
                 const ActiveIcon = areas[activeArea].icon;
                 return <ActiveIcon className="size-5" />;
               })()}
             </div>
             <div>
-              <CardTitle className="text-xl font-bold text-white font-mono uppercase tracking-wider">{areas[activeArea].title}</CardTitle>
+              <CardTitle className="text-xl font-bold text-foreground font-mono uppercase tracking-wider">{areas[activeArea].title}</CardTitle>
               <CardDescription className="text-xs text-muted-foreground mt-0.5">{areas[activeArea].description}</CardDescription>
             </div>
           </div>
@@ -318,7 +415,7 @@ export function WorkspaceHome({ userEmail, userRole, preferredArea, metrics }: W
                 return (
                   <div
                     key={link.label}
-                    className="opacity-50 flex items-start gap-3 rounded-lg border border-dashed border-white/5 bg-background/20 p-3 select-none"
+                    className="opacity-50 flex items-start gap-3 rounded-lg border border-dashed border-border dark:border-white/5 bg-slate-50/50 dark:bg-background/20 p-3 select-none"
                   >
                     <LinkIcon className="size-4 text-muted-foreground mt-0.5" />
                     <div className="flex flex-col gap-0.5">
@@ -333,11 +430,11 @@ export function WorkspaceHome({ userEmail, userRole, preferredArea, metrics }: W
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="group flex items-start gap-3 rounded-lg border bg-background/40 p-3 transition-all duration-200 hover:bg-purple-950/20 hover:border-purple-500/20 hover:translate-y-[-2px]"
+                  className="group flex items-start gap-3 rounded-lg border border-border bg-white dark:bg-background/40 p-3 transition-all duration-200 hover:bg-purple-50/60 dark:hover:bg-purple-950/20 hover:border-purple-500/30 hover:translate-y-[-2px] shadow-sm"
                 >
-                  <LinkIcon className="size-4 text-muted-foreground group-hover:text-purple-300 mt-0.5 transition-colors" />
+                  <LinkIcon className="size-4 text-muted-foreground group-hover:text-primary mt-0.5 transition-colors" />
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-semibold text-white group-hover:text-purple-300 transition-colors flex items-center gap-1">
+                    <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1">
                       {link.label}
                       <ChevronRightIcon className="size-3 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                     </span>
@@ -348,11 +445,11 @@ export function WorkspaceHome({ userEmail, userRole, preferredArea, metrics }: W
             })}
           </div>
 
-          <div className="mt-5 pt-4 border-t border-white/5 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Role recomendada: <span className="capitalize text-white">{userRole || "member"}</span></span>
+          <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Role recomendada: <span className="capitalize text-foreground font-semibold">{userRole || "member"}</span></span>
             {areas[activeArea].quickAction.href !== "#" && (
               <Link href={areas[activeArea].quickAction.href}>
-                <span className="text-xs font-medium text-purple-400 hover:text-purple-300 flex items-center gap-1 font-mono transition-colors">
+                <span className="text-xs font-semibold text-primary dark:text-purple-400 hover:text-primary/80 dark:hover:text-purple-300 flex items-center gap-1 font-mono transition-colors">
                   {areas[activeArea].quickAction.label}
                   <ChevronRightIcon className="size-3.5" />
                 </span>

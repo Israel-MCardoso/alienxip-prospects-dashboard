@@ -372,7 +372,7 @@ export async function updateProspectStatusAction(id: string, status: string) {
   if (!supabase) throw new Error("Supabase nao esta configurado.");
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!prospectStatuses.includes(status as ProspectStatus)) {
+  if (!(prospectStatuses as readonly string[]).includes(status)) {
     throw new Error(`Status inválido: ${status}`);
   }
 
@@ -399,6 +399,43 @@ export async function updateProspectStatusAction(id: string, status: string) {
     title: "Etapa atualizada",
     description: `Etapa alterada para o status atualizado.`,
     metadata: { status }
+  });
+
+  revalidatePath("/os/prospects");
+  revalidatePath(`/os/prospects/${id}`);
+  revalidatePath("/os/prospects/pipeline");
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
+}
+
+export async function updateProspectTemperatureAction(id: string, temperature: string) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase nao esta configurado.");
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { error } = await supabase
+    .from("prospects")
+    .update({ temperature: temperature as "cold" | "warm" | "hot" })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  await supabase.from("prospect_activities").insert({
+    prospect_id: id,
+    actor_id: user?.id || null,
+    action_type: "updated",
+    description: `Temperatura alterada para ${temperature}.`,
+    metadata: { temperature }
+  });
+
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: id,
+    actor_id: user?.id || null,
+    action: "updated",
+    title: "Temperatura atualizada",
+    description: `Temperatura alterada para ${temperature}.`,
+    metadata: { temperature }
   });
 
   revalidatePath("/os/prospects");

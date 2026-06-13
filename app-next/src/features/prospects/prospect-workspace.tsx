@@ -13,7 +13,8 @@ import {
   GlobeIcon,
   BookOpenIcon,
   PlusIcon,
-  FileTextIcon
+  FileTextIcon,
+  PlayIcon
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,8 @@ import type {
   ProspectRow,
   ProspectProposalRow
 } from "./data";
+import type { ProspectOutreachRow, OutreachEventRow } from "@/types/outreach";
+import { pauseOutreachAction, stopOutreachAction, resumeOutreachAction, testSdrSandboxAction } from "@/features/outreach/actions";
 import type { ProfileRow, ClientRow, CompanyRow } from "@/features/workspace/data";
 import {
   createNoteAction,
@@ -49,6 +52,7 @@ import { completeTaskAction, convertProspectAction, createTaskAction } from "@/f
 import { taskPriorities, taskStatuses } from "@/features/commercial/commercial-helpers";
 import { FileList } from "@/features/tech/file-list";
 import { statusLabel, priorityLabel, temperatureLabel } from "@/lib/display-helpers";
+import { AiBrainPanel } from "@/features/ai/ai-brain-panel";
 
 // Industry Playbooks Recommendation Map
 const getRecommendedPlaybooks = (segment: string | null) => {
@@ -81,7 +85,9 @@ export function ProspectWorkspace({
   proposals = [],
   profiles = [],
   clients = [],
-  companies = []
+  companies = [],
+  outreach,
+  outreachEvents = []
 }: {
   prospect: ProspectRow;
   diagnostic: ProspectDiagnosticRow | null;
@@ -93,6 +99,8 @@ export function ProspectWorkspace({
   profiles?: ProfileRow[];
   clients?: ClientRow[];
   companies?: CompanyRow[];
+  outreach?: ProspectOutreachRow | null;
+  outreachEvents?: OutreachEventRow[];
 }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isPending, startTransition] = useTransition();
@@ -220,6 +228,8 @@ export function ProspectWorkspace({
               <TabsTrigger value="tasks" className="rounded-lg text-xs font-mono py-1.5 px-3">Tarefas</TabsTrigger>
               <TabsTrigger value="files" className="rounded-lg text-xs font-mono py-1.5 px-3">Arquivos</TabsTrigger>
               <TabsTrigger value="proposals" className="rounded-lg text-xs font-mono py-1.5 px-3">Propostas</TabsTrigger>
+              <TabsTrigger value="outreach" className="rounded-lg text-xs font-mono py-1.5 px-3">Automação</TabsTrigger>
+              <TabsTrigger value="ai-brain" className="rounded-lg text-xs font-mono py-1.5 px-3">AI Brain</TabsTrigger>
             </TabsList>
 
             <AnimatePresence mode="wait">
@@ -304,6 +314,30 @@ export function ProspectWorkspace({
                   transition={{ duration: 0.15 }}
                 >
                   <ProposalsTab prospectId={prospect.id} proposals={proposals} />
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="outreach" className="mt-4 focus-visible:outline-none">
+                <motion.div
+                  key="outreach"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <OutreachTab prospect={prospect} outreach={outreach || null} outreachEvents={outreachEvents} />
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="ai-brain" className="mt-4 focus-visible:outline-none">
+                <motion.div
+                  key="ai-brain"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <AiBrainPanel prospect={prospect} diagnostic={diagnostic} />
                 </motion.div>
               </TabsContent>
             </AnimatePresence>
@@ -901,6 +935,242 @@ function ProposalsTab({
               </div>
             );
           })}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function OutreachTab({
+  prospect,
+  outreach,
+  outreachEvents
+}: {
+  prospect: ProspectRow;
+  outreach: ProspectOutreachRow | null;
+  outreachEvents: OutreachEventRow[];
+}) {
+  const [isPending, startTransition] = useTransition();
+
+  const handlePause = () => {
+    startTransition(async () => {
+      try {
+        await pauseOutreachAction(prospect.id);
+      } catch (err) {
+        alert("Erro ao pausar: " + (err instanceof Error ? err.message : String(err)));
+      }
+    });
+  };
+
+  const handleStop = () => {
+    startTransition(async () => {
+      try {
+        await stopOutreachAction(prospect.id);
+      } catch (err) {
+        alert("Erro ao parar: " + (err instanceof Error ? err.message : String(err)));
+      }
+    });
+  };
+
+  const handleResume = () => {
+    startTransition(async () => {
+      try {
+        await resumeOutreachAction(prospect.id);
+      } catch (err) {
+        alert("Erro ao retomar: " + (err instanceof Error ? err.message : String(err)));
+      }
+    });
+  };
+
+  const handleTestSandbox = () => {
+    if (!confirm("Executar teste SDR Sandbox para este prospect? Nenhum WhatsApp real, Evolution API ou IA paga será acionado.")) return;
+    startTransition(async () => {
+      try {
+        await testSdrSandboxAction(prospect.id);
+      } catch (err) {
+        alert("Erro no teste SDR Sandbox: " + (err instanceof Error ? err.message : String(err)));
+      }
+    });
+  };
+
+  const statusConfig: Record<string, { label: string; bg: string; text: string; border: string }> = {
+    not_started: { label: "Não Iniciado", bg: "bg-zinc-950/20", text: "text-zinc-400", border: "border-zinc-500/20" },
+    queued: { label: "Fila", bg: "bg-blue-950/20", text: "text-blue-300", border: "border-blue-500/20" },
+    sent: { label: "Enviado", bg: "bg-cyan-950/20", text: "text-cyan-300", border: "border-cyan-500/20" },
+    delivered: { label: "Entregue", bg: "bg-sky-950/20", text: "text-sky-300", border: "border-sky-500/20" },
+    waiting_reply: { label: "Aguardando Resposta", bg: "bg-indigo-950/20", text: "text-indigo-300", border: "border-indigo-500/20" },
+    replied: { label: "Respondeu", bg: "bg-purple-950/20", text: "text-purple-300", border: "border-purple-500/20" },
+    negotiating: { label: "Negociando", bg: "bg-amber-950/20", text: "text-amber-300", border: "border-amber-500/20" },
+    meeting_scheduled: { label: "Reunião Marcada", bg: "bg-emerald-950/20", text: "text-emerald-300", border: "border-emerald-500/20" },
+    failed: { label: "Falhou", bg: "bg-rose-950/20", text: "text-rose-300", border: "border-rose-500/20" },
+    paused: { label: "Pausado", bg: "bg-yellow-950/20", text: "text-yellow-300", border: "border-yellow-500/20" },
+    stopped: { label: "Parado", bg: "bg-zinc-950/20", text: "text-zinc-400", border: "border-zinc-500/20" },
+    disqualified: { label: "Desqualificado", bg: "bg-orange-950/20", text: "text-orange-300", border: "border-orange-500/20" }
+  };
+
+  const getStatusStyle = (status: string) => {
+    return statusConfig[status] || { label: status, bg: "bg-white/5", text: "text-white", border: "border-white/10" };
+  };
+
+  const style = getStatusStyle(outreach?.status || "not_started");
+
+  return (
+    <div className="flex flex-col gap-5">
+      <Card className="border-white/5 bg-[#08080a]/40 backdrop-blur-md">
+        <CardHeader className="pb-3 border-b border-white/5 flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-sm font-semibold font-mono text-white uppercase tracking-wider">Painel de Automação n8n</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">Supervisão operacional da prospecção fria.</CardDescription>
+          </div>
+          
+          <div className="flex items-center gap-1.5">
+            {outreach?.status && ["queued", "sent", "delivered", "waiting_reply", "replied", "negotiating"].includes(outreach.status) ? (
+              <>
+                <Button variant="outline" size="sm" onClick={handlePause} disabled={isPending} className="h-8 text-xs font-mono">
+                  Pausar
+                </Button>
+                <Button variant="outline" size="sm" className="h-8 text-xs font-mono text-rose-300 hover:text-rose-200" onClick={handleStop} disabled={isPending}>
+                  Parar
+                </Button>
+              </>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="sm"
+                  className="bg-yellow-600 hover:bg-yellow-500 text-white flex items-center gap-1 h-8 text-xs font-mono cursor-pointer"
+                  onClick={handleTestSandbox}
+                  disabled={isPending}
+                >
+                  <PlayIcon className="size-3" />
+                  <span>Testar SDR Sandbox</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center gap-1 h-8 text-xs font-mono cursor-pointer"
+                  onClick={handleResume}
+                  disabled={isPending}
+                >
+                  <PlayIcon className="size-3" />
+                  <span>Retomar</span>
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4 flex flex-col gap-4">
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 font-mono text-xs text-muted-foreground">
+            <div className="p-3.5 border border-white/5 rounded-xl bg-zinc-950/20 flex flex-col gap-1">
+              <span>Status</span>
+              <Badge className={`text-[9px] uppercase border font-semibold tracking-wider w-max ${style.bg} ${style.text} ${style.border}`}>
+                {style.label}
+              </Badge>
+            </div>
+            <div className="p-3.5 border border-white/5 rounded-xl bg-zinc-950/20 flex flex-col gap-1">
+              <span>Canal</span>
+              <span className="text-white font-bold uppercase">{outreach?.channel || "whatsapp"}</span>
+            </div>
+            <div className="p-3.5 border border-white/5 rounded-xl bg-zinc-950/20 flex flex-col gap-1">
+              <span>Ambiente</span>
+              {outreach?.automation_source === "sandbox" ? (
+                <Badge className="text-[8px] bg-yellow-950/40 text-yellow-300 border-yellow-800/30 uppercase font-bold tracking-wider w-max">
+                  Sandbox
+                </Badge>
+              ) : (
+                <Badge className="text-[8px] bg-purple-950/40 text-purple-300 border-purple-800/30 uppercase font-bold tracking-wider w-max">
+                  Produção
+                </Badge>
+              )}
+            </div>
+            <div className="p-3.5 border border-white/5 rounded-xl bg-zinc-950/20 flex flex-col gap-1 min-w-0">
+              <span>Execution ID</span>
+              <span className="text-white font-bold truncate" title={outreach?.n8n_execution_id || ""}>
+                {outreach?.n8n_execution_id || "-"}
+              </span>
+            </div>
+          </div>
+
+          {outreach?.last_message_preview && (
+            <div className="p-4 rounded-xl border border-purple-500/20 bg-purple-950/15">
+              <h4 className="text-[10px] font-bold font-mono text-purple-300 uppercase tracking-wider mb-2">Última Mensagem da Automação</h4>
+              <p className="text-xs text-purple-100 italic leading-relaxed">
+                &quot;{outreach.last_message_preview}&quot;
+              </p>
+              {outreach.last_message_at && (
+                <span className="block text-[9px] text-zinc-500 font-mono mt-2">
+                  Recebida em: {new Date(outreach.last_message_at).toLocaleString("pt-BR")}
+                </span>
+              )}
+            </div>
+          )}
+
+          {outreach?.status === "meeting_scheduled" && (
+            <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-950/15 flex flex-col gap-1.5 font-mono">
+              <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Reunião Marcada</h4>
+              {outreach.meeting_title && (
+                <p className="text-xs text-white font-bold">Título: {outreach.meeting_title}</p>
+              )}
+              {outreach.meeting_scheduled_at && (
+                <p className="text-xs text-muted-foreground">
+                  Data/Hora: {new Date(outreach.meeting_scheduled_at).toLocaleString("pt-BR")}
+                </p>
+              )}
+              {outreach.meeting_link && (
+                <a href={outreach.meeting_link} target="_blank" rel="noreferrer" className="text-xs text-emerald-300 underline mt-1 hover:text-emerald-200">
+                  Link da Reunião
+                </a>
+              )}
+            </div>
+          )}
+
+          {outreach?.error_message && (
+            <div className="p-4 rounded-xl border border-rose-500/20 bg-rose-950/15 flex flex-col gap-1">
+              <h4 className="text-[10px] font-bold font-mono text-rose-400 uppercase tracking-wider">Erro na Automação</h4>
+              <p className="text-xs text-rose-200 leading-normal">{outreach.error_message}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Events Timeline */}
+      <Card className="border-white/5 bg-[#08080a]/40 backdrop-blur-md">
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold font-mono text-white uppercase tracking-wider">Histórico de Eventos da Automação</CardTitle>
+          <CardDescription className="text-xs text-muted-foreground">Linha do tempo das interações do n8n.</CardDescription>
+        </CardHeader>
+        <CardContent className="pb-6">
+          {outreachEvents.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic text-center py-6">Nenhum evento registrado ainda.</p>
+          ) : (
+            <div className="relative border-l border-white/5 pl-4 ml-2 flex flex-col gap-5">
+              {outreachEvents.map((evt) => {
+                const evtStyle = getStatusStyle(evt.status);
+                return (
+                  <div key={evt.id} className="relative">
+                    {/* Timeline bullet */}
+                    <div className={`absolute -left-[21px] top-1 size-2 rounded-full border bg-[#09090c] ${evtStyle.border}`} />
+                    
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <span className="text-xs font-semibold text-white font-mono uppercase">{evt.event_type}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono ml-2">({evt.channel})</span>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{evt.message}</p>
+                      </div>
+                      
+                      <div className="text-right shrink-0">
+                        <Badge className={`text-[8px] font-mono py-0 h-4 border ${evtStyle.bg} ${evtStyle.text} ${evtStyle.border}`}>
+                          {evtStyle.label}
+                        </Badge>
+                        <span className="block text-[9px] text-muted-foreground font-mono mt-1">
+                          {new Date(evt.created_at).toLocaleString("pt-BR")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
