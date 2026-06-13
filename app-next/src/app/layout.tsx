@@ -45,6 +45,7 @@ export default function RootLayout({
             `,
           }}
         />
+        <script src="/native-select-bridge.js" defer />
       </head>
       <body className="min-h-full antialiased">{children}</body>
     </html>
