@@ -6,8 +6,7 @@ import { LockIcon, MailIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { buildPublicUrl } from "@/lib/site-url";
+import { loginWithPasswordAction, requestPasswordResetAction } from "@/features/auth/actions";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
@@ -39,14 +38,10 @@ export function LoginForm({ isConfigured, initialMessage }: { isConfigured: bool
     setIsPending(true);
 
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      const result = await loginWithPasswordAction(email, password);
 
-      if (signInError) {
-        setError("Não foi possível autenticar. Verifique seus dados e tente novamente.");
+      if (!result.ok) {
+        setError(result.message || "Não foi possível autenticar. Verifique seus dados e tente novamente.");
         return;
       }
 
@@ -73,21 +68,10 @@ export function LoginForm({ isConfigured, initialMessage }: { isConfigured: bool
     setIsPending(true);
 
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: buildPublicUrl("/os/reset-password"),
-      });
+      const result = await requestPasswordResetAction(email.trim());
 
-      if (resetError) {
-        let errorMsg = resetError.message;
-        if (errorMsg.includes("User not found")) {
-          errorMsg = "Usuário não cadastrado no sistema.";
-        } else if (errorMsg.includes("rate limit")) {
-          errorMsg = "Muitas solicitações seguidas. Aguarde alguns minutos antes de tentar novamente.";
-        } else {
-          errorMsg = `Erro ao enviar e-mail: ${resetError.message}`;
-        }
-        setError(errorMsg);
+      if (!result.ok) {
+        setError(result.message || "Erro ao enviar e-mail.");
       } else {
         setForgotPasswordMsg("Link enviado. Verifique Caixa de Entrada, Spam e Promoções.");
         setCooldown(60);

@@ -54,6 +54,39 @@ After Railway generates the public domain, add the Railway URL and final custom 
 
 The app now builds password recovery redirects from `NEXT_PUBLIC_SITE_URL` or the current browser origin.
 
+Before validating login, run the production Supabase smoke check from Railway variables:
+
+```bash
+railway run npm run supabase:health
+```
+
+This check verifies:
+
+- public Supabase URL is syntactically valid;
+- anon key is present;
+- service role key is present;
+- Auth settings endpoint is reachable;
+- Admin Auth API accepts the service role key;
+- `profiles` is readable through the service role.
+
+If the Auth endpoint fails with DNS/name resolution, Railway is pointing to a deleted, paused, or wrong Supabase project and login will fail with `Failed to fetch`.
+
+### Internal User Creation
+
+Use the server-side Admin API script for internal users. Do not pass passwords as CLI arguments and do not print keys in logs.
+
+PowerShell example:
+
+```powershell
+$env:MOTHERXIP_USER_EMAIL="admin@motherxip.com"
+$env:MOTHERXIP_USER_PASSWORD="change-this-password"
+$env:MOTHERXIP_USER_FULL_NAME="Admin MOTHERXIP"
+$env:MOTHERXIP_USER_ROLE="owner"
+railway run npm run supabase:create-user
+```
+
+Supported roles are `owner`, `admin`, `operator`, `manager`, `member`, and `viewer`. New user profile rows are upserted into `public.profiles` as active.
+
 ## Runtime Binding
 
 Set `HOSTNAME=0.0.0.0` in Railway Variables. Without this override, the Next.js standalone server can bind to the container hostname and Railway healthchecks/public networking may fail even though the server logs show `Ready`.
