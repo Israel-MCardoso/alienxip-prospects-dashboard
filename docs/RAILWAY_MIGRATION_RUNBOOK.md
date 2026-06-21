@@ -26,6 +26,7 @@ Configure these in Railway Variables. Do not commit real values.
 
 ### Server-only variables
 
+- `HOSTNAME=0.0.0.0`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `MOTHERXIP_WEBHOOK_SECRET`
 - `MOTHERXIP_PUBLIC_URL`
@@ -52,6 +53,10 @@ After Railway generates the public domain, add the Railway URL and final custom 
 - Password recovery redirect: `/os/reset-password`
 
 The app now builds password recovery redirects from `NEXT_PUBLIC_SITE_URL` or the current browser origin.
+
+## Runtime Binding
+
+Set `HOSTNAME=0.0.0.0` in Railway Variables. Without this override, the Next.js standalone server can bind to the container hostname and Railway healthchecks/public networking may fail even though the server logs show `Ready`.
 
 ## Deployment Flow
 
