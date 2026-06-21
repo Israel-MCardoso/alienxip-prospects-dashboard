@@ -66,7 +66,7 @@ export function loadPrompt(key: PromptKey, options: LoadPromptOptions = {}): Loa
 
   const rootDir = options.rootDir ?? /* turbopackIgnore: true */ process.cwd();
   const primaryPath = resolvePromptPath(descriptor.path, rootDir);
-  const parentPath = resolvePromptPath(descriptor.path, `${rootDir}\\..`);
+  const parentPath = resolvePromptPath(descriptor.path, join(rootDir, ".."));
   const readFile = options.readFile ?? ((path: string) => readFileSync(path, "utf8"));
   const promptPath = options.readFile
     ? primaryPath

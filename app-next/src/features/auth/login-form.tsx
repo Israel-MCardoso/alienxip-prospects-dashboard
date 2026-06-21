@@ -7,6 +7,7 @@ import { LockIcon, MailIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { buildPublicUrl } from "@/lib/site-url";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
@@ -74,7 +75,7 @@ export function LoginForm({ isConfigured, initialMessage }: { isConfigured: bool
     try {
       const supabase = createSupabaseBrowserClient();
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: "https://alienxip-prospects-dashboard.vercel.app/os/reset-password",
+        redirectTo: buildPublicUrl("/os/reset-password"),
       });
 
       if (resetError) {

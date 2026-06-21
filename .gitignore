@@ -16,5 +16,6 @@ node_modules/
 .next-sprint2.err
 
 .vercel/
+.codex-context/
 .DS_Store
 Thumbs.db

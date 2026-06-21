@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "npm --prefix app-next run dev",
     "dev:legacy": "node scripts/dev-server.mjs",
-    "start": "node scripts/dev-server.mjs",
+    "start": "npm --prefix app-next run start",
+    "start:legacy": "node scripts/dev-server.mjs",
     "build": "npm run build:legacy && npm run build:next",
     "build:legacy": "node --check api/prospects.js && node --check scripts/dev-server.mjs && node --check scripts/import-prospects.mjs",
     "build:next": "npm --prefix app-next run build",
