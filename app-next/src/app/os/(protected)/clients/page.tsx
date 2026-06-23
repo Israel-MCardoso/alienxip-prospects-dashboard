@@ -3,10 +3,18 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClients } from "@/features/commercial/data";
 import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/ui/pagination";
+import { statusLabel } from "@/lib/display-helpers";
 
-export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ mine?: string }> }) {
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ mine?: string; page?: string }> }) {
   const filters = await searchParams;
+  const page = parseInt(filters.page || "1", 10);
   const { data, error } = await getClients(filters);
+
+  const itemsPerPage = 10;
+  const totalItems = data.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedClients = data.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   return (
     <div className="flex flex-col gap-4">
@@ -14,24 +22,25 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
         <p className="text-sm text-muted-foreground">Primeira lista de clientes convertidos a partir de prospects.</p>
       </div>
-      {error ? <Card><CardHeader><CardTitle>Conexao pendente</CardTitle><CardDescription>{error}</CardDescription></CardHeader></Card> : null}
+      {error ? <Card><CardHeader><CardTitle>Conexão pendente</CardTitle><CardDescription>{error}</CardDescription></CardHeader></Card> : null}
       <Card>
-        <CardHeader><CardTitle>Clientes</CardTitle><CardDescription>{data.length} registro(s)</CardDescription></CardHeader>
+        <CardHeader><CardTitle>Clientes</CardTitle><CardDescription>{totalItems} registro(s)</CardDescription></CardHeader>
         <CardContent className="flex flex-col gap-2">
           <form className="mb-2">
-            <select name="mine" className="mr-2 h-8 rounded-lg border bg-background px-2 text-sm">
+            <select name="mine" className="mr-2 h-8 rounded-lg border bg-background px-2 text-sm" defaultValue={filters.mine || ""}>
               <option value="">Todos clientes</option>
               <option value="1">Meus clientes</option>
             </select>
             <Button type="submit" variant="outline">Filtrar</Button>
           </form>
-          {data.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum cliente ainda.</p> : null}
-          {data.map((client) => (
-            <Link key={client.id} href={`/os/clients/${client.id}`} className="rounded-lg border p-3 hover:bg-muted/50">
+          {totalItems === 0 ? <p className="text-sm text-muted-foreground">Nenhum cliente ainda.</p> : null}
+          {paginatedClients.map((client) => (
+            <Link key={client.id} href={`/os/clients/${client.id}`} className="rounded-lg border p-3 hover:bg-muted/50 block">
               <div className="font-medium">{client.main_contact_name || client.id}</div>
-              <div className="text-sm text-muted-foreground">status: {client.status} | contrato: {client.contract_status}</div>
+              <div className="text-sm text-muted-foreground">status: {statusLabel(client.status)} | contrato: {statusLabel(client.contract_status)}</div>
             </Link>
           ))}
+          <Pagination currentPage={page} totalPages={totalPages} totalItems={totalItems} perPage={itemsPerPage} />
         </CardContent>
       </Card>
     </div>

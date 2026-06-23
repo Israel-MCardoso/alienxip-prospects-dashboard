@@ -29,6 +29,7 @@ import { slugify, wikiStatuses } from "./knowledge-helpers";
 import { seedOfficialTemplatesAction, updateKnowledgeReviewAction, duplicateWikiPageAction } from "@/features/governance/actions";
 import { statusLabel, getCoreCategoryName } from "@/lib/display-helpers";
 import { cn } from "@/lib/utils";
+import { Pagination } from "@/components/ui/pagination";
 
 // Defined UI category layout matching user specs
 const UI_CATEGORIES = [
@@ -44,6 +45,16 @@ export function WikiList({ pages, error }: { pages: WikiPageRow[]; error: string
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showCreateForm, setShowCreateForm] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const [prevSelectedCategory, setPrevSelectedCategory] = useState(selectedCategory);
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+
+  if (selectedCategory !== prevSelectedCategory || searchQuery !== prevSearchQuery) {
+    setPrevSelectedCategory(selectedCategory);
+    setPrevSearchQuery(searchQuery);
+    setCurrentPage(1);
+  }
 
   // Compute counts for each category
   const categoryCounts = useMemo(() => {
@@ -75,6 +86,13 @@ export function WikiList({ pages, error }: { pages: WikiPageRow[]; error: string
       return true;
     });
   }, [pages, selectedCategory, searchQuery]);
+
+  const itemsPerPage = 10;
+  const totalItems = filteredPages.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedPages = useMemo(() => {
+    return filteredPages.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [filteredPages, currentPage]);
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
@@ -174,7 +192,7 @@ export function WikiList({ pages, error }: { pages: WikiPageRow[]; error: string
             <div>
               <CardTitle className="text-base font-semibold text-white font-mono">Documentos Wiki</CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
-                Exibindo {filteredPages.length} de {pages.length} páginas.
+                Exibindo {totalItems} registro(s).
               </CardDescription>
             </div>
             <div className="relative w-full md:w-80">
@@ -189,70 +207,73 @@ export function WikiList({ pages, error }: { pages: WikiPageRow[]; error: string
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-3.5">
-          {filteredPages.length === 0 ? (
+          {paginatedPages.length === 0 ? (
             <div className="py-8 text-center">
               <FileTextIcon className="size-10 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-xs text-muted-foreground">Nenhuma página encontrada para esta seleção.</p>
             </div>
           ) : (
-            <div className="grid gap-2.5">
-              {filteredPages.map((page) => {
-                const isPublished = page.status === "published";
-                const isArchived = page.status === "archived";
-                const needsReview = page.review_status === "needs_review";
+            <>
+              <div className="grid gap-2.5">
+                {paginatedPages.map((page) => {
+                  const isPublished = page.status === "published";
+                  const isArchived = page.status === "archived";
+                  const needsReview = page.review_status === "needs_review";
 
-                return (
-                  <Link
-                    key={page.id}
-                    href={`/os/wiki/${page.slug}`}
-                    className="group flex flex-col md:flex-row md:items-center justify-between rounded-xl border border-white/5 bg-background/30 p-3.5 hover:bg-purple-950/10 hover:border-purple-500/20 transition-all duration-200"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-lg bg-[#0e0e12] border border-white/5 text-muted-foreground group-hover:text-purple-300 transition-colors mt-0.5">
-                        <FileTextIcon className="size-4.5" />
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-xs font-semibold text-white group-hover:text-purple-300 transition-colors">
-                          {page.title}
-                        </span>
-                        <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
-                          <span className="text-purple-400 font-medium">
-                            {getCoreCategoryName(page.category)}
+                  return (
+                    <Link
+                      key={page.id}
+                      href={`/os/wiki/${page.slug}`}
+                      className="group flex flex-col md:flex-row md:items-center justify-between rounded-xl border border-white/5 bg-background/30 p-3.5 hover:bg-purple-950/10 hover:border-purple-500/20 transition-all duration-200"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-[#0e0e12] border border-white/5 text-muted-foreground group-hover:text-purple-300 transition-colors mt-0.5">
+                          <FileTextIcon className="size-4.5" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs font-semibold text-white group-hover:text-purple-300 transition-colors">
+                            {page.title}
                           </span>
-                          <span>&bull;</span>
-                          <span className="flex items-center gap-1">
-                            <ClockIcon className="size-3" />
-                            {page.updated_at ? new Date(page.updated_at).toLocaleDateString("pt-BR") : "Recent"}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
+                            <span className="text-purple-400 font-medium">
+                              {getCoreCategoryName(page.category)}
+                            </span>
+                            <span>&bull;</span>
+                            <span className="flex items-center gap-1">
+                              <ClockIcon className="size-3" />
+                              {page.updated_at ? new Date(page.updated_at).toLocaleDateString("pt-BR") : "Recent"}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-2 mt-3 md:mt-0">
-                      {needsReview && (
-                        <span className="text-[9px] font-semibold bg-amber-950/40 text-amber-300 border border-amber-800/40 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                          <AlertCircleIcon className="size-3" />
-                          Revisão
-                        </span>
-                      )}
-                      <span
-                        className={cn(
-                          "text-[9px] font-semibold px-2.5 py-0.5 rounded-full border",
-                          isPublished
-                            ? "bg-purple-950/40 text-purple-300 border-purple-800/40"
-                            : isArchived
-                            ? "bg-zinc-900/60 text-zinc-400 border-zinc-800/60"
-                            : "bg-amber-950/40 text-amber-300 border-amber-800/40"
+                      <div className="flex items-center gap-2 mt-3 md:mt-0">
+                        {needsReview && (
+                          <span className="text-[9px] font-semibold bg-amber-950/40 text-amber-300 border border-amber-800/40 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                            <AlertCircleIcon className="size-3" />
+                            Revisão
+                          </span>
                         )}
-                      >
-                        {statusLabel(page.status)}
-                      </span>
-                      <ChevronRightIcon className="size-4 text-muted-foreground group-hover:text-purple-300 transition-colors group-hover:translate-x-0.5" />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+                        <span
+                          className={cn(
+                            "text-[9px] font-semibold px-2.5 py-0.5 rounded-full border",
+                            isPublished
+                              ? "bg-purple-950/40 text-purple-300 border-purple-800/40"
+                              : isArchived
+                              ? "bg-zinc-900/60 text-zinc-400 border-zinc-800/60"
+                              : "bg-amber-950/40 text-amber-300 border-amber-800/40"
+                          )}
+                        >
+                          {statusLabel(page.status)}
+                        </span>
+                        <ChevronRightIcon className="size-4 text-muted-foreground group-hover:text-purple-300 transition-colors group-hover:translate-x-0.5" />
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={setCurrentPage} />
+            </>
           )}
         </CardContent>
       </Card>

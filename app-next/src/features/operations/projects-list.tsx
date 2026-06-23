@@ -9,6 +9,7 @@ import { groupProjectsByStatus } from "./operations-helpers";
 import type { ClientRow, CompanyRow, ProfileRow, ProjectRow } from "./data";
 import { formatDate, priorityLabel, statusLabel } from "./format";
 import { ProjectForm } from "./project-form";
+import { Pagination } from "@/components/ui/pagination";
 
 function profileName(profiles: ProfileRow[], id: string | null) {
   const profile = profiles.find((item) => item.id === id);
@@ -29,13 +30,19 @@ export function ProjectsList({
   clients,
   companies,
   profiles,
-  error
+  error,
+  currentPage,
+  totalPages,
+  totalItems
 }: {
   projects: ProjectRow[];
   clients: ClientRow[];
   companies: CompanyRow[];
   profiles: ProfileRow[];
   error: string | null;
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
 }) {
   const grouped = groupProjectsByStatus(projects);
 
@@ -95,40 +102,43 @@ export function ProjectsList({
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Lista de projetos</CardTitle><CardDescription>{projects.length} registro(s)</CardDescription></CardHeader>
+        <CardHeader><CardTitle>Lista de projetos</CardTitle><CardDescription>{totalItems} registro(s)</CardDescription></CardHeader>
         <CardContent>
           {projects.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum projeto encontrado.</p> : null}
           {projects.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Projeto</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Prioridade</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>Responsavel</TableHead>
-                  <TableHead>Prazo</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {projects.map((project) => (
-                  <TableRow key={project.id}>
-                    <TableCell><Link className="font-medium text-primary hover:underline" href={`/os/projects/${project.id}`}>{project.name}</Link></TableCell>
-                    <TableCell><Badge variant="outline">{statusLabel(project.status)}</Badge></TableCell>
-                    <TableCell>{priorityLabel(project.priority)}</TableCell>
-                    <TableCell>
-                      {project.client_id ? <Link className="text-primary hover:underline" href={`/os/clients/${project.client_id}`}>{clientName(clients, project.client_id)}</Link> : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {project.company_id ? <Link className="text-primary hover:underline" href={`/os/companies/${project.company_id}`}>{companyName(companies, project.company_id)}</Link> : "-"}
-                    </TableCell>
-                    <TableCell>{profileName(profiles, project.owner_id)}</TableCell>
-                    <TableCell>{formatDate(project.due_date)}</TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Projeto</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Prioridade</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>Responsavel</TableHead>
+                    <TableHead>Prazo</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {projects.map((project) => (
+                    <TableRow key={project.id}>
+                      <TableCell><Link className="font-medium text-primary hover:underline" href={`/os/projects/${project.id}`}>{project.name}</Link></TableCell>
+                      <TableCell><Badge variant="outline">{statusLabel(project.status)}</Badge></TableCell>
+                      <TableCell>{priorityLabel(project.priority)}</TableCell>
+                      <TableCell>
+                        {project.client_id ? <Link className="text-primary hover:underline" href={`/os/clients/${project.client_id}`}>{clientName(clients, project.client_id)}</Link> : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {project.company_id ? <Link className="text-primary hover:underline" href={`/os/companies/${project.company_id}`}>{companyName(companies, project.company_id)}</Link> : "-"}
+                      </TableCell>
+                      <TableCell>{profileName(profiles, project.owner_id)}</TableCell>
+                      <TableCell>{formatDate(project.due_date)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} />
+            </>
           ) : null}
         </CardContent>
       </Card>

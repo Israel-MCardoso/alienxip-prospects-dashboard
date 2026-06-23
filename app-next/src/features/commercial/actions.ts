@@ -11,6 +11,12 @@ function nullable(value: string | undefined) {
   return value && value.length > 0 ? value : null;
 }
 
+function optionalNumber(value: FormDataEntryValue | null) {
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export async function createTaskAction(prospectId: string, formData: FormData) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) throw new Error("Supabase nao esta configurado.");
@@ -281,6 +287,74 @@ export async function updateCompanyAction(id: string, formData: FormData) {
   revalidatePath("/os/companies");
   revalidatePath(`/os/companies/${id}`);
   revalidatePath("/os/activity");
+}
+
+export async function createClientFromCompanyAction(companyId: string, formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase nao esta configurado.");
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) throw new Error("Usuario nao autenticado.");
+
+  const status = String(formData.get("status") || "active") as ClientStatus;
+  const contract_status = String(formData.get("contract_status") || "draft") as ContractStatus;
+  const main_contact_name = String(formData.get("main_contact_name") || "");
+  const main_contact_email = String(formData.get("main_contact_email") || "");
+  const main_contact_phone = String(formData.get("main_contact_phone") || "");
+  const start_date = String(formData.get("start_date") || "");
+
+  const { data: company, error: companyError } = await supabase
+    .from("companies")
+    .select("id, name")
+    .eq("id", companyId)
+    .single();
+
+  if (companyError) throw new Error(companyError.message);
+  if (!company) throw new Error("Empresa nao encontrada.");
+
+  const { data: client, error } = await supabase
+    .from("clients")
+    .insert({
+      company_id: company.id,
+      status,
+      contract_status,
+      monthly_value: optionalNumber(formData.get("monthly_value")),
+      start_date: nullable(start_date),
+      main_contact_name: nullable(main_contact_name),
+      main_contact_email: nullable(main_contact_email),
+      main_contact_phone: nullable(main_contact_phone),
+      owner_id: userId
+    })
+    .select("*")
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  await recordActivity(supabase, {
+    entity_type: "client",
+    entity_id: client.id,
+    actor_id: userId,
+    action: "client_created",
+    title: "Cliente criado",
+    description: main_contact_name || company.name,
+    metadata: { company_id: company.id, source: "company_workspace" }
+  });
+
+  await recordActivity(supabase, {
+    entity_type: "company",
+    entity_id: company.id,
+    actor_id: userId,
+    action: "client_created",
+    title: "Cliente vinculado",
+    description: main_contact_name || "Novo cliente vinculado a empresa.",
+    metadata: { client_id: client.id, source: "company_workspace" }
+  });
+
+  revalidatePath(`/os/companies/${company.id}`);
+  revalidatePath(`/os/clients/${client.id}`);
+  revalidatePath("/os/clients");
+  revalidatePath("/os/activity");
+  revalidatePath("/os/dashboard");
 }
 
 export async function updateClientAction(id: string, formData: FormData) {

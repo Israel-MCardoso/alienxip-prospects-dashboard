@@ -22,10 +22,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { ProspectRow } from "@/features/prospects/data";
 import type { WebhookAuditLogRow, OutreachBatchRow } from "@/types/outreach";
 import { pauseOutreachAction, stopOutreachAction, resumeOutreachAction } from "./actions";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { ProductionReadinessStrip } from "./production-readiness-strip";
+import { Pagination } from "@/components/ui/pagination";
 
 interface OutreachCenterProps {
   prospects: ProspectRow[];
@@ -48,6 +51,20 @@ export function OutreachCenter({
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedChannel, setSelectedChannel] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [prevQ, setPrevQ] = useState(q);
+  const [prevStatus, setPrevStatus] = useState(selectedStatus);
+  const [prevChannel, setPrevChannel] = useState(selectedChannel);
+  const [prevSource, setPrevSource] = useState(selectedSource);
+
+  if (q !== prevQ || selectedStatus !== prevStatus || selectedChannel !== prevChannel || selectedSource !== prevSource) {
+    setPrevQ(q);
+    setPrevStatus(selectedStatus);
+    setPrevChannel(selectedChannel);
+    setPrevSource(selectedSource);
+    setCurrentPage(1);
+  }
 
   // Debounce query input
   useEffect(() => {
@@ -98,6 +115,11 @@ export function OutreachCenter({
 
     return hasMatch && statusMatch && channelMatch;
   });
+
+  const itemsPerPage = 10;
+  const totalItems = filtered.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedFiltered = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // 3. Calculate statistics based on selected source
   const outreachList = sourceFilteredProspects.map(getOutreach).filter(Boolean);
@@ -275,6 +297,8 @@ export function OutreachCenter({
           </CardHeader>
         </Card>
       )}
+
+      <ProductionReadinessStrip />
 
       {/* Stats Section */}
       <div className="grid gap-4 md:grid-cols-2">
@@ -523,11 +547,12 @@ export function OutreachCenter({
               </CardHeader>
               <CardContent className="p-3 flex flex-col gap-2.5 max-h-[480px] overflow-y-auto scrollbar-none">
                 {colLeads.length === 0 ? (
-                  <div className="py-10 flex flex-col items-center justify-center text-center px-4 rounded-lg border border-dashed border-border/40 bg-muted/5">
-                    <SendIcon className="size-5 text-muted-foreground/30 mb-2" />
-                    <p className="text-[10px] font-medium text-muted-foreground font-mono uppercase tracking-wider">Vazio</p>
-                    <p className="text-[9px] text-muted-foreground/60 mt-1 max-w-[150px]">Nenhum prospect neste estágio no momento.</p>
-                  </div>
+                  <EmptyState
+                    title="Vazio"
+                    description="Nenhum prospect neste estágio no momento."
+                    icon={<SendIcon className="size-5 text-muted-foreground/30" />}
+                    className="py-10 border-dashed border-border/40 bg-muted/5 rounded-lg"
+                  />
                 ) : (
                   colLeads.map((p) => {
                     const o = getOutreach(p);
@@ -622,120 +647,124 @@ export function OutreachCenter({
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-4">
-          {filtered.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border/80 bg-card/25 p-12 text-center flex flex-col items-center justify-center max-w-md mx-auto my-6">
-              <SearchIcon className="size-8 text-muted-foreground/30 mb-3" />
-              <h3 className="text-sm font-semibold text-foreground font-mono uppercase tracking-wider">Nenhum lead correspondente</h3>
-              <p className="text-xs text-muted-foreground mt-1.5 max-w-xs leading-relaxed">
-                Tente ajustar os filtros acima para encontrar registros de prospecção.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 font-mono text-[11px]"
-                onClick={() => {
-                  setQ("");
-                  setSelectedStatus("");
-                  setSelectedChannel("");
-                }}
-              >
-                Limpar filtros
-              </Button>
-            </div>
+          {paginatedFiltered.length === 0 ? (
+            <EmptyState
+              title="Nenhum lead correspondente"
+              description="Tente ajustar os filtros acima para encontrar registros de prospecção."
+              icon={<SearchIcon className="size-5 text-muted-foreground/30" />}
+              className="max-w-md mx-auto my-6"
+              action={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="font-mono text-[11px]"
+                  onClick={() => {
+                    setQ("");
+                    setSelectedStatus("");
+                    setSelectedChannel("");
+                  }}
+                >
+                  Limpar filtros
+                </Button>
+              }
+            />
           ) : (
-            <div className="relative overflow-x-auto rounded-lg border border-border bg-card">
-              <table className="w-full text-left text-xs text-muted-foreground">
-                <thead className="bg-muted/50 font-mono uppercase tracking-wider text-[10px] border-b border-border">
-                  <tr>
-                    <th scope="col" className="px-4 py-3 text-foreground">Prospect</th>
-                    <th scope="col" className="px-4 py-3 text-foreground">Status</th>
-                    <th scope="col" className="px-4 py-3 text-foreground text-center hidden sm:table-cell">Canal</th>
-                    <th scope="col" className="px-4 py-3 text-foreground hidden md:table-cell">Último Retorno</th>
-                    <th scope="col" className="px-4 py-3 text-foreground hidden lg:table-cell">ID de Execução</th>
-                    <th scope="col" className="px-4 py-3 text-foreground text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filtered.map((p) => {
-                    const o = getOutreach(p);
-                    const style = getStatusStyle(o?.status || "not_started");
-                    return (
-                      <tr key={p.id} className="hover:bg-muted/40 transition-all">
-                        <td className="px-4 py-3.5 font-medium text-foreground">
-                          <Link href={`/os/prospects/${p.id}`} className="hover:text-primary transition-colors font-semibold">
-                            {p.name}
-                          </Link>
-                          {p.segment && <span className="block text-[10px] text-muted-foreground">{p.segment}</span>}
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <Badge className={`text-[9px] font-mono border ${style.bg} ${style.text} ${style.border}`}>
-                            {style.label}
-                          </Badge>
-                          {o?.error_message && (
-                            <span className="block text-[9px] text-rose-500 dark:text-rose-400 mt-1 max-w-[200px] truncate" title={o.error_message}>
-                              Erro: {o.error_message}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3.5 text-center uppercase font-mono text-[10px] hidden sm:table-cell">
-                          {o?.channel || "whatsapp"}
-                        </td>
-                        <td className="px-4 py-3.5 text-muted-foreground font-mono hidden md:table-cell">
-                          {o?.last_message_at ? new Date(o.last_message_at).toLocaleString("pt-BR") : "-"}
-                        </td>
-                        <td className="px-4 py-3.5 font-mono text-[10px] hidden lg:table-cell">
-                          {o?.n8n_execution_id ? o.n8n_execution_id.substring(0, 12) + "..." : "-"}
-                        </td>
-                        <td className="px-4 py-3.5 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {o?.status && ["queued", "sent", "delivered", "waiting_reply", "replied", "negotiating"].includes(o.status) ? (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handlePause(p.id)}
-                                  disabled={isPending}
-                                  className="h-7 px-2 font-mono text-[10px] cursor-pointer"
-                                >
-                                  Pausar
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleStop(p.id)}
-                                  disabled={isPending}
-                                  className="h-7 px-2 font-mono text-[10px] text-rose-500 hover:text-rose-600 dark:text-rose-300 dark:hover:text-rose-250 cursor-pointer"
-                                >
-                                  Parar
-                                </Button>
-                              </>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleResume(p.id)}
-                                disabled={isPending}
-                                className="h-7 px-2 font-mono text-[10px] bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 flex items-center gap-1 cursor-pointer"
-                              >
-                                <PlayIcon className="size-3" />
-                                <span>{selectedSource === "sandbox" ? "Testar" : "Iniciar"}</span>
-                              </Button>
-                            )}
-                            <Link
-                              href={`/os/prospects/${p.id}`}
-                              className="h-7 px-2 border border-input hover:bg-accent hover:text-accent-foreground inline-flex items-center gap-0.5 rounded-md text-[10px] font-mono font-medium transition-colors"
-                            >
-                              <span>Workspace</span>
-                              <ChevronRightIcon className="size-3" />
+            <>
+              <div className="relative overflow-x-auto rounded-lg border border-border bg-card">
+                <table className="w-full text-left text-xs text-muted-foreground">
+                  <thead className="bg-muted/50 font-mono uppercase tracking-wider text-[10px] border-b border-border">
+                    <tr>
+                      <th scope="col" className="px-4 py-3 text-foreground">Prospect</th>
+                      <th scope="col" className="px-4 py-3 text-foreground">Status</th>
+                      <th scope="col" className="px-4 py-3 text-foreground text-center hidden sm:table-cell">Canal</th>
+                      <th scope="col" className="px-4 py-3 text-foreground hidden md:table-cell">Último Retorno</th>
+                      <th scope="col" className="px-4 py-3 text-foreground hidden lg:table-cell">ID de Execução</th>
+                      <th scope="col" className="px-4 py-3 text-foreground text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {paginatedFiltered.map((p) => {
+                      const o = getOutreach(p);
+                      const style = getStatusStyle(o?.status || "not_started");
+                      return (
+                        <tr key={p.id} className="hover:bg-muted/40 transition-all">
+                          <td className="px-4 py-3.5 font-medium text-foreground">
+                            <Link href={`/os/prospects/${p.id}`} className="hover:text-primary transition-colors font-semibold">
+                              {p.name}
                             </Link>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                            {p.segment && <span className="block text-[10px] text-muted-foreground">{p.segment}</span>}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <Badge className={`text-[9px] font-mono border ${style.bg} ${style.text} ${style.border}`}>
+                              {style.label}
+                            </Badge>
+                            {o?.error_message && (
+                              <span className="block text-[9px] text-rose-500 dark:text-rose-400 mt-1 max-w-[200px] truncate" title={o.error_message}>
+                                Erro: {o.error_message}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 text-center uppercase font-mono text-[10px] hidden sm:table-cell">
+                            {o?.channel || "whatsapp"}
+                          </td>
+                          <td className="px-4 py-3.5 text-muted-foreground font-mono hidden md:table-cell">
+                            {o?.last_message_at ? new Date(o.last_message_at).toLocaleString("pt-BR") : "-"}
+                          </td>
+                          <td className="px-4 py-3.5 font-mono text-[10px] hidden lg:table-cell">
+                            {o?.n8n_execution_id ? o.n8n_execution_id.substring(0, 12) + "..." : "-"}
+                          </td>
+                          <td className="px-4 py-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {o?.status && ["queued", "sent", "delivered", "waiting_reply", "replied", "negotiating"].includes(o.status) ? (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handlePause(p.id)}
+                                    disabled={isPending}
+                                    className="h-7 px-2 font-mono text-[10px] cursor-pointer"
+                                  >
+                                    Pausar
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleStop(p.id)}
+                                    disabled={isPending}
+                                    className="h-7 px-2 font-mono text-[10px] text-rose-500 hover:text-rose-600 dark:text-rose-300 dark:hover:text-rose-250 cursor-pointer"
+                                  >
+                                    Parar
+                                  </Button>
+                                </>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleResume(p.id)}
+                                  disabled={isPending}
+                                  className="h-7 px-2 font-mono text-[10px] bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 flex items-center gap-1 cursor-pointer"
+                                >
+                                  <PlayIcon className="size-3" />
+                                  <span>{selectedSource === "sandbox" ? "Testar" : "Iniciar"}</span>
+                                </Button>
+                              )}
+                              <Link
+                                href={`/os/prospects/${p.id}`}
+                                className="h-7 px-2 border border-input hover:bg-accent hover:text-accent-foreground inline-flex items-center gap-0.5 rounded-md text-[10px] font-mono font-medium transition-colors"
+                              >
+                                <span>Workspace</span>
+                                <ChevronRightIcon className="size-3" />
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={setCurrentPage} />
+            </>
           )}
         </CardContent>
       </Card>
@@ -766,6 +795,7 @@ export function OutreachCenter({
                   size="icon"
                   onClick={() => setShowDevDrawer(false)}
                   className="h-9 w-9 shrink-0 cursor-pointer"
+                  aria-label="Fechar"
                 >
                   <XIcon className="size-4" />
                 </Button>

@@ -3,8 +3,11 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CustomSelect } from "@/components/ui/custom-select";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import type { ActivityRow, ProfileRow, ProspectRow, ProjectRow } from "./data";
+import { Pagination } from "@/components/ui/pagination";
 
 function actorName(profiles: ProfileRow[], actorId: string | null) {
   const profile = profiles.find((item) => item.id === actorId);
@@ -24,7 +27,13 @@ function Group({ title, activities, profiles }: { title: string; activities: Act
     <Card>
       <CardHeader><CardTitle>{title}</CardTitle><CardDescription>{activities.length} atividade(s)</CardDescription></CardHeader>
       <CardContent className="flex flex-col gap-2">
-        {activities.length === 0 ? <p className="text-sm text-muted-foreground">Nada registrado neste periodo.</p> : null}
+        {activities.length === 0 ? (
+          <EmptyState
+            title="Sem atividades"
+            description="Nenhum evento operacional foi registrado neste período."
+            className="p-6"
+          />
+        ) : null}
         {activities.map((activity) => (
           <Link key={activity.id} href={activityHref(activity)} className="rounded-lg border p-3 hover:bg-muted/50">
             <div className="flex flex-wrap items-center gap-2">
@@ -46,13 +55,19 @@ export function ActivityFeed({
   profiles,
   prospects,
   projects,
-  error
+  error,
+  currentPage,
+  totalPages,
+  totalItems
 }: {
   grouped: { today: ActivityRow[]; yesterday: ActivityRow[]; last7: ActivityRow[] };
   profiles: ProfileRow[];
   prospects: ProspectRow[];
   projects: ProjectRow[];
   error: string | null;
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -67,27 +82,43 @@ export function ActivityFeed({
         <CardHeader><CardTitle>Filtros</CardTitle></CardHeader>
         <CardContent>
           <form className="grid gap-3 md:grid-cols-5">
-            <select name="actor_id" className="h-8 rounded-lg border bg-background px-2 text-sm">
-              <option value="">Todos usuarios</option>
-              {profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.full_name || profile.email}</option>)}
-            </select>
-            <select name="entity_type" className="h-8 rounded-lg border bg-background px-2 text-sm">
-              <option value="">Todos tipos</option>
-              <option value="prospect">Prospect</option>
-              <option value="project">Projeto</option>
-              <option value="client">Cliente</option>
-              <option value="task">Task</option>
-            </select>
-            <select name="project_id" className="h-8 rounded-lg border bg-background px-2 text-sm">
-              <option value="">Projeto</option>
-              {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
-            </select>
-            <select name="prospect_id" className="h-8 rounded-lg border bg-background px-2 text-sm">
-              <option value="">Prospect</option>
-              {prospects.map((prospect) => <option key={prospect.id} value={prospect.id}>{prospect.name}</option>)}
-            </select>
+            <CustomSelect
+              name="actor_id"
+              defaultValue=""
+              options={[
+                { value: "", label: "Todos os usuários" },
+                ...profiles.map((profile) => ({ value: profile.id, label: profile.full_name || profile.email }))
+              ]}
+            />
+            <CustomSelect
+              name="entity_type"
+              defaultValue=""
+              options={[
+                { value: "", label: "Todos os tipos" },
+                { value: "prospect", label: "Prospect" },
+                { value: "project", label: "Projeto" },
+                { value: "client", label: "Cliente" },
+                { value: "task", label: "Task" }
+              ]}
+            />
+            <CustomSelect
+              name="project_id"
+              defaultValue=""
+              options={[
+                { value: "", label: "Projeto" },
+                ...projects.map((project) => ({ value: project.id, label: project.name }))
+              ]}
+            />
+            <CustomSelect
+              name="prospect_id"
+              defaultValue=""
+              options={[
+                { value: "", label: "Prospect" },
+                ...prospects.map((prospect) => ({ value: prospect.id, label: prospect.name }))
+              ]}
+            />
             <div className="flex gap-2">
-              <Input name="client_id" placeholder="ID cliente" />
+              <Input name="client_id" placeholder="ID do cliente" />
               <Button type="submit">Filtrar</Button>
             </div>
           </form>
@@ -96,7 +127,8 @@ export function ActivityFeed({
 
       <Group title="Hoje" activities={grouped.today} profiles={profiles} />
       <Group title="Ontem" activities={grouped.yesterday} profiles={profiles} />
-      <Group title="Ultimos 7 dias" activities={grouped.last7} profiles={profiles} />
+      <Group title="Últimos 7 dias" activities={grouped.last7} profiles={profiles} />
+      <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} />
     </div>
   );
 }

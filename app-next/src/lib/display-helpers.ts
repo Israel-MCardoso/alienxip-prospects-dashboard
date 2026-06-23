@@ -49,7 +49,19 @@ export function statusLabel(status: string | null | undefined): string {
     monitoring: "Monitorando",
     resolved: "Resolvido",
     fixed: "Corrigido",
-    wont_fix: "Não será corrigido"
+    wont_fix: "Não será corrigido",
+    
+    // Outreach / SDR Statuses
+    not_started: "Não Iniciado",
+    queued: "Fila",
+    sent: "Enviado",
+    delivered: "Entregue",
+    waiting_reply: "Aguardando Resposta",
+    replied: "Respondeu",
+    negotiating: "Negociando",
+    failed: "Falhou",
+    stopped: "Parado",
+    disqualified: "Desqualificado"
   };
 
   return mapping[s] || status;

@@ -5,9 +5,17 @@ import { getCompanies } from "@/features/commercial/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createCompanyAction } from "@/features/commercial/actions";
+import { Pagination } from "@/components/ui/pagination";
 
-export default async function CompaniesPage() {
+export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const filters = await searchParams;
+  const page = parseInt(filters.page || "1", 10);
   const { data, error } = await getCompanies();
+
+  const itemsPerPage = 10;
+  const totalItems = data.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedCompanies = data.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   return (
     <div className="flex flex-col gap-4">
@@ -52,11 +60,11 @@ export default async function CompaniesPage() {
         <Card>
           <CardHeader>
             <CardTitle>Empresas Cadastradas</CardTitle>
-            <CardDescription>{data.length} registro(s)</CardDescription>
+            <CardDescription>{totalItems} registro(s)</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
-            {data.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma empresa cadastrada ainda.</p> : null}
-            {data.map((company) => (
+            {totalItems === 0 ? <p className="text-sm text-muted-foreground">Nenhuma empresa cadastrada ainda.</p> : null}
+            {paginatedCompanies.map((company) => (
               <Link key={company.id} href={`/os/companies/${company.id}`} className="rounded-lg border p-3 hover:bg-muted/50 block">
                 <div className="font-medium text-white">{company.name}</div>
                 <div className="text-sm text-muted-foreground">
@@ -64,6 +72,7 @@ export default async function CompaniesPage() {
                 </div>
               </Link>
             ))}
+            <Pagination currentPage={page} totalPages={totalPages} totalItems={totalItems} perPage={itemsPerPage} />
           </CardContent>
         </Card>
       </div>

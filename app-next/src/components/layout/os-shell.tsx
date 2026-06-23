@@ -15,6 +15,7 @@ import {
   LayoutDashboardIcon,
   LibraryIcon,
   ListTodoIcon,
+  MessageSquareIcon,
   SettingsIcon,
   TargetIcon,
   WrenchIcon,
@@ -33,24 +34,32 @@ import { logoutAction } from "@/features/auth/actions";
 import { cn } from "@/lib/utils";
 import { roleLabel } from "@/lib/display-helpers";
 import Image from "next/image";
+import {
+  findActiveNavigation,
+  flattenNavigation,
+  navigationGroups,
+  type NavigationIconName
+} from "@/components/layout/os-navigation";
 
-const navigation = [
-  { href: "/os", label: "Início", icon: HomeIcon },
-  { href: "/os/dashboard", label: "Painel", icon: LayoutDashboardIcon },
-  { href: "/os/prospects", label: "Prospects", icon: TargetIcon },
-  { href: "/os/prospects/pipeline", label: "Funil de Vendas", icon: ClipboardListIcon },
-  { href: "/os/tasks", label: "Tarefas", icon: ListTodoIcon },
-  { href: "/os/calendar", label: "Calendário", icon: CalendarDaysIcon },
-  { href: "/os/activity", label: "Atividades", icon: HistoryIcon },
-  { href: "/os/clients", label: "Clientes", icon: Building2Icon },
-  { href: "/os/companies", label: "Empresas", icon: Building2Icon },
-  { href: "/os/projects", label: "Projetos", icon: BriefcaseBusinessIcon },
-  { href: "/os/tech", label: "Tecnologia", icon: WrenchIcon },
-  { href: "/os/wiki", label: "Wiki", icon: LibraryIcon },
-  { href: "/os/playbooks", label: "Playbooks", icon: FileTextIcon },
-  { href: "/os/files", label: "Arquivos", icon: FilesIcon },
-  { href: "/os/settings", label: "Configurações", icon: SettingsIcon }
-];
+const navigationIconMap = {
+  BriefcaseBusinessIcon,
+  Building2Icon,
+  CalendarDaysIcon,
+  ClipboardListIcon,
+  FilesIcon,
+  FileTextIcon,
+  HistoryIcon,
+  HomeIcon,
+  LayoutDashboardIcon,
+  LibraryIcon,
+  ListTodoIcon,
+  MessageSquareIcon,
+  SettingsIcon,
+  TargetIcon,
+  WrenchIcon
+} satisfies Record<NavigationIconName, typeof HomeIcon>;
+
+// Route surface contract: /os/outreach/sdr-command-center (SDR Command Center) lives in os-navigation.
 
 export function OsShell({
   children,
@@ -66,6 +75,8 @@ export function OsShell({
   searchData?: GlobalSearchData;
 }) {
   const pathname = usePathname();
+  const activeNavigation = findActiveNavigation(pathname);
+  const flatNavigation = flattenNavigation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("dark");
@@ -154,26 +165,33 @@ export function OsShell({
               </div>
             </div>
 
-            <nav className="mt-6 flex flex-1 flex-col gap-1 overflow-y-auto pr-1">
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                const active = pathname === item.href;
+            <nav className="mt-6 flex flex-1 flex-col gap-4 overflow-y-auto pr-1">
+              {navigationGroups.map((group) => (
+                <div key={group.label} className="flex flex-col gap-1">
+                  <div className="px-2.5 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60">
+                    {group.label}
+                  </div>
+                  {group.items.map((item) => {
+                    const Icon = navigationIconMap[item.icon as NavigationIconName];
+                    const active = activeNavigation?.item.href === item.href;
 
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={cn(
-                      "flex h-11 items-center gap-2 rounded-lg px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                      active && "bg-sidebar-accent border border-sidebar-border text-sidebar-primary"
-                    )}
-                  >
-                    <Icon data-icon="inline-start" className="size-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex h-11 items-center gap-2 rounded-lg px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                          active && "bg-sidebar-accent border border-sidebar-border text-sidebar-primary"
+                        )}
+                      >
+                        <Icon data-icon="inline-start" className="size-4" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
             </nav>
 
             <div className="mt-auto rounded-lg border border-sidebar-border bg-sidebar-accent/50 p-3.5 text-xs text-muted-foreground">
@@ -218,56 +236,69 @@ export function OsShell({
           </button>
         </div>
 
-        <nav className="mt-6 flex flex-1 flex-col gap-1 pr-0.5 overflow-y-auto scrollbar-none">
-          {navigation.map((item, idx) => {
-            const Icon = item.icon;
-            const active = pathname === item.href;
-            const getShortcut = (index: number) => {
-              if (index < 9) return `⌘${index + 1}`;
-              if (index === 9) return `⌘0`;
-              return null;
-            };
+        <nav className="mt-6 flex flex-1 flex-col gap-3 pr-0.5 overflow-y-auto scrollbar-none">
+          {navigationGroups.map((group) => (
+            <div key={group.label} className="flex flex-col gap-1">
+              {collapsed ? (
+                <div className="mx-auto my-1 h-px w-6 bg-sidebar-border" />
+              ) : (
+                <div className="px-3.5 pt-1 text-[8px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
+                  {group.label}
+                </div>
+              )}
 
-            return (
-              <div key={item.href} className="relative group flex items-center">
-                {active && (
-                  <motion.div
-                    layoutId="active-nav-indicator"
-                    className="absolute left-0 w-0.5 h-4 bg-primary rounded-full"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "flex h-9 items-center rounded-lg text-xs font-semibold font-mono uppercase tracking-wider transition-all duration-200 w-full",
-                    collapsed 
-                      ? "justify-center px-0 w-10 mx-auto" 
-                      : "gap-3 px-3.5 pl-4.5",
-                    active 
-                      ? "bg-sidebar-accent text-sidebar-primary border border-sidebar-border" 
-                      : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border border-transparent"
-                  )}
-                >
-                  <Icon data-icon="inline-start" className={cn("size-4 shrink-0 transition-transform duration-200 group-hover:scale-110", active ? "text-sidebar-primary" : "text-muted-foreground")} />
-                  <span className={cn("transition-opacity duration-300", collapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto")}>
-                    {item.label}
-                  </span>
-                  {!collapsed && getShortcut(idx) && (
-                    <kbd className="ml-auto hidden group-hover:inline-flex h-4.5 select-none items-center rounded border border-sidebar-border bg-background px-1.5 font-mono text-[9px] font-medium text-muted-foreground/40 transition-colors duration-200">
-                      {getShortcut(idx)}
-                    </kbd>
-                  )}
-                </Link>
-                {/* Tooltip on Hover when collapsed */}
-                {collapsed && (
-                  <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1.5 bg-popover border border-border text-popover-foreground text-[10px] rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-lg font-mono uppercase tracking-wider whitespace-nowrap">
-                    {item.label}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+              {group.items.map((item) => {
+                const Icon = navigationIconMap[item.icon as NavigationIconName];
+                const active = activeNavigation?.item.href === item.href;
+                const idx = flatNavigation.findIndex((entry) => entry.href === item.href);
+                const getShortcut = (index: number) => {
+                  if (index < 0) return null;
+                  if (index < 9) return `#${index + 1}`;
+                  if (index === 9) return `#0`;
+                  return null;
+                };
+
+                return (
+                  <div key={item.href} className="relative group flex items-center">
+                    {active && (
+                      <motion.div
+                        layoutId="active-nav-indicator"
+                        className="absolute left-0 w-0.5 h-4 bg-primary rounded-full"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex h-9 items-center rounded-lg text-xs font-semibold font-mono uppercase tracking-wider transition-all duration-200 w-full",
+                        collapsed
+                          ? "justify-center px-0 w-10 mx-auto"
+                          : "gap-3 px-3.5 pl-4.5",
+                        active
+                          ? "bg-sidebar-accent text-sidebar-primary border border-sidebar-border"
+                          : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border border-transparent"
+                      )}
+                    >
+                      <Icon data-icon="inline-start" className={cn("size-4 shrink-0 transition-transform duration-200 group-hover:scale-110", active ? "text-sidebar-primary" : "text-muted-foreground")} />
+                      <span className={cn("transition-opacity duration-300", collapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto")}>
+                        {item.label}
+                      </span>
+                      {!collapsed && getShortcut(idx) && (
+                        <kbd className="ml-auto hidden group-hover:inline-flex h-4.5 select-none items-center rounded border border-sidebar-border bg-background px-1.5 font-mono text-[9px] font-medium text-muted-foreground/40 transition-colors duration-200">
+                          {getShortcut(idx)}
+                        </kbd>
+                      )}
+                    </Link>
+                    {collapsed && (
+                      <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1.5 bg-popover border border-border text-popover-foreground text-[10px] rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-lg font-mono uppercase tracking-wider whitespace-nowrap">
+                        {item.label}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className={cn("mt-auto rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-3.5 text-[10px] font-mono text-muted-foreground transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]", collapsed ? "opacity-0 h-0 p-0 overflow-hidden border-0" : "opacity-100")}>
@@ -302,7 +333,7 @@ export function OsShell({
             >
               {theme === "dark" ? <SunIcon className="size-4 text-amber-400" /> : <MoonIcon className="size-4 text-indigo-500" />}
             </button>
-            {searchData ? <GlobalSearch data={searchData} /> : <Button variant="outline" size="sm">Search</Button>}
+            {searchData ? <GlobalSearch data={searchData} /> : <Button variant="outline" size="sm">Buscar</Button>}
             <form action={logoutAction}>
               <Button size="sm" variant="secondary" className="border border-border bg-background hover:bg-muted text-foreground h-8 text-xs cursor-pointer" type="submit" disabled={!isAuthConfigured}>
                 Sair

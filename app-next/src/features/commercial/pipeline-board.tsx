@@ -10,6 +10,7 @@ import type { ProspectRow } from "@/features/prospects/data";
 import { temperatureLabel } from "@/lib/display-helpers";
 import { cn } from "@/lib/utils";
 import { updateProspectStatusAction } from "@/features/prospects/actions";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // PT-BR Mappings for Column Headers
 const columnMeta: Record<string, { label: string; colorClass: string; glowClass: string; dotClass: string }> = {
@@ -84,6 +85,9 @@ export function PipelineBoard({
   const [activeOverColumn, setActiveOverColumn] = useState<string | null>(null);
 
   const grouped = groupProspectsByPipelineStatus(localProspects);
+  const boardPotential = localProspects.reduce((sum, prospect) => sum + getProspectPotentialValue(prospect), 0);
+  const hotProspects = localProspects.filter((prospect) => prospect.temperature === "hot").length;
+  const scheduledMeetings = localProspects.filter((prospect) => prospect.status === "meeting_scheduled").length;
 
   // Formatter for currency
   const formatCurrency = (val: number) => {
@@ -145,14 +149,32 @@ export function PipelineBoard({
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
       {/* Header */}
-      <div>
+      <div className="rounded-2xl border border-white/5 bg-[#08080a]/55 p-5 shadow-sm backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
-          <h1 className="text-3xl font-bold tracking-tight text-white font-mono">FUNIL DE VENDAS</h1>
+          <span className="h-2 w-2 rounded-full bg-purple-500 shadow-[0_0_16px_rgba(168,85,247,0.75)]" />
+          <h1 className="text-2xl font-bold tracking-tight text-white font-mono">DEAL BOARD</h1>
+          <span className="rounded-full border border-purple-500/20 bg-purple-950/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-purple-200">
+            {localProspects.length} oportunidades
+          </span>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
           Arraste e solte os leads entre as etapas para atualizar o status e acompanhar o valor em negociação.
         </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl border border-purple-500/15 bg-purple-950/10 px-4 py-3">
+          <span className="block text-[9px] font-mono uppercase tracking-wider text-zinc-500">Potencial total</span>
+          <strong className="mt-1 block font-mono text-xl text-purple-200">{formatCurrency(boardPotential)}</strong>
+        </div>
+        <div className="rounded-xl border border-rose-500/15 bg-rose-950/10 px-4 py-3">
+          <span className="block text-[9px] font-mono uppercase tracking-wider text-zinc-500">Oportunidades hot</span>
+          <strong className="mt-1 block font-mono text-xl text-rose-200">{hotProspects}</strong>
+        </div>
+        <div className="rounded-xl border border-teal-500/15 bg-teal-950/10 px-4 py-3">
+          <span className="block text-[9px] font-mono uppercase tracking-wider text-zinc-500">Reunioes agendadas</span>
+          <strong className="mt-1 block font-mono text-xl text-teal-200">{scheduledMeetings}</strong>
+        </div>
       </div>
 
       {error && (
@@ -188,34 +210,40 @@ export function PipelineBoard({
               onDragLeave={() => setActiveOverColumn(null)}
               onDrop={(e) => handleDrop(e, status)}
               className={cn(
-                "min-w-[290px] w-[290px] shrink-0 bg-[#08080a]/60 border-white/5 backdrop-blur-md flex flex-col justify-between overflow-hidden transition-all duration-300",
+                "min-w-[300px] w-[300px] shrink-0 bg-[#08080a]/70 border-white/5 backdrop-blur-md flex flex-col justify-between overflow-hidden transition-all duration-300",
                 meta.colorClass,
-                activeOverColumn === status ? "border-purple-500/35 bg-purple-950/5 scale-[1.015] shadow-lg shadow-purple-950/10" : "",
+                activeOverColumn === status ? "border-purple-500/45 bg-purple-950/15 scale-[1.015] shadow-xl shadow-purple-950/20 ring-1 ring-purple-500/20" : "",
                 meta.glowClass
               )}
             >
-              <CardHeader className="pb-3 border-b border-white/5 bg-zinc-950/20">
-                <div className="flex items-center justify-between">
+              <CardHeader className="pb-3 border-b border-white/5 bg-zinc-950/35">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-1.5 min-w-0">
                     {hasDot && <span className={cn("size-1.5 rounded-full shrink-0", meta.dotClass)} />}
                     <CardTitle className="text-xs font-bold font-mono text-white uppercase tracking-wider truncate">
                       {meta.label}
                     </CardTitle>
                   </div>
-                  <span className="text-[10px] font-mono bg-white/5 px-2 py-0.5 rounded-full border border-white/5 text-muted-foreground">
+                  <span className="text-[10px] font-mono bg-white/5 px-2 py-0.5 rounded-full border border-white/5 text-zinc-300">
                     {list.length}
                   </span>
                 </div>
-                <div className="text-[10px] text-purple-400 font-semibold font-mono mt-1">
-                  Val: {formatCurrency(totalPotential)}
+                <div className="mt-3 rounded-lg border border-white/5 bg-black/20 px-2.5 py-2">
+                  <span className="block text-[9px] font-mono uppercase tracking-wider text-zinc-500">Potencial</span>
+                  <span className="text-sm font-bold text-purple-200 font-mono">{formatCurrency(totalPotential)}</span>
                 </div>
               </CardHeader>
 
-              <CardContent className="flex flex-col gap-3 pt-4 flex-1 overflow-y-auto min-h-[450px] max-h-[600px] scrollbar-none bg-zinc-950/10">
+              <CardContent className="flex flex-col gap-3 pt-4 flex-1 overflow-y-auto min-h-[450px] max-h-[640px] scrollbar-none bg-zinc-950/10">
                 {list.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-white/5 p-8 text-center text-[10px] text-muted-foreground italic my-auto">
-                    Sem leads nesta etapa
-                  </div>
+                  <EmptyState
+                    title="Etapa vazia"
+                    description="Solte oportunidades aqui"
+                    className={cn(
+                      "my-auto border-dashed border-white/10 bg-transparent p-4",
+                      activeOverColumn === status && "border-purple-500/30 bg-purple-950/10 text-purple-200"
+                    )}
+                  />
                 ) : null}
 
                 <AnimatePresence initial={false}>
@@ -238,8 +266,8 @@ export function PipelineBoard({
                           whileHover={{ scale: 1.015 }}
                           whileTap={{ scale: 0.985 }}
                           className={cn(
-                            "group cursor-grab active:cursor-grabbing flex flex-col justify-between rounded-xl border border-white/5 bg-[#0b0b0e] p-3.5 hover:bg-purple-950/10 hover:border-purple-500/25 hover:shadow-md hover:shadow-purple-950/5 transition-all duration-300",
-                            draggedId === prospect.id ? "opacity-30 border-purple-500/15" : ""
+                            "group cursor-grab active:cursor-grabbing flex flex-col justify-between rounded-xl border border-white/5 bg-[#0b0b0e] p-3.5 shadow-sm hover:bg-purple-950/10 hover:border-purple-500/25 hover:shadow-md hover:shadow-purple-950/10 transition-all duration-300",
+                            draggedId === prospect.id ? "opacity-30 border-purple-500/25 ring-1 ring-purple-500/20" : ""
                           )}
                         >
                           <div>
@@ -256,6 +284,9 @@ export function PipelineBoard({
                             </div>
 
                             <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full border uppercase font-mono bg-purple-950/20 text-purple-200 border-purple-500/20">
+                                Oportunidade
+                              </span>
                               <span
                                 className={cn(
                                   "text-[8px] font-bold px-1.5 py-0.5 rounded-full border uppercase font-mono shadow-sm",
@@ -275,11 +306,10 @@ export function PipelineBoard({
                               )}
                             </div>
 
-                            {prospect.city && (
-                              <div className="mt-1.5 text-[9px] text-muted-foreground/60 truncate">
-                                📍 {prospect.city}
-                              </div>
-                            )}
+                            <div className="mt-2 grid gap-1 text-[9px] text-muted-foreground/70 font-mono uppercase tracking-wider">
+                              <span className="truncate">{[prospect.city, prospect.state].filter(Boolean).join(" / ") || "Sem localizacao"}</span>
+                              <span className="truncate">{prospect.responsible_user_id || prospect.owner_id ? "Responsavel definido" : "Sem responsavel"}</span>
+                            </div>
                           </div>
 
                           <div className="mt-4 pt-2 border-t border-white/5 text-[9px] text-muted-foreground flex flex-col gap-0.5 leading-normal">

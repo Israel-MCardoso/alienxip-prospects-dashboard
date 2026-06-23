@@ -18,6 +18,7 @@ import {
 import type { ClientRow, CompanyRow, ProfileRow, ProjectRow, TaskRow } from "./data";
 import { formatDate, priorityLabel, statusLabel } from "./format";
 import { TaskForm } from "./task-form";
+import { Pagination } from "@/components/ui/pagination";
 
 function profileName(profiles: ProfileRow[], id: string | null) {
   const profile = profiles.find((item) => item.id === id);
@@ -201,7 +202,10 @@ export function TasksCenter({
   clients,
   profiles,
   projects,
-  error
+  error,
+  currentPage,
+  totalPages,
+  totalItems
 }: {
   tasks: TaskRow[];
   myTasks: TaskRow[];
@@ -211,6 +215,9 @@ export function TasksCenter({
   profiles: ProfileRow[];
   projects: ProjectRow[];
   error: string | null;
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
 }) {
   const [editingTask, setEditingTask] = useState<TaskRow | null>(null);
 
@@ -289,7 +296,7 @@ export function TasksCenter({
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Lista geral</CardTitle><CardDescription>{tasks.length} registro(s)</CardDescription></CardHeader>
+        <CardHeader><CardTitle>Lista geral</CardTitle><CardDescription>{totalItems} registro(s)</CardDescription></CardHeader>
         <CardContent>
           <TaskTable
             tasks={tasks}
@@ -299,6 +306,7 @@ export function TasksCenter({
             companies={companies}
             onEdit={setEditingTask}
           />
+          <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} />
         </CardContent>
       </Card>
 

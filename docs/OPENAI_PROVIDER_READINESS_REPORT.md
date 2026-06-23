@@ -126,5 +126,18 @@ Observacao: os valores devem ser reconfirmados na documentacao oficial da OpenAI
 ## Validacoes
 
 - `npm test`: passou, 67/67.
-- `npm run lint`: pendente no momento da criacao do relatorio.
-- `npm run build`: pendente no momento da criacao do relatorio.
+- `npm run lint`: passou.
+- `npm run build`: passou.
+
+Observacao de build: o Turbopack emitiu um aviso nao bloqueante sobre tracing de filesystem por causa do carregamento local dos prompts Markdown. Nao houve erro de compilacao, tipagem ou geracao de paginas.
+
+## Varredura de Chamadas Externas
+
+Resultado das buscas na camada `app-next/src/lib/ai`:
+
+- `fetch(`: nao encontrado.
+- `new OpenAI(`: nao encontrado.
+- `from "openai"`: nao encontrado.
+- `axios`: nao encontrado na camada AI.
+
+O unico registro de `axios` observado esta dentro da regex de teste que impede uso de clients HTTP externos.
