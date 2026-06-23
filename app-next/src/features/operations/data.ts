@@ -17,6 +17,7 @@ export type TaskFilters = {
   due?: string;
   project_id?: string;
   client_id?: string;
+  company_id?: string;
 };
 
 export type ProjectFilters = {
@@ -85,6 +86,7 @@ export async function getTasks(filters: TaskFilters = {}) {
   if (filters.priority) query = query.eq("priority", filters.priority as TaskRow["priority"]);
   if (filters.project_id) query = query.eq("project_id", filters.project_id);
   if (filters.client_id) query = query.eq("client_id", filters.client_id);
+  if (filters.company_id) query = query.eq("company_id", filters.company_id);
   if (filters.due === "overdue") query = query.lt("due_date", todayISO()).neq("status", "completed");
   if (filters.due === "today") query = query.eq("due_date", todayISO());
   if (filters.due === "none") query = query.is("due_date", null);

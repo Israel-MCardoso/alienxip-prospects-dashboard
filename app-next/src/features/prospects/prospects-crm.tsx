@@ -8,7 +8,13 @@ import {
   AlertTriangleIcon,
   TargetIcon,
   PlusIcon,
-  XIcon
+  XIcon,
+  SearchIcon,
+  ArrowUpRightIcon,
+  Edit3Icon,
+  MapPinIcon,
+  UserRoundIcon,
+  DollarSignIcon
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -24,11 +30,22 @@ import { Input } from "@/components/ui/input";
 import { ProspectForm } from "./prospect-form";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { CustomCheckbox } from "@/components/ui/custom-checkbox";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Pagination } from "@/components/ui/pagination";
 import type { ProspectRow } from "./data";
 import { prospectStatuses, prospectTemperatures } from "./prospect-schema";
 import { statusLabel, temperatureLabel } from "@/lib/display-helpers";
 import { updateProspectStatusAction, updateProspectTemperatureAction } from "./actions";
 import { cn } from "@/lib/utils";
+import { getProspectPotentialValue } from "@/features/commercial/commercial-helpers";
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 0
+  }).format(value);
+}
 
 export function ProspectsCrm({
   prospects,
@@ -73,6 +90,13 @@ export function ProspectsCrm({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingProspect, setEditingProspect] = useState<ProspectRow | null>(null);
 
+  // Pagination parameters
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const itemsPerPage = 10;
+  const totalItems = localProspects.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedProspects = localProspects.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
 
 
   // Handle drawer Escape keyboard triggers
@@ -96,6 +120,9 @@ export function ProspectsCrm({
         params.delete(key);
       }
     });
+    if (!updates.page) {
+      params.delete("page");
+    }
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, router, pathname]);
 
@@ -121,10 +148,18 @@ export function ProspectsCrm({
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === localProspects.length) {
-      setSelectedIds([]);
+    const paginatedIds = paginatedProspects.map(p => p.id);
+    const allSelectedOnPage = paginatedIds.every(id => selectedIds.includes(id));
+    if (allSelectedOnPage) {
+      setSelectedIds(prev => prev.filter(id => !paginatedIds.includes(id)));
     } else {
-      setSelectedIds(localProspects.map(p => p.id));
+      setSelectedIds(prev => {
+        const next = [...prev];
+        paginatedIds.forEach(id => {
+          if (!next.includes(id)) next.push(id);
+        });
+        return next;
+      });
     }
   };
 
@@ -240,21 +275,46 @@ export function ProspectsCrm({
   };
 
   const isAnyFilterActive = currentQ || currentStatus || currentTemperature || currentOutreach || currentMine;
+  const totalPotential = localProspects.reduce((sum, prospect) => sum + getProspectPotentialValue(prospect), 0);
+  const hotCount = localProspects.filter((prospect) => prospect.temperature === "hot").length;
+  const activeOutreachCount = localProspects.filter((prospect) => {
+    const outreach = getOutreach(prospect);
+    return outreach ? activeStatuses.includes(outreach.status) : false;
+  }).length;
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="bg-purple-950/40 text-purple-300 dark:text-purple-300 border-purple-800/40 dark:border-purple-800/40 border-purple-200 font-mono">
-            Supabase CRM v1.5
+            CRM Comercial
           </Badge>
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight text-white font-mono uppercase bg-gradient-to-r dark:from-white dark:via-purple-100 dark:to-purple-400 from-slate-900 via-purple-800 to-purple-600 bg-clip-text text-transparent">
-          PROSPECTS PIPELINE
+          PROSPECTS & OPORTUNIDADES
         </h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
           Gestão e prospecção ativa de leads e inteligência comercial integrados no Supabase.
         </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-xl border border-white/5 bg-[#08080a]/60 p-3">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Prospects filtrados</span>
+          <strong className="mt-1 block font-mono text-2xl text-white">{localProspects.length}</strong>
+        </div>
+        <div className="rounded-xl border border-purple-500/15 bg-purple-950/10 p-3">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Valor potencial</span>
+          <strong className="mt-1 block font-mono text-2xl text-purple-200">{formatCurrency(totalPotential)}</strong>
+        </div>
+        <div className="rounded-xl border border-rose-500/15 bg-rose-950/10 p-3">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Temperatura hot</span>
+          <strong className="mt-1 block font-mono text-2xl text-rose-200">{hotCount}</strong>
+        </div>
+        <div className="rounded-xl border border-indigo-500/15 bg-indigo-950/10 p-3">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Em SDR ativo</span>
+          <strong className="mt-1 block font-mono text-2xl text-indigo-200">{activeOutreachCount}</strong>
+        </div>
       </div>
 
       {error ? (
@@ -269,7 +329,7 @@ export function ProspectsCrm({
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <CardTitle>Lista de prospects</CardTitle>
+            <CardTitle>Lista comercial</CardTitle>
             <CardDescription>
               Dados lidos da tabela `prospects` quando Supabase está configurado.
             </CardDescription>
@@ -304,7 +364,11 @@ export function ProspectsCrm({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {/* Filters Form - Now fully reactive! */}
-          <div className="grid gap-3 md:grid-cols-[1fr_180px_180px_180px_120px_auto]">
+          <div className="grid gap-3 rounded-xl border border-white/5 bg-[#08080a]/45 p-3 md:grid-cols-[1fr_180px_180px_180px_120px_auto]">
+            <div className="flex items-center gap-2 md:col-span-6">
+              <SearchIcon className="size-3.5 text-purple-300" />
+              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Filtros reativos</span>
+            </div>
             <Input 
               value={searchText} 
               onChange={(e) => setSearchText(e.target.value)} 
@@ -371,28 +435,35 @@ export function ProspectsCrm({
           </div>
 
           {localProspects.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border/85 bg-card/25 p-12 text-center flex flex-col items-center justify-center max-w-md mx-auto my-6 animate-in fade-in duration-300">
-              <TargetIcon className="size-8 text-muted-foreground/30 mb-3" />
-              <h3 className="text-sm font-semibold text-foreground font-mono uppercase tracking-wider">Nenhum prospect encontrado</h3>
-              <p className="text-xs text-muted-foreground mt-1.5 max-w-xs leading-relaxed">
-                Nenhum lead corresponde aos filtros definidos. Remova os filtros ou cadastre novos prospects.
-              </p>
-            </div>
+            <EmptyState
+              title="Nenhum prospect encontrado"
+              description="Nenhum lead corresponde aos filtros definidos. Remova os filtros ou cadastre novos prospects."
+              icon={<TargetIcon className="size-5" />}
+              className="max-w-md mx-auto my-6 animate-in fade-in duration-300"
+            />
           ) : (
             <div className="flex flex-col gap-3">
               {/* Select All Row */}
               <div className="flex items-center gap-2 px-2 py-1 select-none text-xs font-mono text-muted-foreground border-b border-white/5 pb-2">
                 <CustomCheckbox
-                  checked={localProspects.length > 0 && selectedIds.length === localProspects.length}
+                  checked={paginatedProspects.length > 0 && paginatedProspects.every(p => selectedIds.includes(p.id))}
                   onChange={toggleSelectAll}
                 />
-                <span>Selecionar todos nesta visualização</span>
+                <span>Selecionar todos nesta página</span>
               </div>
 
-              {localProspects.map((prospect) => {
+              {paginatedProspects.map((prospect) => {
                 const isSelected = selectedIds.includes(prospect.id);
                 const o = getOutreach(prospect);
                 const hasPhoneNum = hasPhone(prospect);
+                const potentialValue = getProspectPotentialValue(prospect);
+                const nextAction = o?.status === "meeting_scheduled"
+                  ? "Preparar reuniao"
+                  : o && activeStatuses.includes(o.status)
+                  ? "Acompanhar SDR"
+                  : hasPhoneNum
+                  ? "Enviar para SDR"
+                  : "Completar contato";
 
                 return (
                   <div
@@ -457,7 +528,7 @@ export function ProspectsCrm({
 
                             {o && (
                               <Badge variant="outline" className="text-[9px] font-mono bg-indigo-500/10 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-300 border-indigo-500/20 py-0 px-1.5 h-5 uppercase">
-                                Automação: {o.status}
+                                Automação: {statusLabel(o.status)}
                               </Badge>
                             )}
                           </div>
@@ -490,6 +561,24 @@ export function ProspectsCrm({
                             </>
                           )}
                         </div>
+
+                        <div className="mt-2 grid gap-2 text-[10px] font-mono text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
+                          <span className="inline-flex items-center gap-1 rounded-lg border border-white/5 bg-black/20 px-2 py-1">
+                            <DollarSignIcon className="size-3 text-purple-300" />
+                            {formatCurrency(potentialValue)}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-lg border border-white/5 bg-black/20 px-2 py-1">
+                            <MapPinIcon className="size-3 text-purple-300" />
+                            {[prospect.city, prospect.state].filter(Boolean).join(" / ") || "Sem local"}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-lg border border-white/5 bg-black/20 px-2 py-1">
+                            <UserRoundIcon className="size-3 text-purple-300" />
+                            {prospect.responsible_user_id || prospect.owner_id ? "Responsavel definido" : "Sem responsavel"}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-lg border border-purple-500/10 bg-purple-950/10 px-2 py-1 text-purple-200">
+                            {nextAction}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -501,7 +590,8 @@ export function ProspectsCrm({
                         render={<Link href={`/os/prospects/${prospect.id}`} />}
                         className="cursor-pointer transition-all hover:bg-primary/10 font-mono text-xs"
                       >
-                        Abrir
+                        <ArrowUpRightIcon className="size-3" />
+                        <span>Abrir</span>
                       </Button>
                       <Button
                         variant="outline"
@@ -509,12 +599,33 @@ export function ProspectsCrm({
                         onClick={() => setEditingProspect(prospect)}
                         className="cursor-pointer transition-all font-mono text-xs"
                       >
-                        Editar
+                        <Edit3Icon className="size-3" />
+                        <span>Editar</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedIds([prospect.id]);
+                          setIsConfirmOpen(true);
+                        }}
+                        className="cursor-pointer transition-all font-mono text-xs"
+                        disabled={!hasPhoneNum || Boolean(o && activeStatuses.includes(o.status))}
+                      >
+                        <SendIcon className="size-3" />
+                        <span>SDR</span>
                       </Button>
                     </div>
                   </div>
                 );
               })}
+              
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                perPage={itemsPerPage}
+              />
             </div>
           )}
         </CardContent>
@@ -541,6 +652,7 @@ export function ProspectsCrm({
                   size="icon"
                   onClick={() => setIsCreateOpen(false)}
                   className="h-8 w-8 shrink-0 cursor-pointer"
+                  aria-label="Fechar"
                 >
                   <XIcon className="size-3.5" />
                 </Button>
@@ -582,6 +694,7 @@ export function ProspectsCrm({
                   size="icon"
                   onClick={() => setEditingProspect(null)}
                   className="h-8 w-8 shrink-0 cursor-pointer"
+                  aria-label="Fechar"
                 >
                   <XIcon className="size-3.5" />
                 </Button>
@@ -636,16 +749,17 @@ export function ProspectsCrm({
               ) : null}
             </div>
             
-            <div className="mt-4 flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold font-mono text-muted-foreground uppercase">Ambiente de Automação</label>
-              <select
+            <div className="mt-4 flex flex-col gap-1.5 font-mono">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Ambiente de Automação</label>
+              <CustomSelect
                 value={automationSource}
-                onChange={(e) => setAutomationSource(e.target.value as "production" | "sandbox")}
-                className="w-full h-9 rounded-lg border border-white/10 bg-zinc-950 px-2.5 text-xs text-white font-mono focus:outline-none focus:border-purple-500"
-              >
-                <option value="production">🚀 Produção (Real)</option>
-                <option value="sandbox">🛠️ Sandbox / Homologação (Mock, sem WhatsApp real)</option>
-              </select>
+                onChange={(val) => setAutomationSource(val as "production" | "sandbox")}
+                options={[
+                  { value: "production", label: "🚀 Produção (Real)" },
+                  { value: "sandbox", label: "🛠️ Sandbox / Homologação (Mock, sem WhatsApp real)" }
+                ]}
+                className="w-full text-xs text-white"
+              />
             </div>
             
             <div className="mt-5 flex gap-2.5 justify-end">

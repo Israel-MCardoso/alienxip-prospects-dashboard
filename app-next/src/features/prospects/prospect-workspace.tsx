@@ -20,12 +20,21 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  RecordActionsPanel,
+  RecordLayout,
+  RecordPropertiesPanel,
+  RecordTimeline,
+  type RecordTimelineItem,
+  type RecordProperty
+} from "@/components/records";
+import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
+import { CustomSelect } from "@/components/ui/custom-select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
@@ -75,6 +84,88 @@ const getRecommendedPlaybooks = (segment: string | null) => {
   return recs;
 };
 
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 0
+  }).format(value);
+}
+
+function buildProspectTimelineItems({
+  prospect,
+  diagnostic,
+  notes,
+  activities,
+  tasks,
+  proposals,
+  outreachEvents
+}: {
+  prospect: ProspectRow;
+  diagnostic: ProspectDiagnosticRow | null;
+  notes: ProspectNoteRow[];
+  activities: ProspectActivityRow[];
+  tasks: CommercialTaskRow[];
+  proposals: ProspectProposalRow[];
+  outreachEvents: OutreachEventRow[];
+}): RecordTimelineItem[] {
+  return [
+    {
+      id: `prospect-created-${prospect.id}`,
+      type: "status",
+      title: "Prospect cadastrado",
+      description: `${statusLabel(prospect.status)} | ${temperatureLabel(prospect.temperature)}`,
+      datetime: prospect.created_at
+    },
+    ...(diagnostic ? [{
+      id: `diagnostic-${diagnostic.id}`,
+      type: "diagnostic" as const,
+      title: "Diagnostico digital",
+      description: diagnostic.diagnosis_summary || "Diagnostico registrado no workspace.",
+      datetime: diagnostic.updated_at || diagnostic.created_at,
+      meta: diagnostic.created_at ? `Criado em ${new Date(diagnostic.created_at).toLocaleDateString("pt-BR")}` : undefined
+    }] : []),
+    ...notes.map((note) => ({
+      id: `note-${note.id}`,
+      type: "note" as const,
+      title: `Nota: ${note.type}`,
+      description: note.content,
+      datetime: note.updated_at || note.created_at
+    })),
+    ...activities.map((activity) => ({
+      id: `activity-${activity.id}`,
+      type: activity.action_type === "status_changed" ? "status" as const : "activity" as const,
+      title: activityLabel(activity.action_type),
+      description: activity.description || "Atividade registrada.",
+      datetime: activity.created_at
+    })),
+    ...tasks.map((task) => ({
+      id: `task-${task.id}`,
+      type: "task" as const,
+      title: task.title,
+      description: task.description || `Status: ${statusLabel(task.status)} | Prioridade: ${priorityLabel(task.priority)}`,
+      datetime: task.due_date || task.updated_at || task.created_at,
+      meta: `Status: ${statusLabel(task.status)} | Prioridade: ${priorityLabel(task.priority)}`
+    })),
+    ...proposals.map((proposal) => ({
+      id: `proposal-${proposal.id}`,
+      type: "proposal" as const,
+      title: proposal.title,
+      description: proposal.content || `Valor: ${formatCurrency(Number(proposal.value))}`,
+      datetime: proposal.updated_at || proposal.created_at,
+      meta: `Status: ${proposal.status} | Valor: ${formatCurrency(Number(proposal.value))}`
+    })),
+    ...outreachEvents.map((event) => ({
+      id: `outreach-${event.id}`,
+      type: "outreach" as const,
+      title: event.event_type,
+      description: event.message || `Canal: ${event.channel}`,
+      datetime: event.created_at,
+      meta: `Status: ${event.status} | Canal: ${event.channel}`
+    }))
+  ];
+}
+
 export function ProspectWorkspace({
   prospect,
   diagnostic,
@@ -113,6 +204,26 @@ export function ProspectWorkspace({
     : (clientObj?.main_contact_name || prospect.converted_client_id || "-");
 
   const playbooks = getRecommendedPlaybooks(prospect.segment);
+  const responsibleProfile = profiles.find((p) => p.id === prospect.responsible_user_id);
+  const openTasks = tasks.filter((task) => task.status !== "completed");
+  const timelineItems = buildProspectTimelineItems({
+    prospect,
+    diagnostic,
+    notes,
+    activities,
+    tasks,
+    proposals,
+    outreachEvents
+  });
+  const recordProperties: RecordProperty[] = [
+    { label: "Segmento", value: prospect.segment || "Sem segmento" },
+    { label: "Cidade/UF", value: [prospect.city, prospect.state].filter(Boolean).join(" / ") || "Local nao definido" },
+    { label: "Origem", value: prospect.source || "-" },
+    { label: "Score", value: prospect.priority_score ?? 0 },
+    { label: "Responsavel", value: responsibleProfile?.full_name || responsibleProfile?.email || "Nao definido" },
+    { label: "Cliente convertido", value: resolvedClientLabel },
+    { label: "Criado em", value: new Date(prospect.created_at).toLocaleDateString("pt-BR") }
+  ];
 
   // IA Generation Simulation
   const handleGenerateDiagnostic = () => {
@@ -215,21 +326,33 @@ export function ProspectWorkspace({
         </div>
       </div>
 
-      {/* 2. MODULAR 2-COLUMN OPERATIONAL LAYOUT */}
-      <div className="grid gap-6 lg:grid-cols-12 items-start">
-        {/* Main Column */}
-        <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-5">
+      {/* 2. MODULAR RECORD OPERATIONAL LAYOUT */}
+      <RecordLayout
+        left={
+          <RecordPropertiesPanel
+            title="Propriedades do prospect"
+            description="Dados operacionais principais do registro."
+            properties={recordProperties}
+          />
+        }
+        main={
+        <div className="flex flex-col gap-5">
+          <RecordTimeline
+            title="Timeline operacional"
+            items={timelineItems}
+            emptyLabel="Nenhum historico operacional registrado para este prospect."
+          />
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="flex flex-wrap bg-[#08080a]/60 border border-white/5 p-1 rounded-xl w-full justify-start overflow-x-auto scrollbar-none">
-              <TabsTrigger value="overview" className="rounded-lg text-xs font-mono py-1.5 px-3">Resumo</TabsTrigger>
-              <TabsTrigger value="diagnostic" className="rounded-lg text-xs font-mono py-1.5 px-3">Diagnóstico IA</TabsTrigger>
-              <TabsTrigger value="timeline" className="rounded-lg text-xs font-mono py-1.5 px-3">Histórico</TabsTrigger>
-              <TabsTrigger value="notes" className="rounded-lg text-xs font-mono py-1.5 px-3">Atividades</TabsTrigger>
-              <TabsTrigger value="tasks" className="rounded-lg text-xs font-mono py-1.5 px-3">Tarefas</TabsTrigger>
-              <TabsTrigger value="files" className="rounded-lg text-xs font-mono py-1.5 px-3">Arquivos</TabsTrigger>
-              <TabsTrigger value="proposals" className="rounded-lg text-xs font-mono py-1.5 px-3">Propostas</TabsTrigger>
-              <TabsTrigger value="outreach" className="rounded-lg text-xs font-mono py-1.5 px-3">Automação</TabsTrigger>
-              <TabsTrigger value="ai-brain" className="rounded-lg text-xs font-mono py-1.5 px-3">AI Brain</TabsTrigger>
+            <TabsList className="flex flex-wrap !h-auto bg-[#08080a]/60 border border-white/5 p-1 rounded-xl w-full justify-start gap-1.5 overflow-visible">
+              <TabsTrigger value="overview" className="rounded-lg text-xs font-mono py-1.5 px-3 h-8 flex-none">Resumo</TabsTrigger>
+              <TabsTrigger value="diagnostic" className="rounded-lg text-xs font-mono py-1.5 px-3 h-8 flex-none">Diagnóstico IA</TabsTrigger>
+              <TabsTrigger value="timeline" className="rounded-lg text-xs font-mono py-1.5 px-3 h-8 flex-none">Histórico</TabsTrigger>
+              <TabsTrigger value="notes" className="rounded-lg text-xs font-mono py-1.5 px-3 h-8 flex-none">Atividades</TabsTrigger>
+              <TabsTrigger value="tasks" className="rounded-lg text-xs font-mono py-1.5 px-3 h-8 flex-none">Tarefas</TabsTrigger>
+              <TabsTrigger value="files" className="rounded-lg text-xs font-mono py-1.5 px-3 h-8 flex-none">Arquivos</TabsTrigger>
+              <TabsTrigger value="proposals" className="rounded-lg text-xs font-mono py-1.5 px-3 h-8 flex-none">Propostas</TabsTrigger>
+              <TabsTrigger value="outreach" className="rounded-lg text-xs font-mono py-1.5 px-3 h-8 flex-none">Automação</TabsTrigger>
+              <TabsTrigger value="ai-brain" className="rounded-lg text-xs font-mono py-1.5 px-3 h-8 flex-none">AI Brain</TabsTrigger>
             </TabsList>
 
             <AnimatePresence mode="wait">
@@ -343,9 +466,16 @@ export function ProspectWorkspace({
             </AnimatePresence>
           </Tabs>
         </div>
-
-        {/* Sidebar Column */}
-        <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-6">
+        }
+        right={
+        <RecordActionsPanel
+          actions={[
+            { label: "Editar prospect", href: `/os/prospects/${prospect.id}/edit` },
+            { label: "Ver pipeline", href: "/os/prospects/pipeline" },
+            { label: "Abrir tarefas", description: `${openTasks.length} tarefa(s) aberta(s) neste prospect.` }
+          ]}
+          sections={
+        <div className="flex flex-col gap-6">
           {/* Industry Playbooks Widget */}
           <Card className="bg-[#08080a]/60 border-white/5 backdrop-blur-md">
             <CardHeader className="pb-3 border-b border-white/5">
@@ -433,7 +563,10 @@ export function ProspectWorkspace({
             </CardContent>
           </Card>
         </div>
-      </div>
+          }
+        />
+        }
+      />
     </div>
   );
 }
@@ -754,12 +887,18 @@ function TasksTab({ prospect, tasks }: { prospect: ProspectRow; tasks: Commercia
             <form action={action} className="flex flex-col gap-3">
               <Input name="title" required placeholder="Assunto/Título" className="h-8 text-xs" />
               <Input name="description" placeholder="Instruções adicionais" className="h-8 text-xs" />
-              <select name="status" defaultValue="pending" className="h-8 rounded-lg border border-white/5 bg-zinc-950/40 text-white px-2.5 text-xs focus:outline-none">
-                {taskStatuses.map((status: string) => <option key={status} value={status}>{statusLabel(status)}</option>)}
-              </select>
-              <select name="priority" defaultValue="medium" className="h-8 rounded-lg border border-white/5 bg-zinc-950/40 text-white px-2.5 text-xs focus:outline-none">
-                {taskPriorities.map((priority: string) => <option key={priority} value={priority}>{priorityLabel(priority)}</option>)}
-              </select>
+              <CustomSelect
+                name="status"
+                defaultValue="pending"
+                options={taskStatuses.map((status: string) => ({ value: status, label: statusLabel(status) }))}
+                triggerClassName="h-8 border-white/5 bg-zinc-950/40 text-xs text-white"
+              />
+              <CustomSelect
+                name="priority"
+                defaultValue="medium"
+                options={taskPriorities.map((priority: string) => ({ value: priority, label: priorityLabel(priority) }))}
+                triggerClassName="h-8 border-white/5 bg-zinc-950/40 text-xs text-white"
+              />
               <Input name="due_date" type="date" className="h-8 text-xs text-white" />
               <Button type="submit" className="bg-purple-600 text-white hover:bg-purple-500 text-xs">Agendar</Button>
             </form>
@@ -777,12 +916,17 @@ function TasksTab({ prospect, tasks }: { prospect: ProspectRow; tasks: Commercia
               <Input name="main_contact_email" placeholder="E-mail principal" disabled={alreadyConverted} className="h-8 text-xs" />
               <Input name="main_contact_phone" placeholder="Telefone" disabled={alreadyConverted} className="h-8 text-xs" />
               <Input name="monthly_value" placeholder="Valor mensal (Ex: 2000)" disabled={alreadyConverted} className="h-8 text-xs" />
-              <select name="contract_status" defaultValue="draft" disabled={alreadyConverted} className="h-8 rounded-lg border border-white/5 bg-zinc-950/40 text-white px-2.5 text-xs focus:outline-none">
-                <option value="draft">Rascunho</option>
-                <option value="active">Ativo</option>
-                <option value="paused">Pausado</option>
-                <option value="cancelled">Cancelado</option>
-              </select>
+              <CustomSelect
+                name="contract_status"
+                defaultValue="draft"
+                options={[
+                  { value: "draft", label: "Rascunho" },
+                  { value: "active", label: "Ativo" },
+                  { value: "paused", label: "Pausado" },
+                  { value: "cancelled", label: "Cancelado" }
+                ]}
+                triggerClassName="h-8 border-white/5 bg-zinc-950/40 text-xs text-white"
+              />
               <Button type="submit" disabled={alreadyConverted} className="bg-purple-600 text-white hover:bg-purple-500 text-xs">
                 {alreadyConverted ? "Convertido" : "Converter em Cliente"}
               </Button>

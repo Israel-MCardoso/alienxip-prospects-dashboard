@@ -28,6 +28,7 @@ import { playbookStatuses } from "./knowledge-helpers";
 import { duplicatePlaybookAction, updateKnowledgeReviewAction, updatePlaybookStatusAction } from "@/features/governance/actions";
 import { statusLabel, getCoreCategoryName } from "@/lib/display-helpers";
 import { cn } from "@/lib/utils";
+import { Pagination } from "@/components/ui/pagination";
 
 // Defined UI category layout matching user specs
 const UI_CATEGORIES = [
@@ -43,6 +44,16 @@ export function PlaybooksPageView({ playbooks, error }: { playbooks: PlaybookRow
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showCreateForm, setShowCreateForm] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const [prevSelectedCategory, setPrevSelectedCategory] = useState(selectedCategory);
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+
+  if (selectedCategory !== prevSelectedCategory || searchQuery !== prevSearchQuery) {
+    setPrevSelectedCategory(selectedCategory);
+    setPrevSearchQuery(searchQuery);
+    setCurrentPage(1);
+  }
 
   // Compute counts for each category
   const categoryCounts = useMemo(() => {
@@ -75,6 +86,13 @@ export function PlaybooksPageView({ playbooks, error }: { playbooks: PlaybookRow
       return true;
     });
   }, [playbooks, selectedCategory, searchQuery]);
+
+  const itemsPerPage = 10;
+  const totalItems = filteredPlaybooks.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedPlaybooks = useMemo(() => {
+    return filteredPlaybooks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [filteredPlaybooks, currentPage]);
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
@@ -169,7 +187,7 @@ export function PlaybooksPageView({ playbooks, error }: { playbooks: PlaybookRow
             <div>
               <CardTitle className="text-base font-semibold text-white font-mono">Biblioteca de Playbooks</CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
-                Exibindo {filteredPlaybooks.length} de {playbooks.length} playbooks.
+                Exibindo {totalItems} registro(s).
               </CardDescription>
             </div>
             <div className="relative w-full md:w-80">
@@ -184,78 +202,81 @@ export function PlaybooksPageView({ playbooks, error }: { playbooks: PlaybookRow
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {filteredPlaybooks.length === 0 ? (
+          {paginatedPlaybooks.length === 0 ? (
             <div className="py-8 text-center">
               <FileTextIcon className="size-10 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-xs text-muted-foreground">Nenhum playbook encontrado.</p>
             </div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-2">
-              {filteredPlaybooks.map((playbook) => {
-                const isPublished = playbook.status === "published";
-                const isArchived = playbook.status === "archived";
-                const needsReview = playbook.review_status === "needs_review";
+            <>
+              <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-2">
+                {paginatedPlaybooks.map((playbook) => {
+                  const isPublished = playbook.status === "published";
+                  const isArchived = playbook.status === "archived";
+                  const needsReview = playbook.review_status === "needs_review";
 
-                return (
-                  <Link
-                    href={`/os/playbooks/${playbook.id}`}
-                    key={playbook.id}
-                    className="group relative flex flex-col justify-between rounded-xl border border-white/5 bg-background/30 p-4 hover:bg-purple-950/10 hover:border-purple-500/20 transition-all duration-200"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-bold bg-purple-950/40 text-purple-300 border border-purple-800/40 px-2 py-0.5 rounded-full">
-                          {getCoreCategoryName(playbook.category)}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          {needsReview && (
-                            <span className="text-[9px] font-semibold bg-amber-950/40 text-amber-300 border border-amber-800/40 px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                              <AlertCircleIcon className="size-2.5" />
-                              Revisão
-                            </span>
-                          )}
-                          <span
-                            className={cn(
-                              "text-[9px] font-semibold px-2 py-0.5 rounded-full border",
-                              isPublished
-                                ? "bg-purple-950/40 text-purple-300 border-purple-800/40"
-                                : isArchived
-                                ? "bg-zinc-900/60 text-zinc-400 border-zinc-800/60"
-                                : "bg-amber-950/40 text-amber-300 border-amber-800/40"
-                            )}
-                          >
-                            {statusLabel(playbook.status)}
+                  return (
+                    <Link
+                      href={`/os/playbooks/${playbook.id}`}
+                      key={playbook.id}
+                      className="group relative flex flex-col justify-between rounded-xl border border-white/5 bg-background/30 p-4 hover:bg-purple-950/10 hover:border-purple-500/20 transition-all duration-200"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-bold bg-purple-950/40 text-purple-300 border border-purple-800/40 px-2 py-0.5 rounded-full">
+                            {getCoreCategoryName(playbook.category)}
                           </span>
+                          <div className="flex items-center gap-1.5">
+                            {needsReview && (
+                              <span className="text-[9px] font-semibold bg-amber-950/40 text-amber-300 border border-amber-800/40 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                                <AlertCircleIcon className="size-2.5" />
+                                Revisão
+                              </span>
+                            )}
+                            <span
+                              className={cn(
+                                "text-[9px] font-semibold px-2 py-0.5 rounded-full border",
+                                isPublished
+                                  ? "bg-purple-950/40 text-purple-300 border-purple-800/40"
+                                  : isArchived
+                                  ? "bg-zinc-900/60 text-zinc-400 border-zinc-800/60"
+                                  : "bg-amber-950/40 text-amber-300 border-amber-800/40"
+                              )}
+                            >
+                                {statusLabel(playbook.status)}
+                            </span>
+                          </div>
                         </div>
+
+                        <h3 className="text-sm font-semibold text-white group-hover:text-purple-300 mt-2.5 transition-colors">
+                          {playbook.title}
+                        </h3>
+                        {playbook.description && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                            {playbook.description}
+                          </p>
+                        )}
+                        
+                        <p className="text-xs text-zinc-500 mt-3 line-clamp-2 leading-normal italic font-mono bg-black/20 p-2 rounded border border-white/5">
+                          {playbook.content}
+                        </p>
                       </div>
 
-                      <h3 className="text-sm font-semibold text-white group-hover:text-purple-300 mt-2.5 transition-colors">
-                        {playbook.title}
-                      </h3>
-                      {playbook.description && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                          {playbook.description}
-                        </p>
-                      )}
-                      
-                      <p className="text-xs text-zinc-500 mt-3 line-clamp-2 leading-normal italic font-mono bg-black/20 p-2 rounded border border-white/5">
-                        {playbook.content}
-                      </p>
-                    </div>
-
-                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] font-medium text-purple-400 group-hover:text-purple-300 transition-colors">
-                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                        <ClockIcon className="size-3" />
-                        {playbook.updated_at ? new Date(playbook.updated_at).toLocaleDateString("pt-BR") : "Recent"}
-                      </span>
-                      <span className="flex items-center gap-0.5">
-                        Acessar playbook &rarr;
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+                      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] font-medium text-purple-400 group-hover:text-purple-300 transition-colors">
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <ClockIcon className="size-3" />
+                          {playbook.updated_at ? new Date(playbook.updated_at).toLocaleDateString("pt-BR") : "Recent"}
+                        </span>
+                        <span className="flex items-center gap-0.5">
+                          Acessar playbook &rarr;
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={setCurrentPage} />
+            </>
           )}
         </CardContent>
       </Card>

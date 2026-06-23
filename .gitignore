@@ -19,3 +19,5 @@ node_modules/
 .codex-context/
 .DS_Store
 Thumbs.db
+supabase/.temp/
+backup-*.sql

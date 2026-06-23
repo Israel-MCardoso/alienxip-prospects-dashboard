@@ -81,9 +81,11 @@ export async function createGeneralTaskAction(formData: FormData) {
     action: "task_created",
     title: "Task criada",
     description: task.title,
-    metadata: { project_id: task.project_id, prospect_id: task.prospect_id, client_id: task.client_id }
+    metadata: { project_id: task.project_id, prospect_id: task.prospect_id, client_id: task.client_id, company_id: task.company_id }
   });
 
+  if (task.client_id) revalidatePath(`/os/clients/${task.client_id}`);
+  if (task.company_id) revalidatePath(`/os/companies/${task.company_id}`);
   revalidatePath("/os/tasks");
   revalidatePath("/os/calendar");
   revalidatePath("/os/activity");

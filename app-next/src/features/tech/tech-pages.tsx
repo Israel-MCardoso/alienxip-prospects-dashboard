@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { XIcon, ChevronDownIcon } from "lucide-react";
+import { Pagination } from "@/components/ui/pagination";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,6 +74,61 @@ function profileName(profiles: ProfileRow[], id: string | null) {
   const profile = profiles.find((p) => p.id === id);
   return profile?.full_name || profile?.email || "-";
 }
+
+const severityLabelsMap: Record<string, string> = {
+  low: "Baixo",
+  medium: "Médio",
+  high: "Alto",
+  critical: "Crítico"
+};
+const priorityLabelsMap: Record<string, string> = {
+  low: "Baixa",
+  medium: "Média",
+  high: "Alta",
+  urgent: "Urgente"
+};
+const bugStatusesMap: Record<string, string> = {
+  open: "Aberto",
+  triage: "Triagem",
+  in_progress: "Em Progresso",
+  fixed: "Corrigido",
+  wont_fix: "Não Corrigir",
+  closed: "Fechado"
+};
+const incidentStatusesMap: Record<string, string> = {
+  investigating: "Investigando",
+  identified: "Identificado",
+  monitoring: "Monitorando",
+  resolved: "Resolvido"
+};
+const backlogTypesMap: Record<string, string> = {
+  refactor: "Refatoração",
+  infrastructure: "Infraestrutura",
+  feature: "Nova Feature",
+  debt: "Dívida Técnica",
+  security: "Segurança",
+  performance: "Performance"
+};
+const backlogStatusesMap: Record<string, string> = {
+  open: "Aberto",
+  planned: "Planejado",
+  in_progress: "Em Progresso",
+  done: "Concluído",
+  archived: "Arquivado"
+};
+const roadmapStatusesMap: Record<string, string> = {
+  planned: "Planejado",
+  in_progress: "Em Progresso",
+  shipped: "Entregue",
+  paused: "Pausado",
+  canceled: "Cancelado"
+};
+const technicalDecisionStatusesMap: Record<string, string> = {
+  proposed: "Proposto",
+  accepted: "Aceito",
+  deprecated: "Depreciado",
+  superseded: "Substituído"
+};
 
 interface RightDrawerProps {
   isOpen: boolean;
@@ -145,6 +201,7 @@ export function BugsPageView({
   error: string | null;
 }) {
   const [editingBug, setEditingBug] = useState<TechBugRow | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   
   // Local state for bugs to support Optimistic UI
   const [prevBugs, setPrevBugs] = useState<TechBugRow[]>(bugs);
@@ -152,7 +209,15 @@ export function BugsPageView({
   if (bugs !== prevBugs) {
     setPrevBugs(bugs);
     setLocalBugs(bugs);
+    setCurrentPage(1);
   }
+
+  const itemsPerPage = 10;
+  const totalItems = localBugs.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedBugs = useMemo(() => {
+    return localBugs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [localBugs, currentPage]);
 
   const handleUpdate = async (formData: FormData) => {
     if (!editingBug) return;
@@ -205,10 +270,10 @@ export function BugsPageView({
           <form action={createBugAction} className="grid gap-3 md:grid-cols-4">
             <Input name="title" placeholder="Título" required className="md:col-span-2" />
             <select name="severity" defaultValue="medium" className="h-8 rounded-lg border bg-background px-2 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-              {severityLevels.map((item: string) => <option key={item} value={item}>{item}</option>)}
+              {severityLevels.map((item: string) => <option key={item} value={item}>{severityLabelsMap[item] || item}</option>)}
             </select>
             <select name="priority" defaultValue="medium" className="h-8 rounded-lg border bg-background px-2 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-              {priorityLevels.map((item: string) => <option key={item} value={item}>{item}</option>)}
+              {priorityLevels.map((item: string) => <option key={item} value={item}>{priorityLabelsMap[item] || item}</option>)}
             </select>
             <textarea name="description" placeholder="Descrição" className="min-h-20 rounded-lg border bg-background p-3 text-sm md:col-span-2 focus:ring-1 focus:ring-purple-500 outline-none resize-none" />
             
@@ -242,142 +307,145 @@ export function BugsPageView({
       <Card>
         <CardHeader>
           <CardTitle>Bugs Registrados</CardTitle>
-          <CardDescription>{localBugs.length} bug(s) listado(s)</CardDescription>
+          <CardDescription>{totalItems} registro(s)</CardDescription>
         </CardHeader>
         <CardContent>
           {localBugs.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum bug encontrado.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Título</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Severidade</TableHead>
-                    <TableHead>Prioridade</TableHead>
-                    <TableHead>Vinculos</TableHead>
-                    <TableHead>Atribuído a</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {localBugs.map((bug) => (
-                    <TableRow key={bug.id}>
-                      <TableCell>
-                        <div className="font-semibold text-white">{bug.title}</div>
-                        {bug.description ? <div className="text-xs text-muted-foreground mt-0.5">{bug.description}</div> : null}
-                      </TableCell>
-                      <TableCell>
-                        <div className="relative group/status flex items-center">
-                          <select
-                            value={bug.status}
-                            onChange={(e) => handleUpdateBugStatus(bug.id, e.target.value)}
-                            className={cn(
-                              "text-[10px] font-mono uppercase tracking-wider bg-opacity-20 border py-0.5 px-2.5 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-opacity-30 transition-colors cursor-pointer appearance-none pr-5.5 font-bold",
-                              bug.status === "open"
-                                ? "bg-zinc-900 text-zinc-400 border-zinc-800"
-                                : bug.status === "in_progress"
-                                ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
-                                : bug.status === "fixed"
-                                ? "bg-emerald-950/20 text-emerald-400 border-emerald-500/20"
-                                : "bg-purple-950/20 text-purple-400 border-purple-500/20"
-                            )}
-                          >
-                            {bugStatuses.map((st) => (
-                              <option key={st} value={st} className="bg-popover text-popover-foreground">{st}</option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute right-1.5 flex items-center opacity-60">
-                            <ChevronDownIcon className={cn("h-3 w-3",
-                              bug.status === "open" ? "text-zinc-500" :
-                              bug.status === "in_progress" ? "text-blue-400" :
-                              bug.status === "fixed" ? "text-emerald-400" :
-                              "text-purple-400"
-                            )} />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="relative group/severity flex items-center">
-                          <select
-                            value={bug.severity}
-                            onChange={(e) => handleUpdateBugSeverity(bug.id, e.target.value)}
-                            className={cn(
-                              "text-[10px] font-mono uppercase tracking-wider bg-opacity-20 border py-0.5 px-2.5 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-opacity-30 transition-colors cursor-pointer appearance-none pr-5.5 font-bold",
-                              bug.severity === "critical"
-                                ? "bg-rose-950/30 text-rose-400 border-rose-500/30"
-                                : bug.severity === "high"
-                                ? "bg-amber-950/30 text-amber-400 border-amber-500/30"
-                                : bug.severity === "medium"
-                                ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
-                                : "bg-zinc-900/40 text-zinc-400 border-zinc-800/20"
-                            )}
-                          >
-                            {severityLevels.map((sv) => (
-                              <option key={sv} value={sv} className="bg-popover text-popover-foreground">{sv}</option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute right-1.5 flex items-center opacity-60">
-                            <ChevronDownIcon className={cn("h-3 w-3",
-                              bug.severity === "critical" ? "text-rose-400" :
-                              bug.severity === "high" ? "text-amber-400" :
-                              bug.severity === "medium" ? "text-blue-400" :
-                              "text-zinc-400"
-                            )} />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="relative group/priority flex items-center">
-                          <select
-                            value={bug.priority}
-                            onChange={(e) => handleUpdateBugPriority(bug.id, e.target.value)}
-                            className={cn(
-                              "text-[10px] font-mono uppercase tracking-wider bg-opacity-20 border py-0.5 px-2.5 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-opacity-30 transition-colors cursor-pointer appearance-none pr-5.5 font-bold",
-                              bug.priority === "urgent"
-                                ? "bg-rose-950/30 text-rose-400 border-rose-500/20"
-                                : bug.priority === "high"
-                                ? "bg-amber-950/20 text-amber-400 border-amber-500/20"
-                                : bug.priority === "medium"
-                                ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
-                                : "bg-zinc-900/40 text-zinc-400 border-zinc-80"
-                            )}
-                          >
-                            {priorityLevels.map((pr) => (
-                              <option key={pr} value={pr} className="bg-popover text-popover-foreground">{pr}</option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute right-1.5 flex items-center opacity-60">
-                            <ChevronDownIcon className={cn("h-3 w-3",
-                              bug.priority === "urgent" ? "text-rose-400" :
-                              bug.priority === "high" ? "text-amber-400" :
-                              bug.priority === "medium" ? "text-blue-400" :
-                              "text-zinc-400"
-                            )} />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {bug.project_id ? <div className="mb-0.5"><span className="text-[10px] text-zinc-500 font-mono">PROJ: </span><Link href={`/os/projects/${bug.project_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{projectName(projects, bug.project_id)}</Link></div> : null}
-                        {bug.client_id ? <div><span className="text-[10px] text-zinc-500 font-mono">CLI: </span><Link href={`/os/clients/${bug.client_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{clientName(clients, companies, bug.client_id)}</Link></div> : null}
-                      </TableCell>
-                      <TableCell className="text-zinc-300">{profileName(profiles, bug.assigned_to)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditingBug(bug)} className="cursor-pointer">Editar</Button>
-                          {bug.status !== "closed" && bug.status !== "fixed" ? (
-                            <form action={archiveBugAction.bind(null, bug.id)}>
-                              <Button size="sm" variant="outline" type="submit" className="text-red-400 hover:text-red-300 border-red-500/20 hover:bg-red-950/20 cursor-pointer">Fechar</Button>
-                            </form>
-                          ) : null}
-                        </div>
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Título</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Severidade</TableHead>
+                      <TableHead>Prioridade</TableHead>
+                      <TableHead>Vinculos</TableHead>
+                      <TableHead>Atribuído a</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedBugs.map((bug) => (
+                      <TableRow key={bug.id}>
+                        <TableCell>
+                          <div className="font-semibold text-white">{bug.title}</div>
+                          {bug.description ? <div className="text-xs text-muted-foreground mt-0.5">{bug.description}</div> : null}
+                        </TableCell>
+                        <TableCell>
+                          <div className="relative group/status flex items-center">
+                            <select
+                              value={bug.status}
+                              onChange={(e) => handleUpdateBugStatus(bug.id, e.target.value)}
+                              className={cn(
+                                "text-[10px] font-mono uppercase tracking-wider bg-opacity-20 border py-0.5 px-2.5 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-opacity-30 transition-colors cursor-pointer appearance-none pr-5.5 font-bold",
+                                bug.status === "open"
+                                  ? "bg-zinc-900 text-zinc-400 border-zinc-800"
+                                  : bug.status === "in_progress"
+                                  ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                                  : bug.status === "fixed"
+                                  ? "bg-emerald-950/20 text-emerald-400 border-emerald-500/20"
+                                  : "bg-purple-950/20 text-purple-400 border-purple-500/20"
+                              )}
+                            >
+                              {bugStatuses.map((st) => (
+                                <option key={st} value={st} className="bg-popover text-popover-foreground">{bugStatusesMap[st] || st}</option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute right-1.5 flex items-center opacity-60">
+                              <ChevronDownIcon className={cn("h-3 w-3",
+                                bug.status === "open" ? "text-zinc-500" :
+                                bug.status === "in_progress" ? "text-blue-400" :
+                                bug.status === "fixed" ? "text-emerald-400" :
+                                "text-purple-400"
+                              )} />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="relative group/severity flex items-center">
+                            <select
+                              value={bug.severity}
+                              onChange={(e) => handleUpdateBugSeverity(bug.id, e.target.value)}
+                              className={cn(
+                                "text-[10px] font-mono uppercase tracking-wider bg-opacity-20 border py-0.5 px-2.5 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-opacity-30 transition-colors cursor-pointer appearance-none pr-5.5 font-bold",
+                                bug.severity === "critical"
+                                  ? "bg-rose-950/30 text-rose-400 border-rose-500/30"
+                                  : bug.severity === "high"
+                                  ? "bg-amber-950/30 text-amber-400 border-amber-500/30"
+                                  : bug.severity === "medium"
+                                  ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                                  : "bg-zinc-900/40 text-zinc-400 border-zinc-800/20"
+                              )}
+                            >
+                              {severityLevels.map((sv) => (
+                                <option key={sv} value={sv} className="bg-popover text-popover-foreground">{severityLabelsMap[sv] || sv}</option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute right-1.5 flex items-center opacity-60">
+                              <ChevronDownIcon className={cn("h-3 w-3",
+                                bug.severity === "critical" ? "text-rose-400" :
+                                bug.severity === "high" ? "text-amber-400" :
+                                bug.severity === "medium" ? "text-blue-400" :
+                                "text-zinc-400"
+                              )} />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="relative group/priority flex items-center">
+                            <select
+                              value={bug.priority}
+                              onChange={(e) => handleUpdateBugPriority(bug.id, e.target.value)}
+                              className={cn(
+                                "text-[10px] font-mono uppercase tracking-wider bg-opacity-20 border py-0.5 px-2.5 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-opacity-30 transition-colors cursor-pointer appearance-none pr-5.5 font-bold",
+                                bug.priority === "urgent"
+                                  ? "bg-rose-950/30 text-rose-400 border-rose-500/20"
+                                  : bug.priority === "high"
+                                  ? "bg-amber-950/20 text-amber-400 border-amber-500/20"
+                                  : bug.priority === "medium"
+                                  ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                                  : "bg-zinc-900/40 text-zinc-400 border-zinc-80"
+                              )}
+                            >
+                              {priorityLevels.map((pr) => (
+                                <option key={pr} value={pr} className="bg-popover text-popover-foreground">{priorityLabelsMap[pr] || pr}</option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute right-1.5 flex items-center opacity-60">
+                              <ChevronDownIcon className={cn("h-3 w-3",
+                                bug.priority === "urgent" ? "text-rose-400" :
+                                bug.priority === "high" ? "text-amber-400" :
+                                bug.priority === "medium" ? "text-blue-400" :
+                                "text-zinc-400"
+                              )} />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {bug.project_id ? <div className="mb-0.5"><span className="text-[10px] text-zinc-500 font-mono">PROJ: </span><Link href={`/os/projects/${bug.project_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{projectName(projects, bug.project_id)}</Link></div> : null}
+                          {bug.client_id ? <div><span className="text-[10px] text-zinc-500 font-mono">CLI: </span><Link href={`/os/clients/${bug.client_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{clientName(clients, companies, bug.client_id)}</Link></div> : null}
+                        </TableCell>
+                        <TableCell className="text-zinc-300">{profileName(profiles, bug.assigned_to)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setEditingBug(bug)} className="cursor-pointer">Editar</Button>
+                            {bug.status !== "closed" && bug.status !== "fixed" ? (
+                              <form action={archiveBugAction.bind(null, bug.id)}>
+                                <Button size="sm" variant="outline" type="submit" className="text-red-400 hover:text-red-300 border-red-500/20 hover:bg-red-950/20 cursor-pointer">Fechar</Button>
+                              </form>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={setCurrentPage} />
+            </>
           )}
         </CardContent>
       </Card>
@@ -398,13 +466,13 @@ export function BugsPageView({
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground font-medium">Status</label>
                 <select name="status" defaultValue={editingBug.status} className="w-full h-9 rounded-lg border bg-[#151515] text-white px-2.5 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-                  {bugStatuses.map((st) => <option key={st} value={st}>{st}</option>)}
+                  {bugStatuses.map((st) => <option key={st} value={st}>{bugStatusesMap[st] || st}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground font-medium">Severidade</label>
                 <select name="severity" defaultValue={editingBug.severity} className="w-full h-9 rounded-lg border bg-[#151515] text-white px-2.5 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-                  {severityLevels.map((sv) => <option key={sv} value={sv}>{sv}</option>)}
+                  {severityLevels.map((sv) => <option key={sv} value={sv}>{severityLabelsMap[sv] || sv}</option>)}
                 </select>
               </div>
             </div>
@@ -412,7 +480,7 @@ export function BugsPageView({
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground font-medium">Prioridade</label>
                 <select name="priority" defaultValue={editingBug.priority} className="w-full h-9 rounded-lg border bg-[#151515] text-white px-2.5 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-                  {priorityLevels.map((p) => <option key={p} value={p}>{p}</option>)}
+                  {priorityLevels.map((p) => <option key={p} value={p}>{priorityLabelsMap[p] || p}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
@@ -477,6 +545,7 @@ export function IncidentsPageView({
   error: string | null;
 }) {
   const [editingIncident, setEditingIncident] = useState<TechIncidentRow | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   // Local state for incidents to support Optimistic UI
   const [prevIncidents, setPrevIncidents] = useState<TechIncidentRow[]>(incidents);
@@ -484,7 +553,15 @@ export function IncidentsPageView({
   if (incidents !== prevIncidents) {
     setPrevIncidents(incidents);
     setLocalIncidents(incidents);
+    setCurrentPage(1);
   }
+
+  const itemsPerPage = 10;
+  const totalItems = localIncidents.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedIncidents = useMemo(() => {
+    return localIncidents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [localIncidents, currentPage]);
 
   const handleUpdate = async (formData: FormData) => {
     if (!editingIncident) return;
@@ -526,7 +603,7 @@ export function IncidentsPageView({
           <form action={createIncidentAction} className="grid gap-3 md:grid-cols-4">
             <Input name="title" placeholder="Título" required className="md:col-span-2" />
             <select name="severity" defaultValue="medium" className="h-8 rounded-lg border bg-background px-2 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-              {severityLevels.map((item: string) => <option key={item} value={item}>{item}</option>)}
+              {severityLevels.map((item: string) => <option key={item} value={item}>{severityLabelsMap[item] || item}</option>)}
             </select>
             <Input name="started_at" type="date" className="focus:ring-1 focus:ring-purple-500 outline-none" />
             <textarea name="description" placeholder="Descrição" className="min-h-20 rounded-lg border bg-background p-3 text-sm md:col-span-2 focus:ring-1 focus:ring-purple-500 outline-none resize-none" />
@@ -554,110 +631,113 @@ export function IncidentsPageView({
       <Card>
         <CardHeader>
           <CardTitle>Incidentes Registrados</CardTitle>
-          <CardDescription>{localIncidents.length} incidente(s) listado(s)</CardDescription>
+          <CardDescription>{totalItems} registro(s)</CardDescription>
         </CardHeader>
         <CardContent>
           {localIncidents.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum incidente encontrado.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Título</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Severidade</TableHead>
-                    <TableHead>Início</TableHead>
-                    <TableHead>Vinculos</TableHead>
-                    <TableHead>Responsável</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {localIncidents.map((inc) => (
-                    <TableRow key={inc.id}>
-                      <TableCell>
-                        <div className="font-semibold text-white">{inc.title}</div>
-                        {inc.description ? <div className="text-xs text-muted-foreground mt-0.5">{inc.description}</div> : null}
-                      </TableCell>
-                      <TableCell>
-                        <div className="relative group/status flex items-center">
-                          <select
-                            value={inc.status}
-                            onChange={(e) => handleUpdateIncidentStatus(inc.id, e.target.value)}
-                            className={cn(
-                              "text-[10px] font-mono uppercase tracking-wider bg-opacity-20 border py-0.5 px-2.5 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-opacity-30 transition-colors cursor-pointer appearance-none pr-5.5 font-bold",
-                              (inc.status === "investigating" || inc.status === "identified")
-                                ? "bg-rose-950/30 text-rose-450 border-rose-500/30"
-                                : inc.status === "monitoring"
-                                ? "bg-amber-950/20 text-amber-400 border-amber-500/20"
-                                : "bg-emerald-950/20 text-emerald-400 border-emerald-500/20"
-                            )}
-                          >
-                            {incidentStatuses.map((st) => (
-                              <option key={st} value={st} className="bg-popover text-popover-foreground">{st}</option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute right-1.5 flex items-center opacity-60">
-                            <ChevronDownIcon className={cn("h-3 w-3",
-                              (inc.status === "investigating" || inc.status === "identified") ? "text-rose-400" :
-                              inc.status === "monitoring" ? "text-amber-400" :
-                              "text-emerald-400"
-                            )} />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="relative group/severity flex items-center">
-                          <select
-                            value={inc.severity}
-                            onChange={(e) => handleUpdateIncidentSeverity(inc.id, e.target.value)}
-                            className={cn(
-                              "text-[10px] font-mono uppercase tracking-wider bg-opacity-20 border py-0.5 px-2.5 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-opacity-30 transition-colors cursor-pointer appearance-none pr-5.5 font-bold",
-                              inc.severity === "critical"
-                                ? "bg-rose-950/30 text-rose-450 border-rose-500/30"
-                                : inc.severity === "high"
-                                ? "bg-amber-950/30 text-amber-400 border-amber-500/30"
-                                : inc.severity === "medium"
-                                ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
-                                : "bg-zinc-900/40 text-zinc-400 border-zinc-800/20"
-                            )}
-                          >
-                            {severityLevels.map((sv) => (
-                              <option key={sv} value={sv} className="bg-popover text-popover-foreground">{sv}</option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute right-1.5 flex items-center opacity-60">
-                            <ChevronDownIcon className={cn("h-3 w-3",
-                              inc.severity === "critical" ? "text-rose-450" :
-                              inc.severity === "high" ? "text-amber-450" :
-                              inc.severity === "medium" ? "text-blue-400" :
-                              "text-zinc-400"
-                            )} />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-zinc-400">{inc.started_at ? String(inc.started_at).slice(0, 10) : "-"}</TableCell>
-                      <TableCell>
-                        {inc.project_id ? <div className="mb-0.5"><span className="text-[10px] text-zinc-500 font-mono">PROJ: </span><Link href={`/os/projects/${inc.project_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{projectName(projects, inc.project_id)}</Link></div> : null}
-                        {inc.client_id ? <div><span className="text-[10px] text-zinc-500 font-mono">CLI: </span><Link href={`/os/clients/${inc.client_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{clientName(clients, companies, inc.client_id)}</Link></div> : null}
-                      </TableCell>
-                      <TableCell className="text-zinc-300">{profileName(profiles, inc.owner_id)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditingIncident(inc)} className="cursor-pointer">Editar</Button>
-                          {inc.status !== "resolved" ? (
-                            <form action={archiveIncidentAction.bind(null, inc.id)}>
-                              <Button size="sm" variant="outline" type="submit" className="text-green-400 hover:text-green-300 border-green-500/20 hover:bg-green-950/20 cursor-pointer">Resolver</Button>
-                            </form>
-                          ) : null}
-                        </div>
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Título</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Severidade</TableHead>
+                      <TableHead>Início</TableHead>
+                      <TableHead>Vinculos</TableHead>
+                      <TableHead>Responsável</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedIncidents.map((inc) => (
+                      <TableRow key={inc.id}>
+                        <TableCell>
+                          <div className="font-semibold text-white">{inc.title}</div>
+                          {inc.description ? <div className="text-xs text-muted-foreground mt-0.5">{inc.description}</div> : null}
+                        </TableCell>
+                        <TableCell>
+                          <div className="relative group/status flex items-center">
+                            <select
+                              value={inc.status}
+                              onChange={(e) => handleUpdateIncidentStatus(inc.id, e.target.value)}
+                              className={cn(
+                                "text-[10px] font-mono uppercase tracking-wider bg-opacity-20 border py-0.5 px-2.5 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-opacity-30 transition-colors cursor-pointer appearance-none pr-5.5 font-bold",
+                                (inc.status === "investigating" || inc.status === "identified")
+                                  ? "bg-rose-950/30 text-rose-450 border-rose-500/30"
+                                  : inc.status === "monitoring"
+                                  ? "bg-amber-950/20 text-amber-400 border-amber-500/20"
+                                  : "bg-emerald-950/20 text-emerald-400 border-emerald-500/20"
+                              )}
+                            >
+                              {incidentStatuses.map((st) => (
+                                <option key={st} value={st} className="bg-popover text-popover-foreground">{incidentStatusesMap[st] || st}</option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute right-1.5 flex items-center opacity-60">
+                              <ChevronDownIcon className={cn("h-3 w-3",
+                                (inc.status === "investigating" || inc.status === "identified") ? "text-rose-400" :
+                                inc.status === "monitoring" ? "text-amber-400" :
+                                "text-emerald-400"
+                              )} />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="relative group/severity flex items-center">
+                            <select
+                              value={inc.severity}
+                              onChange={(e) => handleUpdateIncidentSeverity(inc.id, e.target.value)}
+                              className={cn(
+                                "text-[10px] font-mono uppercase tracking-wider bg-opacity-20 border py-0.5 px-2.5 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 hover:bg-opacity-30 transition-colors cursor-pointer appearance-none pr-5.5 font-bold",
+                                inc.severity === "critical"
+                                  ? "bg-rose-950/30 text-rose-450 border-rose-500/30"
+                                  : inc.severity === "high"
+                                  ? "bg-amber-950/30 text-amber-400 border-amber-500/30"
+                                  : inc.severity === "medium"
+                                  ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                                  : "bg-zinc-900/40 text-zinc-400 border-zinc-800/20"
+                              )}
+                            >
+                              {severityLevels.map((sv) => (
+                                <option key={sv} value={sv} className="bg-popover text-popover-foreground">{severityLabelsMap[sv] || sv}</option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute right-1.5 flex items-center opacity-60">
+                              <ChevronDownIcon className={cn("h-3 w-3",
+                                inc.severity === "critical" ? "text-rose-450" :
+                                inc.severity === "high" ? "text-amber-450" :
+                                inc.severity === "medium" ? "text-blue-400" :
+                                "text-zinc-400"
+                              )} />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-zinc-400">{inc.started_at ? String(inc.started_at).slice(0, 10) : "-"}</TableCell>
+                        <TableCell>
+                          {inc.project_id ? <div className="mb-0.5"><span className="text-[10px] text-zinc-500 font-mono">PROJ: </span><Link href={`/os/projects/${inc.project_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{projectName(projects, inc.project_id)}</Link></div> : null}
+                          {inc.client_id ? <div><span className="text-[10px] text-zinc-500 font-mono">CLI: </span><Link href={`/os/clients/${inc.client_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">{clientName(clients, companies, inc.client_id)}</Link></div> : null}
+                        </TableCell>
+                        <TableCell className="text-zinc-300">{profileName(profiles, inc.owner_id)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setEditingIncident(inc)} className="cursor-pointer">Editar</Button>
+                            {inc.status !== "resolved" ? (
+                              <form action={archiveIncidentAction.bind(null, inc.id)}>
+                                <Button size="sm" variant="outline" type="submit" className="text-green-400 hover:text-green-300 border-green-500/20 hover:bg-green-950/20 cursor-pointer">Resolver</Button>
+                              </form>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={setCurrentPage} />
+            </>
           )}
         </CardContent>
       </Card>
@@ -678,13 +758,13 @@ export function IncidentsPageView({
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground font-medium">Status</label>
                 <select name="status" defaultValue={editingIncident.status} className="w-full h-9 rounded-lg border bg-[#151515] text-white px-2.5 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-                  {incidentStatuses.map((st) => <option key={st} value={st}>{st}</option>)}
+                  {incidentStatuses.map((st) => <option key={st} value={st}>{incidentStatusesMap[st] || st}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground font-medium">Severidade</label>
                 <select name="severity" defaultValue={editingIncident.severity} className="w-full h-9 rounded-lg border bg-[#151515] text-white px-2.5 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-                  {severityLevels.map((sv) => <option key={sv} value={sv}>{sv}</option>)}
+                  {severityLevels.map((sv) => <option key={sv} value={sv}>{severityLabelsMap[sv] || sv}</option>)}
                 </select>
               </div>
             </div>
@@ -744,6 +824,19 @@ export function BacklogPageView({
   error: string | null;
 }) {
   const [editingItem, setEditingItem] = useState<TechBacklogRow | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [prevItems, setPrevItems] = useState<TechBacklogRow[]>(items);
+  if (items !== prevItems) {
+    setPrevItems(items);
+    setCurrentPage(1);
+  }
+
+  const itemsPerPage = 10;
+  const totalItems = items.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedItems = useMemo(() => {
+    return items.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [items, currentPage]);
 
   const handleUpdate = async (formData: FormData) => {
     if (!editingItem) return;
@@ -765,10 +858,10 @@ export function BacklogPageView({
           <form action={createBacklogItemAction} className="grid gap-3 md:grid-cols-4">
             <Input name="title" placeholder="Título" required className="md:col-span-2" />
             <select name="priority" defaultValue="medium" className="h-8 rounded-lg border bg-background px-2 text-sm">
-              {priorityLevels.map((item) => <option key={item} value={item}>{item}</option>)}
+              {priorityLevels.map((item) => <option key={item} value={item}>{priorityLabelsMap[item] || item}</option>)}
             </select>
             <select name="type" defaultValue="debt" className="h-8 rounded-lg border bg-background px-2 text-sm">
-              {backlogTypes.map((item) => <option key={item} value={item}>{item}</option>)}
+              {backlogTypes.map((item) => <option key={item} value={item}>{backlogTypesMap[item] || item}</option>)}
             </select>
             <textarea name="description" placeholder="Descrição" className="min-h-20 rounded-lg border bg-background p-3 text-sm md:col-span-2" />
             <select name="project_id" className="h-8 rounded-lg border bg-background px-2 text-sm">
@@ -787,58 +880,61 @@ export function BacklogPageView({
       <Card>
         <CardHeader>
           <CardTitle>Itens de Backlog</CardTitle>
-          <CardDescription>{items.length} item(ns) listado(s)</CardDescription>
+          <CardDescription>{totalItems} registro(s)</CardDescription>
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum item encontrado.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Título</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Prioridade</TableHead>
-                    <TableHead>Projeto</TableHead>
-                    <TableHead>Responsável</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="font-semibold text-white">{item.title}</div>
-                        {item.description ? <div className="text-xs text-muted-foreground">{item.description}</div> : null}
-                      </TableCell>
-                      <TableCell><Badge variant="outline">{item.status}</Badge></TableCell>
-                      <TableCell><Badge variant="secondary">{item.type}</Badge></TableCell>
-                      <TableCell>{item.priority}</TableCell>
-                      <TableCell>
-                        {item.project_id ? (
-                          <Link href={`/os/projects/${item.project_id}`} className="text-primary hover:underline">
-                            {projectName(projects, item.project_id)}
-                          </Link>
-                        ) : "-"}
-                      </TableCell>
-                      <TableCell>{profileName(profiles, item.owner_id)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditingItem(item)}>Editar</Button>
-                          {item.status !== "archived" ? (
-                            <form action={archiveBacklogItemAction.bind(null, item.id)}>
-                              <Button size="sm" variant="outline" type="submit" className="text-red-400 hover:text-red-300 border-red-500/20 hover:bg-red-950/20">Arquivar</Button>
-                            </form>
-                          ) : null}
-                        </div>
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Título</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Prioridade</TableHead>
+                      <TableHead>Projeto</TableHead>
+                      <TableHead>Responsável</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div className="font-semibold text-white">{item.title}</div>
+                          {item.description ? <div className="text-xs text-muted-foreground">{item.description}</div> : null}
+                        </TableCell>
+                        <TableCell><Badge variant="outline">{backlogStatusesMap[item.status] || item.status}</Badge></TableCell>
+                        <TableCell><Badge variant="secondary">{backlogTypesMap[item.type] || item.type}</Badge></TableCell>
+                        <TableCell>{priorityLabelsMap[item.priority] || item.priority}</TableCell>
+                        <TableCell>
+                          {item.project_id ? (
+                            <Link href={`/os/projects/${item.project_id}`} className="text-primary hover:underline">
+                              {projectName(projects, item.project_id)}
+                            </Link>
+                          ) : "-"}
+                        </TableCell>
+                        <TableCell>{profileName(profiles, item.owner_id)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setEditingItem(item)}>Editar</Button>
+                            {item.status !== "archived" ? (
+                              <form action={archiveBacklogItemAction.bind(null, item.id)}>
+                                <Button size="sm" variant="outline" type="submit" className="text-red-400 hover:text-red-300 border-red-500/20 hover:bg-red-950/20">Arquivar</Button>
+                              </form>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={setCurrentPage} />
+            </>
           )}
         </CardContent>
       </Card>
@@ -859,13 +955,13 @@ export function BacklogPageView({
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground font-medium">Status</label>
                 <select name="status" defaultValue={editingItem.status} className="w-full h-9 rounded-lg border bg-[#151515] text-white px-2.5 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-                  {backlogStatusesLocal.map((st) => <option key={st} value={st}>{st}</option>)}
+                  {backlogStatusesLocal.map((st) => <option key={st} value={st}>{backlogStatusesMap[st] || st}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground font-medium">Tipo</label>
                 <select name="type" defaultValue={editingItem.type} className="w-full h-9 rounded-lg border bg-[#151515] text-white px-2.5 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-                  {backlogTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {backlogTypes.map((t) => <option key={t} value={t}>{backlogTypesMap[t] || t}</option>)}
                 </select>
               </div>
             </div>
@@ -873,7 +969,7 @@ export function BacklogPageView({
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground font-medium">Prioridade</label>
                 <select name="priority" defaultValue={editingItem.priority} className="w-full h-9 rounded-lg border bg-[#151515] text-white px-2.5 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-                  {priorityLevels.map((p) => <option key={p} value={p}>{p}</option>)}
+                  {priorityLevels.map((p) => <option key={p} value={p}>{priorityLabelsMap[p] || p}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
@@ -918,6 +1014,19 @@ export function RoadmapPageView({
   error: string | null;
 }) {
   const [editingItem, setEditingItem] = useState<TechRoadmapRow | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [prevItems, setPrevItems] = useState<TechRoadmapRow[]>(items);
+  if (items !== prevItems) {
+    setPrevItems(items);
+    setCurrentPage(1);
+  }
+
+  const itemsPerPage = 10;
+  const totalItems = items.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedItems = useMemo(() => {
+    return items.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [items, currentPage]);
 
   const handleUpdate = async (formData: FormData) => {
     if (!editingItem) return;
@@ -937,7 +1046,7 @@ export function RoadmapPageView({
           <form action={createRoadmapItemAction} className="grid gap-3 md:grid-cols-4">
             <Input name="title" placeholder="Título" required className="md:col-span-2" />
             <select name="priority" defaultValue="medium" className="h-8 rounded-lg border bg-background px-2 text-sm">
-              {priorityLevels.map((item) => <option key={item} value={item}>{item}</option>)}
+              {priorityLevels.map((item) => <option key={item} value={item}>{priorityLabelsMap[item] || item}</option>)}
             </select>
             <Input name="target_date" type="date" />
             <textarea name="description" placeholder="Descrição" className="min-h-20 rounded-lg border bg-background p-3 text-sm md:col-span-2" />
@@ -957,90 +1066,93 @@ export function RoadmapPageView({
       <Card>
         <CardHeader>
           <CardTitle>Roadmap de Produto</CardTitle>
-          <CardDescription>{items.length} item(ns) listado(s)</CardDescription>
+          <CardDescription>{totalItems} registro(s)</CardDescription>
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum item no roadmap.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Título</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Prioridade</TableHead>
-                    <TableHead>Data Limite</TableHead>
-                    <TableHead>Projeto</TableHead>
-                    <TableHead>Responsável</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="font-semibold text-white">{item.title}</div>
-                        {item.description ? <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div> : null}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-[10px] font-mono uppercase tracking-wider",
-                            item.status === "shipped"
-                              ? "bg-emerald-950/20 text-emerald-400 border-emerald-500/20"
-                              : item.status === "in_progress"
-                              ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
-                              : item.status === "canceled"
-                              ? "bg-zinc-950/20 text-zinc-500 border-zinc-800/25"
-                              : "bg-[#0b0b0e] text-zinc-400 border-white/5"
-                          )}
-                        >
-                          {item.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-[10px] font-mono uppercase tracking-wider",
-                            item.priority === "urgent"
-                              ? "bg-rose-950/30 text-rose-400 border-rose-500/20"
-                              : item.priority === "high"
-                              ? "bg-amber-950/20 text-amber-400 border-amber-500/20"
-                              : item.priority === "medium"
-                              ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
-                              : "bg-zinc-900/40 text-zinc-400 border-zinc-80"
-                          )}
-                        >
-                          {item.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-zinc-400">{item.target_date ? String(item.target_date).slice(0, 10) : "-"}</TableCell>
-                      <TableCell>
-                        {item.project_id ? (
-                          <Link href={`/os/projects/${item.project_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">
-                            {projectName(projects, item.project_id)}
-                          </Link>
-                        ) : "-"}
-                      </TableCell>
-                      <TableCell className="text-zinc-300">{profileName(profiles, item.owner_id)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditingItem(item)}>Editar</Button>
-                          {item.status !== "canceled" ? (
-                            <form action={archiveRoadmapItemAction.bind(null, item.id)}>
-                              <Button size="sm" variant="outline" type="submit" className="text-red-400 hover:text-red-300 border-red-500/20 hover:bg-red-950/20">Cancelar</Button>
-                            </form>
-                          ) : null}
-                        </div>
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Título</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Prioridade</TableHead>
+                      <TableHead>Data Limite</TableHead>
+                      <TableHead>Projeto</TableHead>
+                      <TableHead>Responsável</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div className="font-semibold text-white">{item.title}</div>
+                          {item.description ? <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div> : null}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px] font-mono uppercase tracking-wider",
+                              item.status === "shipped"
+                                ? "bg-emerald-950/20 text-emerald-400 border-emerald-500/20"
+                                : item.status === "in_progress"
+                                ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                                : item.status === "canceled"
+                                ? "bg-zinc-950/20 text-zinc-500 border-zinc-800/25"
+                                : "bg-[#0b0b0e] text-zinc-400 border-white/5"
+                            )}
+                          >
+                            {roadmapStatusesMap[item.status] || item.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px] font-mono uppercase tracking-wider",
+                              item.priority === "urgent"
+                                ? "bg-rose-950/30 text-rose-400 border-rose-500/20"
+                                : item.priority === "high"
+                                ? "bg-amber-950/20 text-amber-400 border-amber-500/20"
+                                : item.priority === "medium"
+                                ? "bg-blue-950/20 text-blue-400 border-blue-500/20"
+                                : "bg-zinc-900/40 text-zinc-400 border-zinc-800"
+                            )}
+                          >
+                            {priorityLabelsMap[item.priority] || item.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-zinc-400">{item.target_date ? String(item.target_date).slice(0, 10) : "-"}</TableCell>
+                        <TableCell>
+                          {item.project_id ? (
+                            <Link href={`/os/projects/${item.project_id}`} className="text-xs text-purple-400 hover:text-purple-300 font-semibold hover:underline">
+                              {projectName(projects, item.project_id)}
+                            </Link>
+                          ) : "-"}
+                        </TableCell>
+                        <TableCell className="text-zinc-300">{profileName(profiles, item.owner_id)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setEditingItem(item)}>Editar</Button>
+                            {item.status !== "canceled" ? (
+                              <form action={archiveRoadmapItemAction.bind(null, item.id)}>
+                                <Button size="sm" variant="outline" type="submit" className="text-red-400 hover:text-red-300 border-red-500/20 hover:bg-red-950/20">Cancelar</Button>
+                              </form>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={setCurrentPage} />
+            </>
           )}
         </CardContent>
       </Card>
@@ -1061,13 +1173,13 @@ export function RoadmapPageView({
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground font-medium">Status</label>
                 <select name="status" defaultValue={editingItem.status} className="w-full h-9 rounded-lg border bg-[#151515] text-white px-2.5 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-                  {roadmapStatuses.map((st) => <option key={st} value={st}>{st}</option>)}
+                  {roadmapStatuses.map((st) => <option key={st} value={st}>{roadmapStatusesMap[st] || st}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground font-medium">Prioridade</label>
                 <select name="priority" defaultValue={editingItem.priority} className="w-full h-9 rounded-lg border bg-[#151515] text-white px-2.5 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-                  {priorityLevels.map((p) => <option key={p} value={p}>{p}</option>)}
+                  {priorityLevels.map((p) => <option key={p} value={p}>{priorityLabelsMap[p] || p}</option>)}
                 </select>
               </div>
             </div>
@@ -1116,6 +1228,19 @@ export function DecisionsPageView({
   error: string | null;
 }) {
   const [editingDecision, setEditingDecision] = useState<TechnicalDecisionRow | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [prevItems, setPrevItems] = useState<TechnicalDecisionRow[]>(items);
+  if (items !== prevItems) {
+    setPrevItems(items);
+    setCurrentPage(1);
+  }
+
+  const itemsPerPage = 10;
+  const totalItems = items.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedItems = useMemo(() => {
+    return items.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [items, currentPage]);
 
   const handleUpdate = async (formData: FormData) => {
     if (!editingDecision) return;
@@ -1135,7 +1260,7 @@ export function DecisionsPageView({
           <form action={createTechnicalDecisionAction} className="grid gap-3 md:grid-cols-2">
             <Input name="title" placeholder="Título" required />
             <select name="status" defaultValue="proposed" className="h-8 rounded-lg border bg-background px-2 text-sm">
-              {technicalDecisionStatuses.map((item) => <option key={item} value={item}>{item}</option>)}
+              {technicalDecisionStatuses.map((item) => <option key={item} value={item}>{technicalDecisionStatusesMap[item] || item}</option>)}
             </select>
             <textarea name="context" placeholder="Contexto" required className="min-h-20 rounded-lg border bg-background p-3 text-sm" />
             <textarea name="decision" placeholder="Decisão" required className="min-h-20 rounded-lg border bg-background p-3 text-sm" />
@@ -1149,57 +1274,60 @@ export function DecisionsPageView({
       <Card>
         <CardHeader>
           <CardTitle>Decisões Registradas (ADRs)</CardTitle>
-          <CardDescription>{items.length} decisão(ões) registrada(s)</CardDescription>
+          <CardDescription>{totalItems} registro(s)</CardDescription>
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma decisão técnica encontrada.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Título</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Decisão</TableHead>
-                    <TableHead>Projeto</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((dec) => (
-                    <TableRow key={dec.id}>
-                      <TableCell>
-                        <div className="font-semibold text-white">{dec.title}</div>
-                        {dec.context ? <div className="text-xs text-muted-foreground line-clamp-1">Ctx: {dec.context}</div> : null}
-                      </TableCell>
-                      <TableCell><Badge variant="outline">{dec.status}</Badge></TableCell>
-                      <TableCell>
-                        <div className="text-xs max-w-md line-clamp-2">{dec.decision}</div>
-                        {dec.consequences ? <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">Cons: {dec.consequences}</div> : null}
-                      </TableCell>
-                      <TableCell>
-                        {dec.project_id ? (
-                          <Link href={`/os/projects/${dec.project_id}`} className="text-primary hover:underline">
-                            {projectName(projects, dec.project_id)}
-                          </Link>
-                        ) : "-"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditingDecision(dec)}>Editar</Button>
-                          {dec.status !== "deprecated" ? (
-                            <form action={archiveTechnicalDecisionAction.bind(null, dec.id)}>
-                              <Button size="sm" variant="outline" type="submit" className="text-red-400 hover:text-red-300 border-red-500/20 hover:bg-red-950/20">Depreciar</Button>
-                            </form>
-                          ) : null}
-                        </div>
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Título</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Decisão</TableHead>
+                      <TableHead>Projeto</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedItems.map((dec) => (
+                      <TableRow key={dec.id}>
+                        <TableCell>
+                          <div className="font-semibold text-white">{dec.title}</div>
+                          {dec.context ? <div className="text-xs text-muted-foreground line-clamp-1">Ctx: {dec.context}</div> : null}
+                        </TableCell>
+                        <TableCell><Badge variant="outline">{technicalDecisionStatusesMap[dec.status] || dec.status}</Badge></TableCell>
+                        <TableCell>
+                          <div className="text-xs max-w-md line-clamp-2">{dec.decision}</div>
+                          {dec.consequences ? <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">Cons: {dec.consequences}</div> : null}
+                        </TableCell>
+                        <TableCell>
+                          {dec.project_id ? (
+                            <Link href={`/os/projects/${dec.project_id}`} className="text-primary hover:underline">
+                              {projectName(projects, dec.project_id)}
+                            </Link>
+                          ) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setEditingDecision(dec)}>Editar</Button>
+                            {dec.status !== "deprecated" ? (
+                              <form action={archiveTechnicalDecisionAction.bind(null, dec.id)}>
+                                <Button size="sm" variant="outline" type="submit" className="text-red-400 hover:text-red-300 border-red-500/20 hover:bg-red-950/20">Depreciar</Button>
+                              </form>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={setCurrentPage} />
+            </>
           )}
         </CardContent>
       </Card>
@@ -1220,7 +1348,7 @@ export function DecisionsPageView({
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground font-medium">Status</label>
                 <select name="status" defaultValue={editingDecision.status} className="w-full h-9 rounded-lg border bg-[#151515] text-white px-2.5 text-sm focus:ring-1 focus:ring-purple-500 outline-none">
-                  {technicalDecisionStatuses.map((st) => <option key={st} value={st}>{st}</option>)}
+                  {technicalDecisionStatuses.map((st) => <option key={st} value={st}>{technicalDecisionStatusesMap[st] || st}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
@@ -1273,10 +1401,17 @@ function FilterBar({ status, extraName, extraOptions }: { status: string[]; extr
     } else {
       params.delete(name);
     }
+    params.delete("page");
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const isFilterActive = currentStatus || currentExtra;
+
+  const filterLabelMap: Record<string, string> = {
+    severity: "severidade",
+    priority: "prioridade",
+    status: "status"
+  };
 
   return (
     <Card>
@@ -1287,7 +1422,10 @@ function FilterBar({ status, extraName, extraOptions }: { status: string[]; extr
             onChange={(val) => handleChange("status", val)}
             options={[
               { value: "", label: "Todos status" },
-              ...status.map((item) => ({ value: item, label: item }))
+              ...status.map((item) => ({
+                value: item,
+                label: bugStatusesMap[item] || incidentStatusesMap[item] || item
+              }))
             ]}
             placeholder="Todos status"
             className="w-48"
@@ -1298,10 +1436,13 @@ function FilterBar({ status, extraName, extraOptions }: { status: string[]; extr
               value={currentExtra}
               onChange={(val) => handleChange(extraName, val)}
               options={[
-                { value: "", label: `Todos ${extraName}` },
-                ...extraOptions.map((item) => ({ value: item, label: item }))
+                { value: "", label: `Todas ${filterLabelMap[extraName] || extraName}` },
+                ...extraOptions.map((item) => ({
+                  value: item,
+                  label: (extraName === "severity" ? severityLabelsMap[item] : priorityLabelsMap[item]) || item
+                }))
               ]}
-              placeholder={`Todos ${extraName}`}
+              placeholder={`Todas ${filterLabelMap[extraName] || extraName}`}
               className="w-48"
             />
           ) : null}

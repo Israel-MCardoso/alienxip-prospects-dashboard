@@ -16,10 +16,11 @@ export type ActivityFilters = {
   project_id?: string;
   prospect_id?: string;
   client_id?: string;
+  company_id?: string;
 };
 
 function filterEntityId(filters: ActivityFilters) {
-  return filters.project_id || filters.prospect_id || filters.client_id || "";
+  return filters.project_id || filters.prospect_id || filters.client_id || filters.company_id || "";
 }
 
 export async function getActivities(filters: ActivityFilters = {}) {
