@@ -21,13 +21,7 @@ import { createGeneralTaskAction } from "@/features/operations/actions";
 import { getProjects, getTaskReferenceData, getTasks } from "@/features/operations/data";
 import { formatDate, statusLabel } from "@/features/operations/format";
 import { getActivities } from "@/features/workspace/data";
-
-function whatsappHref(value: string | null) {
-  if (!value) return undefined;
-  if (value.startsWith("http")) return value;
-  const digits = value.replace(/\D/g, "");
-  return digits ? `https://wa.me/${digits}` : undefined;
-}
+import { whatsappHref } from "@/lib/display-helpers";
 
 const taskPriorityOptions = [
   { value: "low", label: "Baixa" },

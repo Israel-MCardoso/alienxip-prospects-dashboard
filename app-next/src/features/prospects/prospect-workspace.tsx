@@ -59,7 +59,7 @@ import { activityLabel, formatActivityDate } from "./workspace-helpers";
 import { completeTaskAction, convertProspectAction, createTaskAction } from "@/features/commercial/actions";
 import { taskPriorities, taskStatuses } from "@/features/commercial/commercial-helpers";
 import { FileList } from "@/features/tech/file-list";
-import { statusLabel, priorityLabel, temperatureLabel } from "@/lib/display-helpers";
+import { statusLabel, priorityLabel, temperatureLabel, whatsappHref } from "@/lib/display-helpers";
 import { AiBrainPanel } from "@/features/ai/ai-brain-panel";
 import { AssignResponsibleSelect } from "./assign-responsible-select";
 
@@ -509,9 +509,13 @@ export function ProspectWorkspace({
               {prospect.whatsapp && (
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] font-mono text-zinc-500 uppercase">WhatsApp</span>
-                  <a href={prospect.whatsapp} target="_blank" rel="noreferrer" className="text-purple-300 hover:underline truncate">
-                    {prospect.whatsapp.replace("https://wa.me/", "+")}
-                  </a>
+                  {whatsappHref(prospect.whatsapp) ? (
+                    <a href={whatsappHref(prospect.whatsapp)} target="_blank" rel="noopener noreferrer" className="text-purple-300 hover:underline truncate">
+                      {prospect.whatsapp}
+                    </a>
+                  ) : (
+                    <span className="text-zinc-400 truncate">{prospect.whatsapp}</span>
+                  )}
                 </div>
               )}
 

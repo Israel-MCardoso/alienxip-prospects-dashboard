@@ -3,6 +3,16 @@
  * Translates database enum values to visual display labels.
  */
 
+export function whatsappHref(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  if (value.startsWith("https://wa.me/")) return value;
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return undefined;
+  // Add Brazilian DDI (55) if number doesn't already start with it
+  const normalized = digits.startsWith("55") ? digits : `55${digits}`;
+  return `https://wa.me/${normalized}`;
+}
+
 export function statusLabel(status: string | null | undefined): string {
   if (!status) return "N/A";
   const s = status.toLowerCase();
