@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 export type RecordAction = {
   label: string;
   href?: string;
+  onClick?: () => void;
   description?: string;
   disabled?: boolean;
 };
@@ -34,6 +35,7 @@ export function RecordActionsPanel({
                 size="sm"
                 variant="outline"
                 disabled={action.disabled}
+                onClick={action.onClick}
                 className="w-full justify-start text-xs"
                 render={action.href ? <Link href={action.href} /> : undefined}
               >

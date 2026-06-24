@@ -52,12 +52,13 @@ export function CustomSelect({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close on any scroll so the fixed dropdown doesn't detach from its trigger
+  // Close when the viewport scrolls so the fixed dropdown doesn't detach from its trigger.
+  // Using default bubble phase (no capture) so inner container scrolls don't close the dropdown.
   React.useEffect(() => {
     if (!open) return;
     const handleScroll = () => setOpen(false);
-    window.addEventListener("scroll", handleScroll, { capture: true });
-    return () => window.removeEventListener("scroll", handleScroll, { capture: true });
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [open]);
 
   const selectedOption = options.find((opt) => opt.value === activeValue);

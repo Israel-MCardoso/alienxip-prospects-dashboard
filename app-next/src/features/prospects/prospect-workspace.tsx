@@ -473,7 +473,7 @@ export function ProspectWorkspace({
           actions={[
             { label: "Editar prospect", href: `/os/prospects/${prospect.id}/edit` },
             { label: "Ver pipeline", href: "/os/prospects/pipeline" },
-            { label: "Abrir tarefas", description: `${openTasks.length} tarefa(s) aberta(s) neste prospect.` }
+            { label: "Abrir tarefas", onClick: handleOpenTasksTab, description: `${openTasks.length} tarefa(s) aberta(s) neste prospect.` }
           ]}
           sections={
         <div className="flex flex-col gap-6">
