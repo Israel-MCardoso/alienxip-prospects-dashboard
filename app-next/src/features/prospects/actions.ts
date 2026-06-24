@@ -7,7 +7,7 @@ import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { ProspectStatus } from "@/types/database";
 import { recordActivity } from "@/features/workspace/activity";
-import { emptyToNull, formDataToProspectInput, prospectStatuses } from "./prospect-schema";
+import { emptyToNull, formDataToProspectInput, formatZodError, prospectStatuses } from "./prospect-schema";
 import { diagnosticSchema, noteSchema } from "./workspace-helpers";
 
 export async function createProspectAction(formData: FormData) {
@@ -21,6 +21,9 @@ export async function createProspectAction(formData: FormData) {
   try {
     input = formDataToProspectInput(formData);
   } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: formatZodError(e) };
+    }
     return { error: e instanceof Error ? e.message : "Dados invalidos no formulario." };
   }
 
@@ -72,7 +75,13 @@ export async function updateProspectAction(id: string, formData: FormData) {
     throw new Error("Supabase nao esta configurado.");
   }
 
-  const input = formDataToProspectInput(formData);
+  let input: ReturnType<typeof formDataToProspectInput>;
+  try {
+    input = formDataToProspectInput(formData);
+  } catch (e) {
+    throw new Error(e instanceof z.ZodError ? formatZodError(e) : e instanceof Error ? e.message : "Dados invalidos no formulario.");
+  }
+
   const {
     data: { user }
   } = await supabase.auth.getUser();
