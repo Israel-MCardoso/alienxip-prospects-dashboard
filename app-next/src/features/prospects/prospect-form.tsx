@@ -41,11 +41,16 @@ export function ProspectForm({
       const formData = new FormData(event.currentTarget);
       startTransition(async () => {
         try {
-          await rawAction(formData);
+          const result = await rawAction(formData);
+          const errorMsg = (result as { error?: string } | undefined)?.error;
+          if (errorMsg) {
+            alert("Erro ao salvar prospect: " + errorMsg);
+            return;
+          }
           onSuccess();
         } catch (err) {
           const isRedirect = err instanceof Error && (
-            err.message.includes("NEXT_REDIRECT") || 
+            err.message.includes("NEXT_REDIRECT") ||
             (err as Error & { digest?: string }).digest?.startsWith("NEXT_REDIRECT")
           );
           if (isRedirect) {
@@ -69,7 +74,7 @@ export function ProspectForm({
   const formContent = (
     <form 
       onSubmit={handleSubmit} 
-      action={onSuccess ? undefined : rawAction} 
+      action={onSuccess ? undefined : (rawAction as (formData: FormData) => Promise<void>)}
       onKeyDown={handleKeyDown}
       className="grid gap-4 md:grid-cols-2"
     >

@@ -32,14 +32,19 @@ export function CustomSelect({
 }: CustomSelectProps) {
   const [open, setOpen] = React.useState(false);
   const [internalValue, setInternalValue] = React.useState(defaultValue);
+  const [dropdownStyle, setDropdownStyle] = React.useState<React.CSSProperties>({});
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
 
-  // If component is controlled, use value, otherwise use internal state
   const activeValue = value !== undefined ? value : internalValue;
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const inContainer = containerRef.current?.contains(target) ?? false;
+      const inDropdown = dropdownRef.current?.contains(target) ?? false;
+      if (!inContainer && !inDropdown) {
         setOpen(false);
       }
     }
@@ -47,7 +52,27 @@ export function CustomSelect({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Close on any scroll so the fixed dropdown doesn't detach from its trigger
+  React.useEffect(() => {
+    if (!open) return;
+    const handleScroll = () => setOpen(false);
+    window.addEventListener("scroll", handleScroll, { capture: true });
+    return () => window.removeEventListener("scroll", handleScroll, { capture: true });
+  }, [open]);
+
   const selectedOption = options.find((opt) => opt.value === activeValue);
+
+  const handleToggle = () => {
+    if (!open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        top: rect.bottom + 6,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+    setOpen(!open);
+  };
 
   const handleSelect = (val: string) => {
     if (value === undefined) {
@@ -61,12 +86,12 @@ export function CustomSelect({
 
   return (
     <div ref={containerRef} className={cn("relative w-full", className)}>
-      {/* Hidden input for standard HTML form submission */}
       {name && <input type="hidden" name={name} value={activeValue} />}
 
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={handleToggle}
         className={cn(
           "flex h-8 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground shadow-sm ring-offset-background transition-colors hover:bg-muted/50 focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-left cursor-pointer",
           triggerClassName
@@ -77,7 +102,11 @@ export function CustomSelect({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-50 min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-lg animate-in fade-in slide-in-from-top-1 duration-100 mt-1.5 p-1 max-h-60 overflow-y-auto">
+        <div
+          ref={dropdownRef}
+          className="fixed z-[9999] min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-lg animate-in fade-in slide-in-from-top-1 duration-100 p-1 max-h-60 overflow-y-auto"
+          style={dropdownStyle}
+        >
           {options.map((opt) => (
             <button
               key={opt.value}

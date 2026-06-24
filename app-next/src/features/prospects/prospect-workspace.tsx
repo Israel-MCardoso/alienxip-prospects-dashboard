@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2Icon,
@@ -195,6 +195,14 @@ export function ProspectWorkspace({
 }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isPending, startTransition] = useTransition();
+  const tabsRef = useRef<HTMLDivElement>(null);
+
+  const handleOpenTasksTab = () => {
+    setActiveTab("tasks");
+    setTimeout(() => {
+      tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
   const [aiStep, setAiStep] = useState<string | null>(null);
 
   const clientObj = clients.find((c) => c.id === prospect.converted_client_id);
@@ -297,7 +305,7 @@ export function ProspectWorkspace({
           <div className="flex flex-wrap gap-2 items-center shrink-0 self-end lg:self-start">
             <Button variant="outline" size="sm" render={<Link href="/os/prospects" />}>Voltar</Button>
             <Button variant="outline" size="sm" render={<Link href={`/os/prospects/${prospect.id}/edit`} />}>Editar</Button>
-            <Button variant="outline" size="sm" onClick={() => setActiveTab("tasks")}>Criar Tarefa</Button>
+            <Button variant="outline" size="sm" onClick={handleOpenTasksTab}>Criar Tarefa</Button>
             <Button 
               className="bg-purple-950/40 text-purple-300 hover:bg-purple-950/60 border border-purple-500/20" 
               size="sm"
@@ -333,6 +341,7 @@ export function ProspectWorkspace({
             items={timelineItems}
             emptyLabel="Nenhum historico operacional registrado para este prospect."
           />
+          <div ref={tabsRef}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="flex flex-wrap !h-auto bg-[#08080a]/60 border border-white/5 p-1 rounded-xl w-full justify-start gap-1.5 overflow-visible">
               <TabsTrigger value="overview" className="rounded-lg text-xs font-mono py-1.5 px-3 h-8 flex-none">Resumo</TabsTrigger>
@@ -456,6 +465,7 @@ export function ProspectWorkspace({
               </TabsContent>
             </AnimatePresence>
           </Tabs>
+          </div>
         </div>
         }
         right={

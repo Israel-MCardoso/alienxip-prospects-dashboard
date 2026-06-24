@@ -14,10 +14,16 @@ export async function createProspectAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    throw new Error("Supabase nao esta configurado.");
+    return { error: "Supabase nao esta configurado." };
   }
 
-  const input = formDataToProspectInput(formData);
+  let input: ReturnType<typeof formDataToProspectInput>;
+  try {
+    input = formDataToProspectInput(formData);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Dados invalidos no formulario." };
+  }
+
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -41,7 +47,7 @@ export async function createProspectAction(formData: FormData) {
   }).select("*").single();
 
   if (error) {
-    throw new Error(error.message);
+    return { error: error.message };
   }
 
   await recordActivity(supabase, {
