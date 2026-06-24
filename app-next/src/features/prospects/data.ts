@@ -154,7 +154,8 @@ export async function getProspectWorkspace(id: string) {
     filesResult,
     userResult,
     outreachResult,
-    outreachEventsResult
+    outreachEventsResult,
+    proposalsResult
   ] = await Promise.all([
     supabase.from("prospects").select("*").eq("id", id).single(),
     supabase.from("prospect_diagnostics").select("*").eq("prospect_id", id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
@@ -164,22 +165,11 @@ export async function getProspectWorkspace(id: string) {
     getEntityFiles("prospect", id),
     supabase.auth.getUser(),
     db.from("prospect_outreach").select("*").eq("prospect_id", id).maybeSingle(),
-    db.from("outreach_events").select("*").eq("prospect_id", id).order("created_at", { ascending: false })
+    db.from("outreach_events").select("*").eq("prospect_id", id).order("created_at", { ascending: false }),
+    supabase.from("prospect_proposals").select("*").eq("prospect_id", id).order("created_at", { ascending: false }).then(r => r).catch(() => ({ data: null, error: null }))
   ]);
 
-  let proposals: ProspectProposalRow[] = [];
-  try {
-    const { data: propData, error: propError } = await supabase
-      .from("prospect_proposals")
-      .select("*")
-      .eq("prospect_id", id)
-      .order("created_at", { ascending: false });
-    if (!propError && propData) {
-      proposals = propData as unknown as ProspectProposalRow[];
-    }
-  } catch (e) {
-    console.error("Failed to fetch proposals, table might not exist yet:", e);
-  }
+  const proposals: ProspectProposalRow[] = (proposalsResult.data as unknown as ProspectProposalRow[]) || [];
 
   const userId = userResult.data.user?.id;
   const profileResult = userId

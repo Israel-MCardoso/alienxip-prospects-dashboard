@@ -344,7 +344,10 @@ export function DashboardCenter({
             <CardContent className="pt-4 flex flex-col gap-4">
               {/* Sellers ranking */}
               <div className="flex flex-col gap-2">
-                <span className="text-[9px] font-bold font-mono text-muted-foreground uppercase">Ranking de Vendedores</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-bold font-mono text-muted-foreground uppercase">Ranking de Vendedores</span>
+                  <span className="text-[8px] font-mono text-amber-600 dark:text-amber-400 border border-amber-400/40 bg-amber-50/60 dark:bg-amber-900/20 rounded px-1 py-0.5 leading-none">Dados de demonstração</span>
+                </div>
                 <div className="flex flex-col gap-1.5 text-xs">
                   {[
                     { name: "Israel M. Cardoso", role: "owner", count: 24, val: 56000 },
