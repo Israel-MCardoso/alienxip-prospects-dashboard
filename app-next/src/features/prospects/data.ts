@@ -166,7 +166,13 @@ export async function getProspectWorkspace(id: string) {
     supabase.auth.getUser(),
     db.from("prospect_outreach").select("*").eq("prospect_id", id).maybeSingle(),
     db.from("outreach_events").select("*").eq("prospect_id", id).order("created_at", { ascending: false }),
-    supabase.from("prospect_proposals").select("*").eq("prospect_id", id).order("created_at", { ascending: false }).then(r => r).catch(() => ({ data: null, error: null }))
+    (async () => {
+      try {
+        return await supabase.from("prospect_proposals").select("*").eq("prospect_id", id).order("created_at", { ascending: false });
+      } catch {
+        return { data: null, error: null };
+      }
+    })()
   ]);
 
   const proposals: ProspectProposalRow[] = (proposalsResult.data as unknown as ProspectProposalRow[]) || [];

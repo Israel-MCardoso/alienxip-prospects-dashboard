@@ -47,12 +47,24 @@ export default async function OsHomePage() {
   // Run all three fetches in parallel
   const [overview, diagnosticsResult, proposalsResult] = await Promise.all([
     getDashboardOverview(),
-    supabase
-      ? supabase.from("prospect_diagnostics").select("prospect_id").then(r => r.data || []).catch(() => [])
-      : Promise.resolve([] as { prospect_id: string }[]),
-    supabase
-      ? supabase.from("prospect_proposals").select("id").eq("status", "sent").then(r => r.data || []).catch(() => [])
-      : Promise.resolve([] as { id: string }[])
+    (async () => {
+      if (!supabase) return [] as { prospect_id: string }[];
+      try {
+        const { data } = await supabase.from("prospect_diagnostics").select("prospect_id");
+        return data || [];
+      } catch {
+        return [] as { prospect_id: string }[];
+      }
+    })(),
+    (async () => {
+      if (!supabase) return [] as { id: string }[];
+      try {
+        const { data } = await supabase.from("prospect_proposals").select("id").eq("status", "sent");
+        return data || [];
+      } catch {
+        return [] as { id: string }[];
+      }
+    })()
   ]);
 
   // Calculate leads created today
