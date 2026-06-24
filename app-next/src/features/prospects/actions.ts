@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { ProspectStatus } from "@/types/database";
@@ -55,7 +56,6 @@ export async function createProspectAction(formData: FormData) {
 
   revalidatePath("/os/prospects");
   revalidatePath("/os/activity");
-  revalidatePath("/os/dashboard");
   redirect("/os/prospects");
 }
 
@@ -112,9 +112,7 @@ export async function updateProspectAction(id: string, formData: FormData) {
 
   revalidatePath("/os/prospects");
   revalidatePath(`/os/prospects/${id}`);
-  revalidatePath("/os/activity");
-  revalidatePath("/os/dashboard");
-  redirect("/os/prospects");
+  redirect(`/os/prospects/${id}`);
 }
 
 export async function saveDiagnosticAction(prospectId: string, diagnosticId: string | null, formData: FormData) {
@@ -172,7 +170,6 @@ export async function saveDiagnosticAction(prospectId: string, diagnosticId: str
 
   revalidatePath(`/os/prospects/${prospectId}`);
   revalidatePath("/os/activity");
-  revalidatePath("/os/dashboard");
 }
 
 export async function createNoteAction(prospectId: string, formData: FormData) {
@@ -215,7 +212,6 @@ export async function createNoteAction(prospectId: string, formData: FormData) {
   });
 
   revalidatePath(`/os/prospects/${prospectId}`);
-  revalidatePath("/os/activity");
 }
 
 export async function updateNoteAction(prospectId: string, noteId: string, formData: FormData) {
@@ -252,7 +248,6 @@ export async function updateNoteAction(prospectId: string, noteId: string, formD
   });
 
   revalidatePath(`/os/prospects/${prospectId}`);
-  revalidatePath("/os/activity");
 }
 
 export async function archiveProspectAction(id: string) {
@@ -279,8 +274,6 @@ export async function archiveProspectAction(id: string) {
 
   revalidatePath("/os/prospects");
   revalidatePath(`/os/prospects/${id}`);
-  revalidatePath("/os/activity");
-  revalidatePath("/os/dashboard");
   redirect("/os/prospects");
 }
 
@@ -308,8 +301,6 @@ export async function restoreProspectAction(id: string) {
 
   revalidatePath("/os/prospects");
   revalidatePath(`/os/prospects/${id}`);
-  revalidatePath("/os/activity");
-  revalidatePath("/os/dashboard");
 }
 
 export async function duplicateProspectAction(id: string) {
@@ -363,7 +354,6 @@ export async function duplicateProspectAction(id: string) {
 
   revalidatePath("/os/prospects");
   revalidatePath("/os/activity");
-  revalidatePath("/os/dashboard");
   redirect(`/os/prospects/${newProspect.id}`);
 }
 
@@ -404,8 +394,6 @@ export async function updateProspectStatusAction(id: string, status: string) {
   revalidatePath("/os/prospects");
   revalidatePath(`/os/prospects/${id}`);
   revalidatePath("/os/prospects/pipeline");
-  revalidatePath("/os/activity");
-  revalidatePath("/os/dashboard");
 }
 
 export async function updateProspectTemperatureAction(id: string, temperature: string) {
@@ -441,8 +429,6 @@ export async function updateProspectTemperatureAction(id: string, temperature: s
   revalidatePath("/os/prospects");
   revalidatePath(`/os/prospects/${id}`);
   revalidatePath("/os/prospects/pipeline");
-  revalidatePath("/os/activity");
-  revalidatePath("/os/dashboard");
 }
 
 export async function generateAiDiagnosticAction(prospectId: string) {
@@ -566,7 +552,6 @@ export async function generateAiDiagnosticAction(prospectId: string) {
   revalidatePath(`/os/prospects/${prospectId}`);
   revalidatePath("/os/prospects/pipeline");
   revalidatePath("/os/activity");
-  revalidatePath("/os/dashboard");
 }
 
 export async function createProposalAction(prospectId: string, formData: FormData) {
@@ -618,5 +603,65 @@ export async function createProposalAction(prospectId: string, formData: FormDat
   revalidatePath(`/os/prospects/${prospectId}`);
   revalidatePath("/os/prospects/pipeline");
   revalidatePath("/os/activity");
-  revalidatePath("/os/dashboard");
+}
+
+const assignResponsibleSchema = z.object({
+  responsibleUserId: z.string().uuid().nullable()
+});
+
+export async function assignProspectResponsibleAction(
+  prospectId: string,
+  responsibleUserId: string | null
+) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error("Supabase nao esta configurado.");
+
+  const parsed = assignResponsibleSchema.parse({ responsibleUserId });
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Usuário não autenticado.");
+
+  let assignedName = "Sem responsável";
+  if (parsed.responsibleUserId) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("id", parsed.responsibleUserId)
+      .maybeSingle();
+    if (profileError) throw new Error(profileError.message);
+    if (!profile) throw new Error("Membro selecionado não foi encontrado.");
+    assignedName = profile.full_name || profile.email || "Membro";
+  }
+
+  const { error } = await supabase
+    .from("prospects")
+    .update({ responsible_user_id: parsed.responsibleUserId })
+    .eq("id", prospectId);
+
+  if (error) throw new Error(error.message);
+
+  const description = parsed.responsibleUserId
+    ? `Responsável atribuído: ${assignedName}.`
+    : "Responsável removido.";
+
+  await supabase.from("prospect_activities").insert({
+    prospect_id: prospectId,
+    actor_id: user.id,
+    action_type: "updated",
+    description,
+    metadata: { responsible_user_id: parsed.responsibleUserId }
+  });
+
+  await recordActivity(supabase, {
+    entity_type: "prospect",
+    entity_id: prospectId,
+    actor_id: user.id,
+    action: "updated",
+    title: parsed.responsibleUserId ? "Responsável atribuído" : "Responsável removido",
+    description,
+    metadata: { responsible_user_id: parsed.responsibleUserId }
+  });
+
+  revalidatePath(`/os/prospects/${prospectId}`);
+  revalidatePath("/os/prospects");
 }
