@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Building2Icon, 
-  CalendarIcon, 
-  MapPinIcon, 
-  TrendingUpIcon, 
-  UserIcon,
+import {
+  Building2Icon,
+  CalendarIcon,
+  MapPinIcon,
+  TrendingUpIcon,
   ChevronRightIcon,
   GlobeIcon,
   BookOpenIcon,
@@ -60,8 +59,9 @@ import { activityLabel, formatActivityDate } from "./workspace-helpers";
 import { completeTaskAction, convertProspectAction, createTaskAction } from "@/features/commercial/actions";
 import { taskPriorities, taskStatuses } from "@/features/commercial/commercial-helpers";
 import { FileList } from "@/features/tech/file-list";
-import { statusLabel, priorityLabel, temperatureLabel } from "@/lib/display-helpers";
+import { statusLabel, priorityLabel, temperatureLabel, whatsappHref } from "@/lib/display-helpers";
 import { AiBrainPanel } from "@/features/ai/ai-brain-panel";
+import { AssignResponsibleSelect } from "./assign-responsible-select";
 
 // Industry Playbooks Recommendation Map
 const getRecommendedPlaybooks = (segment: string | null) => {
@@ -225,19 +225,10 @@ export function ProspectWorkspace({
     { label: "Criado em", value: new Date(prospect.created_at).toLocaleDateString("pt-BR") }
   ];
 
-  // IA Generation Simulation
   const handleGenerateDiagnostic = () => {
     setActiveTab("diagnostic");
     startTransition(async () => {
-      setAiStep("Mapeando presença digital local...");
-      await new Promise((r) => setTimeout(r, 600));
-      setAiStep("Analisando perfil de Google Meu Negócio...");
-      await new Promise((r) => setTimeout(r, 600));
-      setAiStep("Avaliando SEO de site e redes sociais...");
-      await new Promise((r) => setTimeout(r, 600));
-      setAiStep("Cruzando dados de mercado e gerando sugestões...");
-      await new Promise((r) => setTimeout(r, 700));
-
+      setAiStep("Auditando presença digital...");
       try {
         await generateAiDiagnosticAction(prospect.id);
       } catch (err) {
@@ -509,24 +500,22 @@ export function ProspectWorkspace({
               <CardTitle className="text-xs font-bold font-mono text-white uppercase tracking-wider">Informações Rápidas</CardTitle>
             </CardHeader>
             <CardContent className="pt-4 flex flex-col gap-3.5">
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-mono text-zinc-500 uppercase">Responsável</span>
-                <div className="flex items-center gap-1.5 text-white font-medium">
-                  <UserIcon className="size-3.5 text-purple-400 shrink-0" />
-                  <span className="truncate">
-                    {profiles.find((p) => p.id === prospect.responsible_user_id)?.full_name || 
-                     profiles.find((p) => p.id === prospect.responsible_user_id)?.email || 
-                     "Não definido"}
-                  </span>
-                </div>
-              </div>
+              <AssignResponsibleSelect
+                prospectId={prospect.id}
+                initialResponsibleUserId={prospect.responsible_user_id}
+                profiles={profiles}
+              />
 
               {prospect.whatsapp && (
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] font-mono text-zinc-500 uppercase">WhatsApp</span>
-                  <a href={prospect.whatsapp} target="_blank" rel="noreferrer" className="text-purple-300 hover:underline truncate">
-                    {prospect.whatsapp.replace("https://wa.me/", "+")}
-                  </a>
+                  {whatsappHref(prospect.whatsapp) ? (
+                    <a href={whatsappHref(prospect.whatsapp)} target="_blank" rel="noopener noreferrer" className="text-purple-300 hover:underline truncate">
+                      {prospect.whatsapp}
+                    </a>
+                  ) : (
+                    <span className="text-zinc-400 truncate">{prospect.whatsapp}</span>
+                  )}
                 </div>
               )}
 

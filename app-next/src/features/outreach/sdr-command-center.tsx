@@ -411,8 +411,8 @@ export function SdrCommandCenter({
                 </div>
                 <div className="text-sm text-muted-foreground">{meeting.suggested_date || "Data sugerida pendente"}</div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="secondary">Aprovar</Button>
-                  <Button size="sm" variant="outline">Rejeitar</Button>
+                  <Button size="sm" variant="secondary" disabled title="Confirmação de reunião em breve">Aprovar</Button>
+                  <Button size="sm" variant="outline" disabled title="Confirmação de reunião em breve">Rejeitar</Button>
                 </div>
               </div>
             ))

@@ -42,38 +42,30 @@ export default async function OsHomePage() {
 
   const preferredArea = getPreferredArea(userRole, userEmail);
 
-  // Fetch overview metrics for Mission Control dashboard
-  const overview = await getDashboardOverview();
   const todayStr = new Date().toISOString().split("T")[0];
+
+  // Run all three fetches in parallel
+  const [overview, diagnosticsResult, proposalsResult] = await Promise.all([
+    getDashboardOverview(),
+    supabase
+      ? supabase.from("prospect_diagnostics").select("prospect_id").then(r => r.data || []).catch(() => [])
+      : Promise.resolve([] as { prospect_id: string }[]),
+    supabase
+      ? supabase.from("prospect_proposals").select("id").eq("status", "sent").then(r => r.data || []).catch(() => [])
+      : Promise.resolve([] as { id: string }[])
+  ]);
 
   // Calculate leads created today
   const leadsDoDia = overview.prospects.filter(p => p.created_at && p.created_at.startsWith(todayStr)).length;
 
   // Calculate pending diagnostics (active prospects without diagnostics)
-  let diagnosedIds = new Set<string>();
-  if (supabase) {
-    try {
-      const { data: diagnosticsData } = await supabase.from("prospect_diagnostics").select("prospect_id");
-      diagnosedIds = new Set((diagnosticsData || []).map(d => d.prospect_id));
-    } catch (e) {
-      console.error("Failed to query prospect_diagnostics:", e);
-    }
-  }
+  const diagnosedIds = new Set(diagnosticsResult.map((d: { prospect_id: string }) => d.prospect_id));
   const diagnosticosPendentes = overview.prospects.filter(
     p => !diagnosedIds.has(p.id) && !["fechado", "perdido", "won", "lost", "archived"].includes(p.status)
   ).length;
 
   // Calculate sent/active proposals
-  let propostasEnviadas = 0;
-  if (supabase) {
-    try {
-      const { data: proposalsData } = await supabase.from("prospect_proposals").select("id").eq("status", "sent");
-      propostasEnviadas = proposalsData?.length || 0;
-    } catch (e) {
-      // Fallback in case table isn't migrated or fails
-      console.error("Failed to fetch proposals count:", e);
-    }
-  }
+  const propostasEnviadas = proposalsResult.length;
 
   // Calculate active projects count
   const projetosAtivos = overview.projects.filter(p => p.status === "active" || p.status === "planning").length;
