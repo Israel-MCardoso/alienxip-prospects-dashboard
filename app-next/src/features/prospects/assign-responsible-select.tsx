@@ -4,6 +4,7 @@ import { useOptimistic, useTransition } from "react";
 import { UserIcon } from "lucide-react";
 
 import { CustomSelect } from "@/components/ui/custom-select";
+import { toast } from "@/components/ui/toast";
 import { assignProspectResponsibleAction } from "./actions";
 import type { ProfileRow } from "@/features/workspace/data";
 
@@ -46,9 +47,9 @@ export function AssignResponsibleSelect({
       try {
         await assignProspectResponsibleAction(prospectId, responsibleUserId);
       } catch (err) {
-        alert(
-          "Erro ao atribuir responsável: " +
-            (err instanceof Error ? err.message : String(err))
+        toast.error(
+          "Não foi possível atribuir o responsável.",
+          err instanceof Error ? err.message : String(err)
         );
       }
     });

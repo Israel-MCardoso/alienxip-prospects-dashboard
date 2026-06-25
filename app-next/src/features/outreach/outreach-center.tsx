@@ -29,6 +29,7 @@ import { pauseOutreachAction, stopOutreachAction, resumeOutreachAction } from ".
 import { CustomSelect } from "@/components/ui/custom-select";
 import { ProductionReadinessStrip } from "./production-readiness-strip";
 import { Pagination } from "@/components/ui/pagination";
+import { toast } from "@/components/ui/toast";
 
 interface OutreachCenterProps {
   prospects: ProspectRow[];
@@ -170,7 +171,7 @@ export function OutreachCenter({
       try {
         await pauseOutreachAction(prospectId);
       } catch (err) {
-        alert("Erro ao pausar: " + (err instanceof Error ? err.message : String(err)));
+        toast.error("Não foi possível pausar o outreach.", err instanceof Error ? err.message : String(err));
       }
     });
   };
@@ -180,7 +181,7 @@ export function OutreachCenter({
       try {
         await stopOutreachAction(prospectId);
       } catch (err) {
-        alert("Erro ao parar: " + (err instanceof Error ? err.message : String(err)));
+        toast.error("Não foi possível parar o outreach.", err instanceof Error ? err.message : String(err));
       }
     });
   };
@@ -190,7 +191,7 @@ export function OutreachCenter({
       try {
         await resumeOutreachAction(prospectId);
       } catch (err) {
-        alert("Erro ao retomar: " + (err instanceof Error ? err.message : String(err)));
+        toast.error("Não foi possível retomar o outreach.", err instanceof Error ? err.message : String(err));
       }
     });
   };
@@ -882,7 +883,10 @@ export function OutreachCenter({
                                   variant="outline"
                                   size="sm"
                                   className="h-6 text-[9px] font-mono px-2 cursor-pointer"
-                                  onClick={() => alert(JSON.stringify(batch.metadata, null, 2))}
+                                  onClick={() => {
+                                    // PENDÊNCIA(metadata-json-modal): visualizador temporário de JSON bruto — trocar por modal/drawer dark com JSON copiável (task separada)
+                                    alert(JSON.stringify(batch.metadata, null, 2));
+                                  }}
                                 >
                                   Metadata
                                 </Button>
@@ -969,6 +973,7 @@ export function OutreachCenter({
                                       size="sm"
                                       className="h-6 text-[9px] font-mono cursor-pointer"
                                       onClick={() => {
+                                        // PENDÊNCIA(metadata-json-modal): visualizador temporário de JSON bruto — trocar por modal/drawer dark com JSON copiável (task separada)
                                         alert(JSON.stringify(batch.metadata, null, 2));
                                       }}
                                     >
@@ -1044,7 +1049,10 @@ export function OutreachCenter({
                                   variant="outline"
                                   size="sm"
                                   className="h-6 text-[9px] font-mono px-2 cursor-pointer"
-                                  onClick={() => alert(JSON.stringify(log.payload, null, 2))}
+                                  onClick={() => {
+                                    // PENDÊNCIA(metadata-json-modal): visualizador temporário de JSON bruto — trocar por modal/drawer dark com JSON copiável (task separada)
+                                    alert(JSON.stringify(log.payload, null, 2));
+                                  }}
                                 >
                                   Ver Json
                                 </Button>
@@ -1121,6 +1129,7 @@ export function OutreachCenter({
                                       size="sm"
                                       className="h-6 text-[9px] font-mono cursor-pointer"
                                       onClick={() => {
+                                        // PENDÊNCIA(metadata-json-modal): visualizador temporário de JSON bruto — trocar por modal/drawer dark com JSON copiável (task separada)
                                         alert(JSON.stringify(log.payload, null, 2));
                                       }}
                                     >

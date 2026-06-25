@@ -60,6 +60,7 @@ import { completeTaskAction, convertProspectAction, createTaskAction } from "@/f
 import { taskPriorities, taskStatuses } from "@/features/commercial/commercial-helpers";
 import { FileList } from "@/features/tech/file-list";
 import { statusLabel, priorityLabel, temperatureLabel, whatsappHref } from "@/lib/display-helpers";
+import { toast } from "@/components/ui/toast";
 import { AiBrainPanel } from "@/features/ai/ai-brain-panel";
 import { AssignResponsibleSelect } from "./assign-responsible-select";
 
@@ -240,7 +241,7 @@ export function ProspectWorkspace({
       try {
         await generateAiDiagnosticAction(prospect.id);
       } catch (err) {
-        alert("Erro na geração do diagnóstico: " + (err instanceof Error ? err.message : String(err)));
+        toast.error("Não foi possível gerar o diagnóstico.", err instanceof Error ? err.message : String(err));
       } finally {
         setAiStep(null);
       }
@@ -780,7 +781,7 @@ function NotesTab({
       await updateNoteAction(prospectId, noteId, formData);
       setEditingNoteId(null);
     } catch (err) {
-      alert("Erro ao salvar nota: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar a nota.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -1011,7 +1012,7 @@ function ProposalsTab({
                   await action(fd);
                   setIsFormOpen(false);
                 } catch(e) {
-                  alert(e instanceof Error ? e.message : String(e));
+                  toast.error("Não foi possível salvar a proposta.", e instanceof Error ? e.message : String(e));
                 }
               }} className="flex flex-col gap-3">
                 <Input name="title" required placeholder="Título da Proposta (Ex: Presença Local v1)" className="h-8 text-xs" />
@@ -1100,7 +1101,7 @@ function OutreachTab({
       try {
         await pauseOutreachAction(prospect.id);
       } catch (err) {
-        alert("Erro ao pausar: " + (err instanceof Error ? err.message : String(err)));
+        toast.error("Não foi possível pausar o outreach.", err instanceof Error ? err.message : String(err));
       }
     });
   };
@@ -1110,7 +1111,7 @@ function OutreachTab({
       try {
         await stopOutreachAction(prospect.id);
       } catch (err) {
-        alert("Erro ao parar: " + (err instanceof Error ? err.message : String(err)));
+        toast.error("Não foi possível parar o outreach.", err instanceof Error ? err.message : String(err));
       }
     });
   };
@@ -1120,7 +1121,7 @@ function OutreachTab({
       try {
         await resumeOutreachAction(prospect.id);
       } catch (err) {
-        alert("Erro ao retomar: " + (err instanceof Error ? err.message : String(err)));
+        toast.error("Não foi possível retomar o outreach.", err instanceof Error ? err.message : String(err));
       }
     });
   };
@@ -1131,7 +1132,7 @@ function OutreachTab({
       try {
         await testSdrSandboxAction(prospect.id);
       } catch (err) {
-        alert("Erro no teste SDR Sandbox: " + (err instanceof Error ? err.message : String(err)));
+        toast.error("Não foi possível executar o teste SDR Sandbox.", err instanceof Error ? err.message : String(err));
       }
     });
   };

@@ -37,6 +37,7 @@ import { prospectStatuses, prospectTemperatures } from "./prospect-schema";
 import { statusLabel, temperatureLabel } from "@/lib/display-helpers";
 import { updateProspectStatusAction, updateProspectTemperatureAction } from "./actions";
 import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/toast";
 import { getProspectPotentialValue } from "@/features/commercial/commercial-helpers";
 
 function formatCurrency(value: number) {
@@ -177,7 +178,7 @@ export function ProspectsCrm({
     } catch (err) {
       // Revert status on failure
       setLocalProspects(originalProspects);
-      alert("Falha ao salvar status comercial inline. Revertendo alteração.\nErro: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar o status comercial. Alteração revertida.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -194,7 +195,7 @@ export function ProspectsCrm({
     } catch (err) {
       // Revert temperature on failure
       setLocalProspects(originalProspects);
-      alert("Falha ao salvar temperatura inline. Revertendo alteração.\nErro: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar a temperatura. Alteração revertida.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -237,12 +238,12 @@ export function ProspectsCrm({
     if (eligibleProspects.length === 0) return;
 
     if (automationSource === "production" && eligibleProspects.length > 100) {
-      alert(`Erro: O limite de lote para o ambiente de Produção é de 100 leads por vez (atualmente elegível: ${eligibleProspects.length} leads). Selecione menos registros.`);
+      toast.warning(`Limite de 100 leads por lote em Produção. Elegíveis agora: ${eligibleProspects.length}. Selecione menos registros.`);
       return;
     }
 
     if (automationSource === "sandbox" && eligibleProspects.length > 2) {
-      alert(`Erro: O limite inicial do Sandbox SDR é de 2 leads por vez (atualmente elegível: ${eligibleProspects.length} leads). Selecione 1 ou 2 registros para validar sem WhatsApp real.`);
+      toast.warning(`O Sandbox SDR aceita até 2 leads por vez. Elegíveis agora: ${eligibleProspects.length}. Selecione 1 ou 2 para validar sem WhatsApp real.`);
       return;
     }
 
@@ -263,12 +264,12 @@ export function ProspectsCrm({
       }
       
       await response.json();
-      alert(`${automationSource === "sandbox" ? "Teste SDR Sandbox" : "Automação"} iniciado com sucesso para ${eligibleProspects.length} leads.`);
+      toast.success(`${automationSource === "sandbox" ? "Teste SDR Sandbox" : "Automação"} iniciado para ${eligibleProspects.length} leads.`);
       setSelectedIds([]);
       setIsConfirmOpen(false);
       router.refresh();
     } catch (err) {
-      alert("Erro ao despachar automação: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível despachar a automação.", err instanceof Error ? err.message : String(err));
     } finally {
       setIsDispatching(false);
     }

@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import {
   Card,
   CardContent,
@@ -44,7 +45,7 @@ export function ProspectForm({
           const result = await rawAction(formData);
           const errorMsg = (result as { error?: string } | undefined)?.error;
           if (errorMsg) {
-            alert("Erro ao salvar prospect: " + errorMsg);
+            toast.error("Não foi possível salvar o prospect.", errorMsg);
             return;
           }
           onSuccess();
@@ -56,7 +57,7 @@ export function ProspectForm({
           if (isRedirect) {
             onSuccess();
           } else {
-            alert("Erro ao salvar prospect: " + (err instanceof Error ? err.message : String(err)));
+            toast.error("Não foi possível salvar o prospect.", err instanceof Error ? err.message : String(err));
           }
         }
       });

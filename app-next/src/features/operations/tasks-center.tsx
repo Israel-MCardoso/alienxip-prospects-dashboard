@@ -19,6 +19,7 @@ import type { ClientRow, CompanyRow, ProfileRow, ProjectRow, TaskRow } from "./d
 import { formatDate, priorityLabel, statusLabel } from "./format";
 import { TaskForm } from "./task-form";
 import { Pagination } from "@/components/ui/pagination";
+import { toast } from "@/components/ui/toast";
 
 function profileName(profiles: ProfileRow[], id: string | null) {
   const profile = profiles.find((item) => item.id === id);
@@ -227,7 +228,7 @@ export function TasksCenter({
       await updateGeneralTaskAction(editingTask.id, formData);
       setEditingTask(null);
     } catch (err) {
-      alert("Erro ao salvar tarefa: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar a tarefa.", err instanceof Error ? err.message : String(err));
     }
   };
 

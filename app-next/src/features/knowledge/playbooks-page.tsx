@@ -29,6 +29,7 @@ import { duplicatePlaybookAction, updateKnowledgeReviewAction, updatePlaybookSta
 import { statusLabel, getCoreCategoryName } from "@/lib/display-helpers";
 import { cn } from "@/lib/utils";
 import { Pagination } from "@/components/ui/pagination";
+import { toast } from "@/components/ui/toast";
 
 // Defined UI category layout matching user specs
 const UI_CATEGORIES = [
@@ -450,7 +451,7 @@ function PlaybookForm({ playbook, onSuccess }: { playbook?: PlaybookRow; onSucce
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      alert("Erro ao salvar: " + msg);
+      toast.error("Não foi possível salvar o playbook.", msg);
     }
   };
 

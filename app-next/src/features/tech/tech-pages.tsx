@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/toast";
 import {
   createBacklogItemAction,
   createBugAction,
@@ -225,7 +226,7 @@ export function BugsPageView({
       await updateBugAction(editingBug.id, formData);
       setEditingBug(null);
     } catch (err) {
-      alert("Erro ao salvar bug: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar o bug.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -236,7 +237,7 @@ export function BugsPageView({
       await updateBugStatusActionInline(id, newStatus);
     } catch (err) {
       setLocalBugs(originalBugs);
-      alert("Falha ao salvar status inline. Revertendo alteração.\nErro: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar o status. Alteração revertida.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -247,7 +248,7 @@ export function BugsPageView({
       await updateBugPriorityActionInline(id, newPriority);
     } catch (err) {
       setLocalBugs(originalBugs);
-      alert("Falha ao salvar prioridade inline. Revertendo alteração.\nErro: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar a prioridade. Alteração revertida.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -258,7 +259,7 @@ export function BugsPageView({
       await updateBugSeverityActionInline(id, newSeverity);
     } catch (err) {
       setLocalBugs(originalBugs);
-      alert("Falha ao salvar severidade inline. Revertendo alteração.\nErro: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar a severidade. Alteração revertida.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -569,7 +570,7 @@ export function IncidentsPageView({
       await updateIncidentAction(editingIncident.id, formData);
       setEditingIncident(null);
     } catch (err) {
-      alert("Erro ao salvar incidente: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar o incidente.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -580,7 +581,7 @@ export function IncidentsPageView({
       await updateIncidentStatusActionInline(id, newStatus);
     } catch (err) {
       setLocalIncidents(originalIncidents);
-      alert("Falha ao salvar status inline. Revertendo alteração.\nErro: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar o status. Alteração revertida.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -591,7 +592,7 @@ export function IncidentsPageView({
       await updateIncidentSeverityActionInline(id, newSeverity);
     } catch (err) {
       setLocalIncidents(originalIncidents);
-      alert("Falha ao salvar severidade inline. Revertendo alteração.\nErro: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar a severidade. Alteração revertida.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -844,7 +845,7 @@ export function BacklogPageView({
       await updateBacklogItemAction(editingItem.id, formData);
       setEditingItem(null);
     } catch (err) {
-      alert("Erro ao salvar item de backlog: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar o item de backlog.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -1034,7 +1035,7 @@ export function RoadmapPageView({
       await updateRoadmapItemAction(editingItem.id, formData);
       setEditingItem(null);
     } catch (err) {
-      alert("Erro ao salvar item de roadmap: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar o item de roadmap.", err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -1248,7 +1249,7 @@ export function DecisionsPageView({
       await updateTechnicalDecisionAction(editingDecision.id, formData);
       setEditingDecision(null);
     } catch (err) {
-      alert("Erro ao salvar decisão técnica: " + (err instanceof Error ? err.message : String(err)));
+      toast.error("Não foi possível salvar a decisão técnica.", err instanceof Error ? err.message : String(err));
     }
   };
 
