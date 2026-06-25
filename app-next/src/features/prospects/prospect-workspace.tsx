@@ -541,6 +541,20 @@ export function ProspectWorkspace({
                 </div>
               )}
 
+              {(prospect.address_street || prospect.address_number || prospect.address_complement || prospect.neighborhood || prospect.postal_code) && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-mono text-zinc-500 uppercase">Endereço</span>
+                  <span className="text-zinc-400">
+                    {[
+                      [prospect.address_street, prospect.address_number].filter(Boolean).join(", "),
+                      prospect.address_complement,
+                      prospect.neighborhood,
+                      prospect.postal_code ? `CEP ${prospect.postal_code}` : null
+                    ].filter(Boolean).join(" · ")}
+                  </span>
+                </div>
+              )}
+
               {prospect.partner_name && (
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] font-mono text-zinc-500 uppercase">Indicação / Parceiro</span>

@@ -27,6 +27,11 @@ export const prospectFormSchema = z.object({
   segment: z.string().trim().optional(),
   city: z.string().trim().optional(),
   state: z.string().trim().optional(),
+  neighborhood: z.string().trim().optional(),
+  address_street: z.string().trim().optional(),
+  address_number: z.string().trim().optional(),
+  address_complement: z.string().trim().optional(),
+  postal_code: z.string().trim().optional(),
   instagram_url: z.string().trim().url().optional().or(z.literal("")),
   website_url: z.string().trim().url().optional().or(z.literal("")),
   whatsapp: z.string().trim().optional(),
@@ -37,10 +42,28 @@ export const prospectFormSchema = z.object({
 
 export type ProspectFormInput = z.infer<typeof prospectFormSchema>;
 
+// Treats blank values and common "no data" phrasings (e.g. "não tem", "n/a",
+// "sem site") as absence, returning null. Real values are returned trimmed.
+// Accent-insensitive so "não tem" and "nao tem" both match.
+const UNAVAILABLE_VALUES = new Set([
+  "nao tem", "não tem", "nao possui", "não possui", "sem site", "sem website",
+  "sem numero", "sem número", "sem telefone", "sem whatsapp", "n/a", "na", "-", "--",
+  "nenhum", "nenhuma", "nao informado", "não informado"
+]);
+
+export function emptyOrUnavailableToNull(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const key = trimmed.toLowerCase();
+  if (UNAVAILABLE_VALUES.has(key)) return null;
+  return trimmed;
+}
+
 // Normalize @handle, handle, or domain/path into a full Instagram URL.
 // Empty string passthrough lets the optional field skip Zod's .url() check.
 function normalizeInstagramUrl(raw: string): string {
-  const v = raw.trim();
+  const v = emptyOrUnavailableToNull(raw);
   if (!v) return "";
   if (v.startsWith("http://") || v.startsWith("https://")) return v;
   const handle = v.startsWith("@") ? v.slice(1) : v;
@@ -51,7 +74,7 @@ function normalizeInstagramUrl(raw: string): string {
 
 // Add https:// to bare domains/paths; full URLs are returned unchanged.
 function normalizeWebsiteUrl(raw: string): string {
-  const v = raw.trim();
+  const v = emptyOrUnavailableToNull(raw);
   if (!v) return "";
   if (v.startsWith("http://") || v.startsWith("https://")) return v;
   return `https://${v}`;
@@ -87,9 +110,14 @@ export function formDataToProspectInput(formData: FormData): ProspectFormInput {
     segment: formData.get("segment") || "",
     city: formData.get("city") || "",
     state: formData.get("state") || "",
+    neighborhood: emptyOrUnavailableToNull(formData.get("neighborhood")) ?? "",
+    address_street: emptyOrUnavailableToNull(formData.get("address_street")) ?? "",
+    address_number: emptyOrUnavailableToNull(formData.get("address_number")) ?? "",
+    address_complement: emptyOrUnavailableToNull(formData.get("address_complement")) ?? "",
+    postal_code: emptyOrUnavailableToNull(formData.get("postal_code")) ?? "",
     instagram_url: normalizeInstagramUrl(String(formData.get("instagram_url") || "")),
     website_url: normalizeWebsiteUrl(String(formData.get("website_url") || "")),
-    whatsapp: formData.get("whatsapp") || "",
+    whatsapp: emptyOrUnavailableToNull(formData.get("whatsapp")) ?? "",
     partner_name: formData.get("partner_name") || "",
     partner_url: normalizeWebsiteUrl(String(formData.get("partner_url") || "")),
     notes: formData.get("notes") || ""

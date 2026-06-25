@@ -101,6 +101,11 @@ export type Database = {
           source: ProspectSource;
           city: string | null;
           state: string | null;
+          neighborhood: string | null;
+          address_street: string | null;
+          address_number: string | null;
+          address_complement: string | null;
+          postal_code: string | null;
           instagram_url: string | null;
           website_url: string | null;
           whatsapp: string | null;
@@ -128,6 +133,11 @@ export type Database = {
           source?: ProspectSource;
           city?: string | null;
           state?: string | null;
+          neighborhood?: string | null;
+          address_street?: string | null;
+          address_number?: string | null;
+          address_complement?: string | null;
+          postal_code?: string | null;
           instagram_url?: string | null;
           website_url?: string | null;
           whatsapp?: string | null;

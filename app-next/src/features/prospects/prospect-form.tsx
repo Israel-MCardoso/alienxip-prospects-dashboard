@@ -91,7 +91,7 @@ export function ProspectForm({
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">WhatsApp</label>
-        <Input name="whatsapp" placeholder="WhatsApp" defaultValue={prospect?.whatsapp || ""} disabled={!isConfigured || isPending} />
+        <Input name="whatsapp" placeholder="(12) 99999-9999 ou deixe vazio" defaultValue={prospect?.whatsapp || ""} disabled={!isConfigured || isPending} />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -122,24 +122,53 @@ export function ProspectForm({
         </select>
       </div>
 
+      <div className="md:col-span-2 mt-1">
+        <span className="text-[11px] font-semibold font-mono text-purple-300/80 uppercase tracking-wider">Localização</span>
+      </div>
+
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Cidade</label>
-        <Input name="city" placeholder="Cidade" defaultValue={prospect?.city || ""} disabled={!isConfigured || isPending} />
+        <Input name="city" placeholder="São Paulo" defaultValue={prospect?.city || ""} disabled={!isConfigured || isPending} />
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Estado</label>
-        <Input name="state" placeholder="Estado" defaultValue={prospect?.state || ""} disabled={!isConfigured || isPending} />
+        <Input name="state" placeholder="SP" defaultValue={prospect?.state || ""} disabled={!isConfigured || isPending} />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Instagram URL</label>
-        <Input name="instagram_url" placeholder="Instagram URL" defaultValue={prospect?.instagram_url || ""} disabled={!isConfigured || isPending} />
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Bairro</label>
+        <Input name="neighborhood" placeholder="Centro" defaultValue={prospect?.neighborhood || ""} disabled={!isConfigured || isPending} />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Site URL</label>
-        <Input name="website_url" placeholder="Site URL" defaultValue={prospect?.website_url || ""} disabled={!isConfigured || isPending} />
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">CEP</label>
+        <Input name="postal_code" placeholder="00000-000" defaultValue={prospect?.postal_code || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5 md:col-span-2">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Rua / Avenida</label>
+        <Input name="address_street" placeholder="Av. Paulista" defaultValue={prospect?.address_street || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Número</label>
+        <Input name="address_number" placeholder="123" defaultValue={prospect?.address_number || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Complemento</label>
+        <Input name="address_complement" placeholder="Sala 04 / Próximo ao mercado" defaultValue={prospect?.address_complement || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Instagram</label>
+        <Input name="instagram_url" placeholder="@perfil ou deixe vazio" defaultValue={prospect?.instagram_url || ""} disabled={!isConfigured || isPending} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Site</label>
+        <Input name="website_url" placeholder="https://empresa.com.br ou deixe vazio" defaultValue={prospect?.website_url || ""} disabled={!isConfigured || isPending} />
       </div>
 
       <div className="flex flex-col gap-1.5">
