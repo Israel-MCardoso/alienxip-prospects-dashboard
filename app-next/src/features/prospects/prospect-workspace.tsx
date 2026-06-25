@@ -515,6 +515,10 @@ export function ProspectWorkspace({
                 initialResponsibleUserId={prospect.responsible_user_id}
                 profiles={profiles}
               />
+              {/* Temporary debug — remove after production validation */}
+              <span className="text-[10px] text-zinc-500">
+                debug: {profiles.length} responsáveis carregados
+              </span>
 
               {prospect.whatsapp && (
                 <div className="flex flex-col gap-1">
