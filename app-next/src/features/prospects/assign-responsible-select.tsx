@@ -24,15 +24,21 @@ export function AssignResponsibleSelect({
   const [optimisticValue, setOptimisticValue] = useOptimistic<string>(initialValue);
   const [isPending, startTransition] = useTransition();
 
+  const memberOptions = profiles.map((profile) => ({
+    value: profile.id,
+    label: profile.full_name || profile.email || "Membro"
+  }));
+
   const options = [
     { value: NONE_VALUE, label: "Não definido" },
-    ...profiles.map((profile) => ({
-      value: profile.id,
-      label: profile.full_name || profile.email || "Membro"
-    }))
+    ...memberOptions,
+    ...(memberOptions.length === 0
+      ? [{ value: "__empty__", label: "Nenhum membro disponível" }]
+      : [])
   ];
 
   const handleChange = (next: string) => {
+    if (next === "__empty__") return;
     if (next === optimisticValue) return;
     const responsibleUserId = next === NONE_VALUE ? null : next;
     startTransition(async () => {

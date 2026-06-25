@@ -7,6 +7,7 @@ import type { ProspectOutreachRow, OutreachEventRow } from "@/types/outreach";
 export type ProspectRow = Database["public"]["Tables"]["prospects"]["Row"] & {
   prospect_outreach?: ProspectOutreachRow[] | null;
 };
+export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 export type ProspectDiagnosticRow = Database["public"]["Tables"]["prospect_diagnostics"]["Row"];
 export type ProspectNoteRow = Database["public"]["Tables"]["prospect_notes"]["Row"];
 export type ProspectActivityRow = Database["public"]["Tables"]["prospect_activities"]["Row"];
@@ -155,7 +156,8 @@ export async function getProspectWorkspace(id: string) {
     userResult,
     outreachResult,
     outreachEventsResult,
-    proposalsResult
+    proposalsResult,
+    allProfilesResult
   ] = await Promise.all([
     supabase.from("prospects").select("*").eq("id", id).single(),
     supabase.from("prospect_diagnostics").select("*").eq("prospect_id", id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
@@ -172,7 +174,8 @@ export async function getProspectWorkspace(id: string) {
       } catch {
         return { data: null, error: null };
       }
-    })()
+    })(),
+    db.from("profiles").select("id, full_name, email, role, is_active").eq("is_active", true).order("email", { ascending: true })
   ]);
 
   const proposals: ProspectProposalRow[] = (proposalsResult.data as unknown as ProspectProposalRow[]) || [];
@@ -201,6 +204,7 @@ export async function getProspectWorkspace(id: string) {
     files: filesResult.data || [],
     proposals,
     profile: profileResult.data,
+    profiles: (allProfilesResult.data || []) as ProfileRow[],
     outreach: (outreachResult.data || null) as unknown as ProspectOutreachRow | null,
     outreachEvents: (outreachEventsResult.data || []) as unknown as OutreachEventRow[],
     error: errorMsg,
