@@ -30,6 +30,7 @@ import { CustomSelect } from "@/components/ui/custom-select";
 import { ProductionReadinessStrip } from "./production-readiness-strip";
 import { Pagination } from "@/components/ui/pagination";
 import { toast } from "@/components/ui/toast";
+import { JsonViewerDialog } from "@/components/ui/json-viewer-dialog";
 
 interface OutreachCenterProps {
   prospects: ProspectRow[];
@@ -53,6 +54,7 @@ export function OutreachCenter({
   const [selectedChannel, setSelectedChannel] = useState("");
   const [isPending, startTransition] = useTransition();
   const [currentPage, setCurrentPage] = useState(1);
+  const [jsonView, setJsonView] = useState<{ title: string; value: unknown } | null>(null);
 
   const [prevQ, setPrevQ] = useState(q);
   const [prevStatus, setPrevStatus] = useState(selectedStatus);
@@ -883,10 +885,7 @@ export function OutreachCenter({
                                   variant="outline"
                                   size="sm"
                                   className="h-6 text-[9px] font-mono px-2 cursor-pointer"
-                                  onClick={() => {
-                                    // PENDÊNCIA(metadata-json-modal): visualizador temporário de JSON bruto — trocar por modal/drawer dark com JSON copiável (task separada)
-                                    alert(JSON.stringify(batch.metadata, null, 2));
-                                  }}
+                                  onClick={() => setJsonView({ title: "Metadata do lote", value: batch.metadata })}
                                 >
                                   Metadata
                                 </Button>
@@ -972,10 +971,7 @@ export function OutreachCenter({
                                       variant="outline"
                                       size="sm"
                                       className="h-6 text-[9px] font-mono cursor-pointer"
-                                      onClick={() => {
-                                        // PENDÊNCIA(metadata-json-modal): visualizador temporário de JSON bruto — trocar por modal/drawer dark com JSON copiável (task separada)
-                                        alert(JSON.stringify(batch.metadata, null, 2));
-                                      }}
+                                      onClick={() => setJsonView({ title: "Metadata do lote", value: batch.metadata })}
                                     >
                                       Metadata
                                     </Button>
@@ -1049,10 +1045,7 @@ export function OutreachCenter({
                                   variant="outline"
                                   size="sm"
                                   className="h-6 text-[9px] font-mono px-2 cursor-pointer"
-                                  onClick={() => {
-                                    // PENDÊNCIA(metadata-json-modal): visualizador temporário de JSON bruto — trocar por modal/drawer dark com JSON copiável (task separada)
-                                    alert(JSON.stringify(log.payload, null, 2));
-                                  }}
+                                  onClick={() => setJsonView({ title: "Payload do log", value: log.payload })}
                                 >
                                   Ver Json
                                 </Button>
@@ -1128,10 +1121,7 @@ export function OutreachCenter({
                                       variant="outline"
                                       size="sm"
                                       className="h-6 text-[9px] font-mono cursor-pointer"
-                                      onClick={() => {
-                                        // PENDÊNCIA(metadata-json-modal): visualizador temporário de JSON bruto — trocar por modal/drawer dark com JSON copiável (task separada)
-                                        alert(JSON.stringify(log.payload, null, 2));
-                                      }}
+                                      onClick={() => setJsonView({ title: "Payload do log", value: log.payload })}
                                     >
                                       Ver Json
                                     </Button>
@@ -1151,6 +1141,15 @@ export function OutreachCenter({
           </div>
         </div>
       )}
+
+      <JsonViewerDialog
+        open={jsonView !== null}
+        onOpenChange={(open) => {
+          if (!open) setJsonView(null);
+        }}
+        title={jsonView?.title ?? ""}
+        value={jsonView?.value}
+      />
     </div>
   );
 }
