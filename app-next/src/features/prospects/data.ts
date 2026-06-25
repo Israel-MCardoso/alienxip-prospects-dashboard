@@ -185,13 +185,6 @@ export async function getProspectWorkspace(id: string) {
     ? await supabase.from("profiles").select("*").eq("id", userId).maybeSingle()
     : { data: null };
 
-  // Temporary diagnostic log — remove after root cause is confirmed in production
-  console.info("[prospect-workspace] profiles query", {
-    count: allProfilesResult.data?.length ?? 0,
-    hasError: Boolean(allProfilesResult.error),
-    errorCode: allProfilesResult.error?.code ?? null,
-  });
-
   const errorMsg = prospectResult.error?.message ||
     diagnosticResult.error?.message ||
     notesResult.error?.message ||
