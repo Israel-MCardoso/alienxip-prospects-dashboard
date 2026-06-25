@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { groupProspectsByPipelineStatus, pipelineStatuses, getProspectPotentialValue } from "./commercial-helpers";
 import type { CommercialTaskRow } from "./data";
 import type { ProspectRow } from "@/features/prospects/data";
-import { temperatureLabel } from "@/lib/display-helpers";
+import { temperatureLabel, formatCurrency } from "@/lib/display-helpers";
 import { cn } from "@/lib/utils";
 import { updateProspectStatusAction } from "@/features/prospects/actions";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -88,15 +88,6 @@ export function PipelineBoard({
   const boardPotential = localProspects.reduce((sum, prospect) => sum + getProspectPotentialValue(prospect), 0);
   const hotProspects = localProspects.filter((prospect) => prospect.temperature === "hot").length;
   const scheduledMeetings = localProspects.filter((prospect) => prospect.status === "meeting_scheduled").length;
-
-  // Formatter for currency
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      maximumFractionDigits: 0
-    }).format(val);
-  };
 
   // Drag handlers
   const handleDragStart = (e: React.DragEvent, id: string) => {

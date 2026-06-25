@@ -164,6 +164,19 @@ export function categoryLabel(cat: string | null | undefined): string {
   return mapping[c] || cat;
 }
 
+export function formatCurrency(
+  value: number | null | undefined,
+  options?: { maximumFractionDigits?: number }
+): string {
+  if (value === null || value === undefined) return "-";
+  const numericValue = Number(value);
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: options?.maximumFractionDigits ?? 0
+  }).format(Number.isFinite(numericValue) ? numericValue : 0);
+}
+
 export function getCoreCategoryName(dbCategory: string | null | undefined): string {
   if (!dbCategory) return "Gestão";
   const c = dbCategory.toLowerCase();

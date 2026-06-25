@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/display-helpers";
 
 import {
   RecordActionsPanel,
@@ -25,15 +26,6 @@ import { ProjectForm } from "@/features/operations/project-form";
 import { getEntityFiles } from "@/features/tech/data";
 import { FileList } from "@/features/tech/file-list";
 import { getActivities } from "@/features/workspace/data";
-
-function formatCurrency(value: number | null) {
-  if (value === null) return "-";
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0
-  }).format(value);
-}
 
 const clientStatusOptions = [
   { value: "active", label: "Ativo" },

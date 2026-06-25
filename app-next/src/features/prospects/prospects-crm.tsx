@@ -34,19 +34,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
 import type { ProspectRow } from "./data";
 import { prospectStatuses, prospectTemperatures } from "./prospect-schema";
-import { statusLabel, temperatureLabel } from "@/lib/display-helpers";
+import { statusLabel, temperatureLabel, formatCurrency } from "@/lib/display-helpers";
 import { updateProspectStatusAction, updateProspectTemperatureAction } from "./actions";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
 import { getProspectPotentialValue } from "@/features/commercial/commercial-helpers";
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0
-  }).format(value);
-}
 
 export function ProspectsCrm({
   prospects,

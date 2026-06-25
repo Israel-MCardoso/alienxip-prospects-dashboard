@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/features/operations/format";
-import { priorityLabel, roleLabel } from "@/lib/display-helpers";
+import { priorityLabel, roleLabel, formatCurrency } from "@/lib/display-helpers";
 import type {
   ActivityRow,
   ClientRow,
@@ -78,15 +78,6 @@ export function DashboardCenter({
   const averageTicket = wonProspects.length > 0 
     ? Math.round(closedValue / wonProspects.length) 
     : 1800; // default average ticket
-
-  // Format currency helper
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      maximumFractionDigits: 0
-    }).format(val);
-  };
 
   // 3. Follow-up and Tasks Filters
   const todayStr = new Date().toISOString().split("T")[0];

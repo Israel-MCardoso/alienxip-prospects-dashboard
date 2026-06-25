@@ -59,7 +59,7 @@ import { activityLabel, formatActivityDate } from "./workspace-helpers";
 import { completeTaskAction, convertProspectAction, createTaskAction } from "@/features/commercial/actions";
 import { taskPriorities, taskStatuses } from "@/features/commercial/commercial-helpers";
 import { FileList } from "@/features/tech/file-list";
-import { statusLabel, priorityLabel, temperatureLabel, whatsappHref } from "@/lib/display-helpers";
+import { statusLabel, priorityLabel, temperatureLabel, whatsappHref, formatCurrency } from "@/lib/display-helpers";
 import { toast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AiBrainPanel } from "@/features/ai/ai-brain-panel";
@@ -85,14 +85,6 @@ const getRecommendedPlaybooks = (segment: string | null) => {
   }
   return recs;
 };
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0
-  }).format(value);
-}
 
 function buildProspectTimelineItems({
   prospect,
@@ -979,15 +971,6 @@ function ProposalsTab({
 }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const action = createProposalAction.bind(null, prospectId);
-
-  // Formatter for currency
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      maximumFractionDigits: 0
-    }).format(val);
-  };
 
   const totalProposalsValue = proposals.reduce((sum, p) => sum + Number(p.value), 0);
 
