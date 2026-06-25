@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { assertOutreachOperator, dispatchOutreachBatch } from "./dispatch-service";
 
 export async function pauseOutreachAction(prospectId: string) {
   const supabase = await createSupabaseServerClient();
@@ -102,30 +103,14 @@ export async function resumeOutreachAction(prospectId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado.");
 
-  // Dispatch logic using server-side local fetch or direct webhook invocation
-  const publicUrl = process.env.MOTHERXIP_PUBLIC_URL || "http://localhost:3000";
-  
-  // Call dispatch API route internally to ensure identical validation/dispatch flow
-  const response = await fetch(`${publicUrl}/api/outreach/dispatch`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      // Forward the user's cookies to authenticate internal request
-      cookie: (await import("next/headers")).cookies().toString()
-    },
-    body: JSON.stringify({ prospect_ids: [prospectId], automation_source: "sandbox" })
+  await assertOutreachOperator(user.id);
+
+  await dispatchOutreachBatch({
+    prospect_ids: [prospectId],
+    automation_source: "sandbox",
+    user_id: user.id,
+    user_email: user.email ?? null
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Falha no reenvio: ${errorText}`);
-  }
-
-  const result = await response.json();
-  const dispatchResult = result.results?.[0];
-  if (dispatchResult && !dispatchResult.success) {
-    throw new Error(dispatchResult.error || "Falha no dispatch.");
-  }
 
   revalidatePath("/os/outreach");
   revalidatePath(`/os/prospects/${prospectId}`);
@@ -138,20 +123,14 @@ export async function testSdrSandboxAction(prospectId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado.");
 
-  const publicUrl = process.env.MOTHERXIP_PUBLIC_URL || "http://localhost:3000";
-  const response = await fetch(`${publicUrl}/api/outreach/dispatch`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      cookie: (await import("next/headers")).cookies().toString()
-    },
-    body: JSON.stringify({ prospect_ids: [prospectId], automation_source: "sandbox" })
-  });
+  await assertOutreachOperator(user.id);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Falha no teste SDR Sandbox: ${errorText}`);
-  }
+  await dispatchOutreachBatch({
+    prospect_ids: [prospectId],
+    automation_source: "sandbox",
+    user_id: user.id,
+    user_email: user.email ?? null
+  });
 
   revalidatePath("/os/outreach");
   revalidatePath(`/os/prospects/${prospectId}`);
