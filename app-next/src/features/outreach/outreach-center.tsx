@@ -1047,7 +1047,7 @@ export function OutreachCenter({
                                   className="h-6 text-[9px] font-mono px-2 cursor-pointer"
                                   onClick={() => setJsonView({ title: "Payload do log", value: log.payload })}
                                 >
-                                  Ver Json
+                                  Ver JSON
                                 </Button>
                               </div>
                             </div>
@@ -1123,7 +1123,7 @@ export function OutreachCenter({
                                       className="h-6 text-[9px] font-mono cursor-pointer"
                                       onClick={() => setJsonView({ title: "Payload do log", value: log.payload })}
                                     >
-                                      Ver Json
+                                      Ver JSON
                                     </Button>
                                   </td>
                                 </tr>

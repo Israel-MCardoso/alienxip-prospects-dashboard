@@ -61,6 +61,7 @@ import { taskPriorities, taskStatuses } from "@/features/commercial/commercial-h
 import { FileList } from "@/features/tech/file-list";
 import { statusLabel, priorityLabel, temperatureLabel, whatsappHref } from "@/lib/display-helpers";
 import { toast } from "@/components/ui/toast";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AiBrainPanel } from "@/features/ai/ai-brain-panel";
 import { AssignResponsibleSelect } from "./assign-responsible-select";
 
@@ -1095,6 +1096,7 @@ function OutreachTab({
   outreachEvents: OutreachEventRow[];
 }) {
   const [isPending, startTransition] = useTransition();
+  const [sandboxConfirmOpen, setSandboxConfirmOpen] = useState(false);
 
   const handlePause = () => {
     startTransition(async () => {
@@ -1127,10 +1129,15 @@ function OutreachTab({
   };
 
   const handleTestSandbox = () => {
-    if (!confirm("Executar teste SDR Sandbox para este prospect? Nenhum WhatsApp real, Evolution API ou IA paga será acionado.")) return;
+    setSandboxConfirmOpen(true);
+  };
+
+  const runTestSandbox = () => {
     startTransition(async () => {
       try {
         await testSdrSandboxAction(prospect.id);
+        toast.success("Teste SDR Sandbox iniciado.");
+        setSandboxConfirmOpen(false);
       } catch (err) {
         toast.error("Não foi possível executar o teste SDR Sandbox.", err instanceof Error ? err.message : String(err));
       }
@@ -1317,6 +1324,18 @@ function OutreachTab({
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={sandboxConfirmOpen}
+        onOpenChange={setSandboxConfirmOpen}
+        title="Executar teste SDR Sandbox?"
+        description="Isso vai disparar o fluxo de teste para este prospect usando o ambiente Sandbox. Use apenas para validação operacional."
+        confirmLabel="Executar teste"
+        cancelLabel="Cancelar"
+        variant="warning"
+        isPending={isPending}
+        onConfirm={runTestSandbox}
+      />
     </div>
   );
 }
