@@ -115,7 +115,8 @@ export function roleLabel(role: string | null | undefined): string {
     manager: "Gerente",
     member: "Membro",
     viewer: "Visualizador",
-    operator: "Operador"
+    operator: "Operador",
+    commercial: "Comercial"
   };
 
   return mapping[r] || role;

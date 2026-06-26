@@ -74,7 +74,7 @@ export type Database = {
           id: string;
           full_name: string | null;
           email: string;
-          role: "owner" | "admin" | "operator" | "manager" | "member" | "viewer";
+          role: "owner" | "admin" | "operator" | "manager" | "member" | "viewer" | "commercial";
           is_active: boolean;
           created_at: string;
           updated_at: string;
@@ -83,7 +83,7 @@ export type Database = {
           id: string;
           full_name?: string | null;
           email: string;
-          role?: "owner" | "admin" | "operator" | "manager" | "member" | "viewer";
+          role?: "owner" | "admin" | "operator" | "manager" | "member" | "viewer" | "commercial";
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -895,7 +895,7 @@ export type Database = {
       };
     };
     Enums: {
-      app_role: "owner" | "admin" | "operator" | "manager" | "member" | "viewer";
+      app_role: "owner" | "admin" | "operator" | "manager" | "member" | "viewer" | "commercial";
       prospect_status: ProspectStatus;
       prospect_temperature: ProspectTemperature;
       prospect_source: ProspectSource;

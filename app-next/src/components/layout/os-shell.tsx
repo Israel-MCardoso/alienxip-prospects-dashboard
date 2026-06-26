@@ -40,6 +40,7 @@ import {
   navigationGroups,
   type NavigationIconName
 } from "@/components/layout/os-navigation";
+import { filterNavigationGroups } from "@/lib/auth/permissions";
 
 const navigationIconMap = {
   BriefcaseBusinessIcon,
@@ -77,6 +78,7 @@ export function OsShell({
   const pathname = usePathname();
   const activeNavigation = findActiveNavigation(pathname);
   const flatNavigation = flattenNavigation();
+  const visibleGroups = filterNavigationGroups(navigationGroups, userRole ?? null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("dark");
@@ -166,7 +168,7 @@ export function OsShell({
             </div>
 
             <nav className="mt-6 flex flex-1 flex-col gap-4 overflow-y-auto pr-1">
-              {navigationGroups.map((group) => (
+              {visibleGroups.map((group) => (
                 <div key={group.label} className="flex flex-col gap-1">
                   <div className="px-2.5 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/60">
                     {group.label}
@@ -237,7 +239,7 @@ export function OsShell({
         </div>
 
         <nav className="mt-6 flex flex-1 flex-col gap-3 pr-0.5 overflow-y-auto scrollbar-none">
-          {navigationGroups.map((group) => (
+          {visibleGroups.map((group) => (
             <div key={group.label} className="flex flex-col gap-1">
               {collapsed ? (
                 <div className="mx-auto my-1 h-px w-6 bg-sidebar-border" />
