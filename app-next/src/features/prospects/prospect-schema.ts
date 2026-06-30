@@ -22,6 +22,7 @@ export const prospectTemperatures = ["cold", "warm", "hot"] as const;
 
 export const prospectFormSchema = z.object({
   name: z.string().trim().min(1, "Nome e obrigatorio."),
+  company_name: z.string().trim().optional(),
   status: z.enum(prospectStatuses),
   temperature: z.enum(prospectTemperatures),
   segment: z.string().trim().optional(),
@@ -105,6 +106,7 @@ export function formatZodError(e: z.ZodError): string {
 export function formDataToProspectInput(formData: FormData): ProspectFormInput {
   return prospectFormSchema.parse({
     name: formData.get("name"),
+    company_name: emptyOrUnavailableToNull(formData.get("company_name")) ?? "",
     status: formData.get("status") || "new",
     temperature: formData.get("temperature") || "warm",
     segment: formData.get("segment") || "",

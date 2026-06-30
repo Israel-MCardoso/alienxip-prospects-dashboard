@@ -218,6 +218,7 @@ export function ProspectWorkspace({
     outreachEvents
   });
   const recordProperties: RecordProperty[] = [
+    { label: "Empresa", value: prospect.company_name || "Nao informada" },
     { label: "Segmento", value: prospect.segment || "Sem segmento" },
     { label: "Cidade/UF", value: [prospect.city, prospect.state].filter(Boolean).join(" / ") || "Local nao definido" },
     { label: "Origem", value: prospect.source || "-" },

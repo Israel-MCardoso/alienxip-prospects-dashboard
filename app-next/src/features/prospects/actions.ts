@@ -33,6 +33,7 @@ export async function createProspectAction(formData: FormData) {
 
   const { data: prospect, error } = await supabase.from("prospects").insert({
     name: input.name,
+    company_name: emptyToNull(input.company_name),
     status: input.status,
     temperature: input.temperature,
     source: "manual",
@@ -95,6 +96,7 @@ export async function updateProspectAction(id: string, formData: FormData) {
     .from("prospects")
     .update({
       name: input.name,
+      company_name: emptyToNull(input.company_name),
       status: input.status,
       temperature: input.temperature,
       segment: emptyToNull(input.segment),
@@ -345,6 +347,7 @@ export async function duplicateProspectAction(id: string) {
     .from("prospects")
     .insert({
       name: `Cópia de ${prospect.name}`,
+      company_name: prospect.company_name,
       status: "new",
       temperature: prospect.temperature,
       source: prospect.source,

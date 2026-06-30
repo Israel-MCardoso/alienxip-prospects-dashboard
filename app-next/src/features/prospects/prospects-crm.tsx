@@ -14,7 +14,9 @@ import {
   Edit3Icon,
   MapPinIcon,
   UserRoundIcon,
-  DollarSignIcon
+  DollarSignIcon,
+  MessageCircleIcon,
+  Building2Icon
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProspectForm } from "./prospect-form";
+import { WhatsappBatchDrawer } from "./whatsapp-batch-drawer";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { CustomCheckbox } from "@/components/ui/custom-checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -82,6 +85,7 @@ export function ProspectsCrm({
   // Drawer visibility states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingProspect, setEditingProspect] = useState<ProspectRow | null>(null);
+  const [isBatchOpen, setIsBatchOpen] = useState(false);
 
   // Pagination parameters
   const page = parseInt(searchParams.get("page") || "1", 10);
@@ -328,7 +332,7 @@ export function ProspectsCrm({
             </CardDescription>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 sm:justify-end">
             {selectedIds.length > 0 && (
               <div className="flex items-center gap-2.5 animate-in slide-in-from-top duration-300">
                 <span className="text-xs text-muted-foreground font-mono">
@@ -344,6 +348,16 @@ export function ProspectsCrm({
                 </Button>
               </div>
             )}
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsBatchOpen(true)}
+              className="font-mono flex items-center gap-1 cursor-pointer border-purple-500/30 text-purple-200 hover:bg-purple-950/30"
+            >
+              <MessageCircleIcon className="size-3.5" />
+              <span>Gerar lote WhatsApp</span>
+            </Button>
 
             <Button
               size="sm"
@@ -527,6 +541,13 @@ export function ProspectsCrm({
                           </div>
                         </div>
 
+                        {prospect.company_name ? (
+                          <span className="flex items-center gap-1 text-xs text-purple-200/70 min-w-0">
+                            <Building2Icon className="size-3 shrink-0 text-purple-400" />
+                            <span className="truncate">{prospect.company_name}</span>
+                          </span>
+                        ) : null}
+
                         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground">
                           {prospect.segment ? (
                             <span className="font-medium text-primary dark:text-purple-200/60">{prospect.segment}</span>
@@ -708,6 +729,13 @@ export function ProspectsCrm({
           </div>
         </div>
       )}
+
+      {/* WhatsApp Batch CSV Drawer */}
+      <WhatsappBatchDrawer
+        open={isBatchOpen}
+        onClose={() => setIsBatchOpen(false)}
+        prospects={localProspects}
+      />
 
       {/* Confirmation Modal */}
       {isConfirmOpen && (

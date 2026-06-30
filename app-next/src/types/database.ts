@@ -95,6 +95,7 @@ export type Database = {
         Row: {
           id: string;
           name: string;
+          company_name: string | null;
           segment: string | null;
           status: ProspectStatus;
           temperature: ProspectTemperature;
@@ -127,6 +128,7 @@ export type Database = {
         Insert: {
           id?: string;
           name: string;
+          company_name?: string | null;
           segment?: string | null;
           status?: ProspectStatus;
           temperature?: ProspectTemperature;

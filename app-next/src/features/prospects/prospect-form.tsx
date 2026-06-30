@@ -84,6 +84,11 @@ export function ProspectForm({
         <Input name="name" placeholder="Nome da empresa" defaultValue={prospect?.name || ""} required disabled={!isConfigured || isPending} />
       </div>
 
+      <div className="flex flex-col gap-1.5 md:col-span-2">
+        <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Empresa</label>
+        <Input name="company_name" placeholder="Ex: Clínica Aurora, Barbearia Alfa, Restaurante Central" defaultValue={prospect?.company_name || ""} disabled={!isConfigured || isPending} />
+      </div>
+
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold font-mono text-muted-foreground uppercase">Segmento</label>
         <Input name="segment" placeholder="Segmento" defaultValue={prospect?.segment || ""} disabled={!isConfigured || isPending} />
